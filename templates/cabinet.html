@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitobxon Kabineti</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- qrious for QR Code generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <!-- html2pdf for PDF Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    /* Custom styles for Cabinet */
+    body { font-family: 'Inter', sans-serif; background: var(--bg-body); margin: 0; padding: 0; color: var(--text-primary); }
+    .cabinet-layout { display: flex; min-height: 100vh; flex-direction: column; }
+    .top-nav { background: var(--bg-base); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
+    .top-nav h1 { margin: 0; font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .nav-actions { display: flex; gap: 16px; align-items: center; }
+    
+    .container { max-width: 1200px; margin: 32px auto; padding: 0 16px; width: 100%; box-sizing: border-box; }
+    
+    .grid-container { display: grid; grid-template-columns: 300px 1fr; gap: 24px; }
+    
+    .card-modern { background: var(--bg-base); border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.04); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--border); }
+    .card-modern:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+    
+    /* Library Card */
+    .library-card { display: flex; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; border: 1px solid #e2e8f0; margin-bottom: 24px; }
+    .lc-left { background: #1e3a8a; color: white; width: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; position: relative; }
+    .lc-left::after { content: ''; position: absolute; top: 0; right: -15px; bottom: 0; width: 30px; background: #1e3a8a; border-radius: 50%; transform: translateX(-50%); }
+    .lc-logo { position: relative; z-index: 2; }
+    .lc-org-name { font-weight: 700; font-size: 0.75rem; margin-top: 10px; line-height: 1.3; }
+    .lc-right { flex: 1; padding: 15px 20px 45px 20px; background: white; position: relative; }
+    .lc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+    .lc-title { color: #1e3a8a; margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; }
+    .lc-subtitle { color: #475569; font-size: 0.75rem; font-weight: 500; letter-spacing: 2px; }
+    .lc-number { background: #1e3a8a; color: white; padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
+    .lc-body { display: flex; justify-content: space-between; }
+    .lc-details { flex: 1; }
+    .lc-row { display: flex; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+    .lc-icon { width: 20px; text-align: center; margin-right: 8px; font-size: 1rem;}
+    .lc-label { width: 90px; color: #64748b; font-weight: 500; font-size: 0.85rem; }
+    .lc-value { font-weight: 600; color: #0f172a; font-size: 0.95rem; }
+    .lc-qr-box { width: 100px; display: flex; flex-direction: column; align-items: center; border: 1px solid #e2e8f0; padding: 8px; border-radius: 12px; margin-left: 15px; }
+    .lc-qr-label { font-size: 0.7rem; color: #64748b; margin-top: 6px; text-align: center; }
+    .lc-footer { position: absolute; bottom: 0; left: 0; right: 0; background: #1e3a8a; color: white; text-align: center; padding: 8px; font-style: italic; font-size: 0.8rem; font-weight: 500; }
+    
+    .section-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; }
+    
+    /* Book Grid */
+    .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    .book-card { background: var(--bg-base); border-radius: 12px; padding: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; transition: 0.2s; }
+    .book-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(99,102,241,0.1); }
+    .book-title { font-weight: 600; font-size: 1rem; margin-bottom: 4px; color: var(--text-primary); }
+    .book-author { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; flex-grow: 1; }
+    
+    .search-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); font-size: 1rem; margin-bottom: 24px; transition: 0.2s; box-sizing: border-box; }
+    .search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+    
+    /* Login Screen */
+    .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); }
+    .login-box { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+    .login-box h2 { margin: 0 0 8px 0; color: #111827; }
+    .login-box p { color: #6b7280; margin-bottom: 32px; }
+    .login-input { width: 100%; padding: 14px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 1.1rem; margin-bottom: 24px; text-align: center; font-weight: 600; letter-spacing: 2px; box-sizing: border-box; transition: 0.2s; }
+    .login-input:focus { border-color: #6366f1; outline: none; }
+    .btn-login { width: 100%; padding: 14px; background: #6366f1; color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-login:hover { background: #4f46e5; transform: translateY(-2px); }
+    
+    @media (max-width: 768px) {
+      .grid-container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="cabinet-app">
+
+  <!-- Login Screen -->
+  <div v-if="!isLoggedIn" class="login-wrapper">
+    <div class="login-box">
+      <div style="font-size: 3rem; margin-bottom: 16px;">📚</div>
+      
+      <div style="display:flex; justify-content:center; gap: 16px; margin-bottom: 24px;">
+        <button class="btn" :class="authTab === 'login' ? 'btn-primary' : 'btn-secondary'" @click="authTab = 'login'" style="border-radius:24px; padding: 8px 16px;">Kirish</button>
+        <button class="btn" :class="authTab === 'register' ? 'btn-primary' : 'btn-secondary'" @click="authTab = 'register'" style="border-radius:24px; padding: 8px 16px;">Ro'yxatdan O'tish</button>
+      </div>
+
+      <div v-if="authTab === 'login'">
+        <h2>Xush kelibsiz!</h2>
+        <p>Kutubxona kartangizdagi Sigla raqamini kiriting</p>
+        
+        <form @submit.prevent="login">
+          <input type="text" v-model="loginSigla" class="login-input" placeholder="Sigla (Masalan: K001)" required>
+          <input type="password" v-model="loginPassword" class="login-input" placeholder="Parol" style="margin-bottom: 12px;">
+          <div style="text-align: right; margin-bottom: 16px;">
+            <a href="#" @click.prevent="openPasswordReset" style="color: var(--primary); font-size: 0.9rem; text-decoration: none;">Parolni unutdingizmi?</a>
+          </div>
+          <button type="submit" class="btn-login" :disabled="loading">
+            {{ loading ? 'Tekshirilmoqda...' : 'Kirish' }}
+          </button>
+        </form>
+      </div>
+
+      <div v-if="authTab === 'register'">
+        <h2>Yangi Kitobxon</h2>
+        <p>Ma'lumotlaringizni kiriting va a'zo bo'ling</p>
+        
+        <form @submit.prevent="registerUser">
+          <input type="text" v-model="regForm.familiya" class="login-input" style="letter-spacing:normal; text-align:left; font-size:1rem; padding:10px; margin-bottom: 12px;" placeholder="To'liq Ism-Familiyangiz" required>
+          <input type="text" v-model="regForm.telefon" class="login-input" style="letter-spacing:normal; text-align:left; font-size:1rem; padding:10px; margin-bottom: 12px;" placeholder="Telefon raqamingiz" required>
+          <div style="text-align:left; color:#6b7280; font-size:0.9rem; margin-bottom: 4px; margin-left: 8px;">Jinsi</div>
+          <select v-model="regForm.jinsi" class="login-input" style="letter-spacing:normal; text-align:left; font-size:1rem; padding:10px; margin-bottom: 12px;" required>
+            <option value="erkak">Erkak</option>
+            <option value="ayol">Ayol</option>
+          </select>
+          <div style="text-align:left; color:#6b7280; font-size:0.9rem; margin-bottom: 4px; margin-left: 8px;">Tug'ilgan sana</div>
+          <input type="date" v-model="regForm.tugilgan_sana" class="login-input" style="letter-spacing:normal; text-align:left; font-size:1rem; padding:10px; margin-bottom: 12px;">
+          
+          <div style="text-align:left; color:#6b7280; font-size:0.9rem; margin-bottom: 4px; margin-left: 8px;">Yo'nalishingiz (Kim uchun)</div>
+          <select v-model="regForm.yunalish" class="login-input" style="letter-spacing:normal; text-align:left; font-size:1rem; padding:10px; margin-bottom: 12px;" required>
+            <option value="Talaba">Talaba</option>
+            <option value="Ishchi">Ishchi</option>
+            <option value="Xizmatchi">Xizmatchi</option>
+            <option value="Boshqa">Boshqa</option>
+          </select>
+          <input v-if="regForm.yunalish === 'Boshqa'" type="text" v-model="regForm.yunalish_boshqa" class="login-input" style="letter-spacing:normal; text-align:left; font-size:1rem; padding:10px; margin-bottom: 12px;" placeholder="Qo'lda yozing" required>
+
+          <input type="text" v-model="regForm.telegram_username" class="login-input" style="letter-spacing:normal; text-align:left; font-size:1rem; padding:10px; margin-bottom: 12px;" placeholder="Telegram Username (Majburiy emas)">
+          <input type="password" v-model="regForm.password" class="login-input" style="letter-spacing:normal; text-align:left; font-size:1rem; padding:10px; margin-bottom: 24px;" placeholder="Yangi parol o'rnating (Majburiy emas)">
+          
+          <button type="submit" class="btn-login" :disabled="loading">
+            {{ loading ? 'Yaratilmoqda...' : 'A\'zo Bo\'lish' }}
+          </button>
+        </form>
+      </div>
+
+      <div v-if="loginError" style="color: #ef4444; margin-top: 16px; font-size: 0.9rem;">
+        {{ loginError }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Cabinet Screen -->
+  <div v-else class="cabinet-layout">
+    <nav class="top-nav">
+      <h1>📚 Kutubxona</h1>
+      <div class="nav-actions">
+        <button class="btn btn-secondary" @click="logout">Chiqish</button>
+      </div>
+    </nav>
+    
+    <div class="container grid-container">
+      
+      <!-- Left Sidebar (Profile & QR) -->
+      <div>
+        <div class="library-card" id="library-card-element">
+          <div class="lc-left">
+            <div class="lc-logo">
+              <div style="font-size:2rem;">📚</div>
+              <div class="lc-org-name">URGUT TUMAN<br>AXBOROT-KUTUBXONA<br>MARKAZI</div>
+            </div>
+          </div>
+          <div class="lc-right">
+            <div class="lc-header">
+              <div class="lc-title-box">
+                <h2 class="lc-title">KITOBXON KARTASI</h2>
+                <div class="lc-subtitle">ELEKTRON A'ZO KARTASI</div>
+              </div>
+              <div class="lc-number">№ {{ member.sigla.replace('FEA', '') }}</div>
+            </div>
+            
+            <div class="lc-body">
+              <div class="lc-details">
+                <div class="lc-row">
+                  <span class="lc-icon">👤</span>
+                  <span class="lc-label">F.I.Sh.:</span>
+                  <span class="lc-value">{{ member.familiya }}</span>
+                </div>
+                <div class="lc-row">
+                  <span class="lc-icon">📅</span>
+                  <span class="lc-label">Tug'ilgan sana:</span>
+                  <span class="lc-value">{{ member.tugilgan_sana || '---' }}</span>
+                </div>
+                <div class="lc-row">
+                  <span class="lc-icon">📞</span>
+                  <span class="lc-label">Telefon:</span>
+                  <span class="lc-value">{{ member.telegram_id || '---' }}</span>
+                </div>
+                <div class="lc-row">
+                  <span class="lc-icon">📍</span>
+                  <span class="lc-label">Manzil:</span>
+                  <span class="lc-value">Urgut tumani</span>
+                </div>
+              </div>
+              
+              <div class="lc-qr-box">
+                <canvas id="qr-code" style="width:100%; height:auto;"></canvas>
+                <div class="lc-qr-label">Karta QR kodi</div>
+              </div>
+            </div>
+          </div>
+          <div class="lc-footer">
+            "Kitob – eng yaxshi do'st va dono maslahatchidir."
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width: 100%; margin-bottom: 24px; padding: 12px; font-weight: 600; font-size: 1rem; border-radius: 12px;" @click="downloadPDF">
+          📄 Biletni PDF shaklda yuklab olish
+        </button>
+        
+        <div class="card-modern" style="margin-top: 24px;">
+          <h3 class="section-title">📊 Statistika</h3>
+          <p>O'qilgan kitoblar: <strong>{{ issueHistory.length }}</strong></p>
+          <p>Holati: <strong :style="{color: member.holati==='faol' ? 'var(--success)' : (member.holati==='kutilmoqda' ? 'var(--primary)' : 'var(--danger)')}">{{ member.holati.toUpperCase() }}</strong></p>
+        </div>
+      </div>
+      
+      <!-- Right Content -->
+      <div>
+        
+        <!-- Currently Issued Books -->
+        <div class="card-modern" style="margin-bottom: 24px;">
+          <h3 class="section-title">📖 O'qilayotgan kitoblar</h3>
+          
+          <div v-if="currentIssues.length === 0" style="color: var(--text-secondary); text-align: center; padding: 24px;">
+            Hozircha o'qilayotgan kitoblar yo'q.
+          </div>
+          
+          <div v-for="issue in currentIssues" :key="issue.id" style="border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 4px;">{{ issue.book_name }}</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                Qaytarish muddati: <strong :style="{ color: isLate(issue.qaytarish_sana) ? 'var(--danger)' : 'inherit' }">{{ issue.qaytarish_sana }}</strong>
+                <span v-if="isLate(issue.qaytarish_sana)" class="badge badge-red" style="margin-left: 8px;">Kechikkan</span>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-secondary btn-sm" @click="openExtensionModal(issue)">+ Muddatni uzaytirish</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reserved Books -->
+        <div class="card-modern" style="margin-bottom: 24px;">
+          <h3 class="section-title">🕒 Bron qilingan (Tayyorlangan) kitoblar</h3>
+          <div v-if="reservations.length === 0" style="color: var(--text-secondary); text-align: center; padding: 24px;">
+            Hozircha bron qilingan kitoblar yo'q.
+          </div>
+          <div v-for="res in reservations" :key="res.id" style="border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 4px;">{{ res.book_title }}</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                Bron sanasi: {{ new Date(res.created_at).toLocaleDateString() }}
+                <span v-if="res.notes">| Izoh: {{ res.notes }}</span>
+              </div>
+            </div>
+            <div>
+              <span class="badge" :class="{'badge-yellow': res.status==='waiting', 'badge-green': res.status==='ready'}">
+                {{ res.status === 'waiting' ? 'Kutilmoqda' : (res.status === 'ready' ? 'Tayyorlangan' : res.status) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Unified Catalog -->
+        <div class="card-title" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="section-title" style="margin:0;">📚 Barcha Kitoblar (Katalog)</h3>
+          <input type="text" class="search-input" style="width: 300px; margin-bottom: 0;" v-model="catalogQuery" @input="debouncedCatalogSearch" placeholder="Kitob izlash...">
+        </div>
+        
+        <div v-if="catalogLoading" style="text-align:center; padding: 20px;">Yuklanmoqda...</div>
+        <div v-else class="book-grid">
+          <div v-for="book in catalogBooks" :key="book.id" class="book-card">
+            <div class="book-title">{{ book.title }}</div>
+            <div class="book-author" style="margin-bottom:8px;">{{ book.author }}</div>
+            
+            <div v-if="book.available_count > 0" style="color: var(--success); font-weight:600; font-size: 0.9rem; margin-bottom: 12px;">
+              ✅ Mavjud ({{ book.available_count }} ta)
+            </div>
+            <div v-else style="color: var(--danger); font-weight:600; font-size: 0.9rem; margin-bottom: 12px;">
+              ❌ Band qilingan
+            </div>
+            
+            <button v-if="book.available_count > 0" class="btn btn-primary btn-sm" @click="openReserveModal(book)">Band qilish</button>
+            <button v-else class="btn btn-secondary btn-sm" disabled>Band qilish</button>
+          </div>
+          
+          <div v-if="catalogBooks.length === 0" style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 24px;">
+            Hozircha kitoblar mavjud emas.
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="card-modern" style="margin-top: 24px;">
+          <h3 class="section-title">⚙️ Sozlamalar va Profil</h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <!-- Profile Update -->
+            <div>
+              <h4 style="margin-top: 0;">Profilni tahrirlash</h4>
+              <div style="background: rgba(99, 102, 241, 0.1); border-left: 4px solid var(--primary); padding: 12px; margin-bottom: 16px; font-size: 0.9rem;">
+                <strong>Xabarnomalar va Parolni tiklash:</strong>
+                <p style="margin: 4px 0 0 0; color: var(--text-secondary);">Botdan foydalanish uchun Telegram'ga kiring va botga <strong>/link {{ member.sigla }}</strong> deb yozib yuboring.</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Familiya va Ism</label>
+                <input type="text" class="form-control" v-model="profileForm.familiya">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Yo'nalish</label>
+                <input type="text" class="form-control" v-model="profileForm.yunalish" placeholder="Masalan: Talaba, Ishchi">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Telegram Username</label>
+                <input type="text" class="form-control" v-model="profileForm.telegram_username" placeholder="@username">
+              </div>
+            </div>
+            
+            <!-- Password Update -->
+            <div>
+              <h4 style="margin-top: 0;">Parolni o'zgartirish</h4>
+              <div class="form-group">
+                <label class="form-label">Yangi parol</label>
+                <input type="password" class="form-control" v-model="profileForm.password" placeholder="Yangi parolni kiriting">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Parolni tasdiqlang</label>
+                <input type="password" class="form-control" v-model="profileForm.passwordConfirm" placeholder="Parolni qayta kiriting">
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; text-align: right;">
+            <button class="btn btn-primary" @click="saveSettings">Ma'lumotlarni saqlash</button>
+          </div>
+        </div>
+        
+      </div>
+      
+    </div>
+  </div>
+  
+  <!-- Toasts -->
+  <div class="toast-container">
+    <div v-for="t in toasts" :key="t.id" class="toast" :class="'toast-' + t.type">
+      {{ t.msg }}
+    </div>
+  
+  <!-- Reserve Modal -->
+  <div class="modal-overlay" v-if="showReserveModal" @click.self="showReserveModal=false">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Kitobni Band Qilish</div>
+        <button class="modal-close" @click="showReserveModal=false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: rgba(251, 191, 36, 0.1); border-left: 4px solid #f59e0b; padding: 12px; margin-bottom: 16px; color: #92400e; font-size: 0.9rem;">
+          <strong>Eslatma:</strong> Band qilganingizdan keyin shaxsingizni tasdiqlovchi hujjat bilan borishingiz so'raladi!
+        </div>
+        <p><strong>{{ selectedBookForReserve?.title }}</strong> kitobini band qilmoqchisiz.</p>
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label">Qachon olib ketasiz? (Sana)</label>
+          <input type="date" class="form-control" v-model="reserveForm.date" required>
+        </div>
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label">Qo'shimcha Izoh (majburiy emas)</label>
+          <textarea class="form-control" v-model="reserveForm.notes" placeholder="Masalan: Soat 14:00 larda boraman" rows="2"></textarea>
+        </div>
+        <div style="text-align:right; margin-top: 24px;">
+          <button class="btn btn-secondary" @click="showReserveModal=false" style="margin-right:8px;">Bekor qilish</button>
+          <button class="btn btn-primary" @click="confirmReservation">Tasdiqlash</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extension Modal -->
+  <div class="modal-overlay" v-if="showExtensionModal" @click.self="showExtensionModal=false">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Muddatni Uzaytirish</div>
+        <button class="modal-close" @click="showExtensionModal=false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>{{ selectedIssueForExt?.book_name }}</strong> kitobini muddatini uzaytirmoqchisiz.</p>
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label">Qachongacha uzaytirmoqchisiz? (Sana)</label>
+          <input type="date" class="form-control" v-model="extForm.requested_date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sabab (majburiy emas)</label>
+          <textarea class="form-control" v-model="extForm.reason" placeholder="Sababni kiriting" rows="2"></textarea>
+        </div>
+        <div style="text-align:right; margin-top: 24px;">
+          <button class="btn btn-secondary" @click="showExtensionModal=false" style="margin-right:8px;">Bekor qilish</button>
+          <button class="btn btn-primary" @click="confirmExtension">Jo'natish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Reset Modal -->
+  <div class="modal-overlay" v-if="showResetModal" @click.self="showResetModal=false">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Parolni tiklash</div>
+        <button class="modal-close" @click="showResetModal=false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div v-if="resetStep === 1">
+          <p style="font-size: 0.9rem; margin-bottom: 16px;">
+            Telegram orqali parolingizni tiklash kodi yuboriladi. 
+            <br><small style="color:var(--text-secondary)">Eslatma: Botga oldin ulangan bo'lishingiz kerak.</small>
+          </p>
+          <div class="form-group">
+            <label class="form-label">Sigla raqamingiz</label>
+            <input type="text" class="form-control" v-model="resetForm.sigla" placeholder="Masalan: K001">
+          </div>
+          <div style="text-align:right; margin-top: 16px;">
+            <button class="btn btn-primary" @click="requestResetCode">Kod yuborish</button>
+          </div>
+        </div>
+        <div v-if="resetStep === 2">
+          <p style="font-size: 0.9rem; margin-bottom: 16px; color: var(--success);">
+            Telegram bot orqali tasdiqlash kodi yuborildi!
+          </p>
+          <div class="form-group">
+            <label class="form-label">Tasdiqlash kodi (4 ta raqam)</label>
+            <input type="text" class="form-control" v-model="resetForm.code" placeholder="0000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yangi parol</label>
+            <input type="password" class="form-control" v-model="resetForm.new_password" placeholder="Yangi parolni kiriting">
+          </div>
+          <div style="text-align:right; margin-top: 16px;">
+            <button class="btn btn-primary" @click="confirmResetCode">Parolni o'zgartirish</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script src="/static/js/cabinet.js"></script>
+</body>
+</html>

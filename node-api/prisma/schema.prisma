@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ----------------------
+// Mock User and Books
+// ----------------------
+model User {
+  id                 Int                @id @default(autoincrement())
+  email              String             @unique
+  password           String
+  
+  // 15. 2FA Login
+  twoFactorSecret    String?
+  twoFactorEnabled   Boolean            @default(false)
+  
+  sessions           Session[]
+  borrowHistory      BorrowHistory[]
+  eventRegistrations EventParticipant[]
+}
+
+model BookItem {
+  id            Int             @id @default(autoincrement())
+  barcode       String          @unique
+  bookTitle     String
+  borrowHistory BorrowHistory[]
+}
+
+// ----------------------
+// 4. KITOB TARIXI (BOOK HISTORY)
+// ----------------------
+model BorrowHistory {
+  id         Int       @id @default(autoincrement())
+  bookItemId Int
+  userId     Int
+  borrowedAt DateTime  @default(now())
+  returnedAt DateTime?
+
+  bookItem   BookItem  @relation(fields: [bookItemId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
+}
+
+// ----------------------
+// 6. SESSION TRACKING
+// ----------------------
+model Session {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  ipAddress String?
+  device    String?
+  loginAt   DateTime  @default(now())
+  logoutAt  DateTime?
+  isActive  Boolean   @default(true)
+
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+// ----------------------
+// 9. EVENT (TADBIR) MODULI
+// ----------------------
+model Event {
+  id           Int                @id @default(autoincrement())
+  title        String
+  description  String?
+  date         DateTime
+  location     String?
+  participants EventParticipant[]
+}
+
+model EventParticipant {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  userId    Int
+  createdAt DateTime @default(now())
+
+  event     Event    @relation(fields: [eventId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+}

@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  branchId     String?
+  firstName    String
+  lastName     String
+  email        String?   @unique
+  phone        String    @unique
+  passwordHash String
+  role         String    @default("MEMBER")   // ADMIN, MANAGER, LIBRARIAN, MEMBER
+  memberType   String    @default("REGULAR")  // STUDENT, TEACHER, VIP, REGULAR
+  siglaNumber  String?   @unique
+  qrCodeUrl    String?
+  status       String    @default("ACTIVE")   // ACTIVE, SUSPENDED, EXPIRED
+  createdAt    DateTime  @default(now())
+
+  branch        Branch?   @relation(fields: [branchId], references: [id])
+  loans         Loan[]    @relation("UserLoans")
+  issuedLoans   Loan[]    @relation("IssuedLoans")
+  fines         Fine[]
+}
+
+model Branch {
+  id           String     @id @default(uuid())
+  name         String
+  address      String?
+  contactEmail String?
+  users        User[]
+  bookCopies   BookCopy[]
+}
+
+model Book {
+  id              String     @id @default(uuid())
+  isbn            String?    @unique
+  title           String
+  author          String?
+  publisher       String?
+  publishYear     Int?
+  categoryId      String?
+  description     String?
+  coverImageUrl   String?
+  isDigital       Boolean    @default(false)
+  digitalFileUrl  String?
+
+  category        Category?  @relation(fields: [categoryId], references: [id])
+  copies          BookCopy[]
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  books Book[]
+}
+
+model BookCopy {
+  id             String   @id @default(uuid())
+  bookId         String
+  branchId       String
+  barcode        String   @unique
+  status         String   @default("AVAILABLE") // AVAILABLE, LOANED, RESERVED, LOST, DAMAGED
+  shelfLocation  String?
+  conditionNotes String?
+
+  book   Book   @relation(fields: [bookId], references: [id])
+  branch Branch @relation(fields: [branchId], references: [id])
+  loans  Loan[]
+}
+
+model Loan {
+  id           String    @id @default(uuid())
+  bookCopyId   String
+  userId       String
+  issuedById   String
+  issueDate    DateTime  @default(now())
+  dueDate      DateTime
+  returnDate   DateTime?
+  status       String    @default("ACTIVE") // ACTIVE, RETURNED, OVERDUE, LOST
+  renewCount   Int       @default(0)
+
+  bookCopy  BookCopy @relation(fields: [bookCopyId], references: [id])
+  user      User     @relation("UserLoans", fields: [userId], references: [id])
+  issuedBy  User     @relation("IssuedLoans", fields: [issuedById], references: [id])
+  fines     Fine[]
+}
+
+model Fine {
+  id        String   @id @default(uuid())
+  loanId    String
+  userId    String
+  amount    Float
+  reason    String?
+  status    String   @default("UNPAID") // UNPAID, PAID, WAIVED
+  createdAt DateTime @default(now())
+
+  loan Loan @relation(fields: [loanId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}

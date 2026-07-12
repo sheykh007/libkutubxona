@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kutubxona Boshqaruv Tizimi – A'zolar, Kitoblar va Statistikani real vaqtda boshqaring.">
+  <title>📚 Kutubxona Boshqaruv Tizimi</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/static/css/style.css?v=2">
+
+  <!-- Libraries (CDN) -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+<div id="app" class="app-wrapper">
+
+  <!-- ======================================================
+       LOGIN SCREEN
+       ====================================================== -->
+  <div class="login-overlay" v-if="!isLoggedIn">
+    <div class="login-card">
+      <div class="login-logo">📚</div>
+      <h2 class="login-title">Kutubxona Tizimi</h2>
+      <p class="login-subtitle">Iltimos, tizimga kiring</p>
+      
+      <div class="form-group" style="margin-bottom:16px;text-align:left">
+        <label class="form-label">Foydalanuvchi nomi</label>
+        <input class="form-control" v-model="loginForm.username" placeholder="admin">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;text-align:left">
+        <label class="form-label">Parol</label>
+        <input class="form-control" type="password" v-model="loginForm.password" placeholder="••••••••">
+      </div>
+      <div class="form-group" style="margin-bottom:24px;text-align:left">
+        <label class="form-label">Rol</label>
+        <select class="form-control" v-model="loginForm.role">
+          <option value="admin">Administrator</option>
+          <option value="operator">Operator</option>
+        </select>
+      </div>
+      
+      <button class="btn btn-primary" style="width:100%" @click="login">Kirish</button>
+    </div>
+  </div>
+
+  <template v-if="isLoggedIn">
+  <!-- ======================================================
+       SIDEBAR
+       ====================================================== -->
+  <nav class="sidebar" :class="{ open: sidebarOpen }" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">📚</div>
+      <div class="logo-text">
+        <h2>Kutubxona</h2>
+        <span>Boshqaruv Tizimi</span>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Asosiy</div>
+
+      <div class="nav-item" :class="{ active: currentPage==='dashboard' }"
+           id="nav-dashboard" @click="navigate('dashboard')">
+        <span class="nav-icon">📊</span>
+        Dashboard
+      </div>
+
+      <div class="nav-section-label">Ma'lumotlar</div>
+
+      <div class="nav-item" :class="{ active: currentPage==='members' }"
+           id="nav-members" @click="navigate('members')">
+        <span class="nav-icon">👤</span>
+        A'zolar
+      </div>
+
+      <div class="nav-item" :class="{ active: currentPage==='books' }"
+           id="nav-books" @click="navigate('books')">
+        <span class="nav-icon">📚</span>
+        Kitoblar
+      </div>
+
+      <div class="nav-item" :class="{ active: currentPage==='issues' }"
+           id="nav-issues" @click="navigate('issues')">
+        <span class="nav-icon">📖</span>
+        Kitob Berish
+      </div>
+
+      <div class="nav-item" :class="{ active: currentPage==='reservations' }"
+           id="nav-reservations" @click="navigate('reservations')">
+        <span class="nav-icon">🔖</span>
+        Band Qilinganlar
+      </div>
+
+      <div class="nav-item" :class="{ active: currentPage==='extensions' }"
+           id="nav-extensions" @click="navigate('extensions')">
+        <span class="nav-icon">⏳</span>
+        So'rovlar
+      </div>
+
+      <div class="nav-item" :class="{ active: currentPage==='finance' }"
+           id="nav-finance" @click="navigate('finance')">
+        <span class="nav-icon">💰</span>
+        Moliya (Beta)
+      </div>
+
+      <div class="nav-section-label">Boshqaruv</div>
+
+      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='import' }"
+           id="nav-import" @click="navigate('import')">
+        <span class="nav-icon">📥</span>
+        Excel Import
+      </div>
+
+      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='audit_log' }"
+           id="nav-audit-log" @click="navigate('audit_log')">
+        <span class="nav-icon">📝</span>
+        Audit Log
+      </div>
+
+      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='backup' }"
+           id="nav-backup" @click="navigate('backup')">
+        <span class="nav-icon">💾</span>
+        Ma'lumotlar Bazasi
+      </div>
+
+      <div class="nav-item" @click="logout" id="nav-logout">
+        <span class="nav-icon">🚪</span>
+        Chiqish
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">{{ auth.role === 'admin' ? '🛡️' : '👤' }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ auth.username }}</div>
+          <div class="user-role">{{ auth.role === 'admin' ? 'Administrator' : 'Operator' }}</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ======================================================
+       MAIN CONTENT
+       ====================================================== -->
+  <div class="main-content">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn-hamburger" @click="sidebarOpen = !sidebarOpen" id="btn-hamburger">☰</button>
+        <h1>
+          <span v-if="currentPage==='dashboard'">📊 Dashboard</span>
+          <span v-else-if="currentPage==='members'">👤 A'zolar Boshqaruvi</span>
+          <span v-else-if="currentPage==='books'">📚 Kitoblar</span>
+          <span v-else-if="currentPage==='issues'">📖 Kitob Berish Jurnali</span>
+          <span v-else-if="currentPage==='reservations'">🔖 Band Qilinganlar</span>
+          <span v-else-if="currentPage==='extensions'">⏳ So'rovlar</span>
+          <span v-else-if="currentPage==='import'">📥 Excel Import</span>
+          <span v-else-if="currentPage==='audit_log'">📝 Audit Log</span>
+          <span v-else-if="currentPage==='backup'">💾 Ma'lumotlar Bazasi</span>
+        </h1>
+        <div class="breadcrumb">Kutubxona Boshqaruv Tizimi</div>
+      </div>
+      <div class="topbar-right">
+        
+        <!-- Notifications Dropdown -->
+        <div class="dropdown" style="position:relative; margin-right:12px;">
+          <button class="btn btn-secondary btn-sm" @click="showNotifications = !showNotifications">
+            🔔 <span class="badge" v-if="notifications.length > 0">{{ notifications.length }}</span>
+          </button>
+          <div class="dropdown-menu" v-if="showNotifications" style="position:absolute; right:0; top:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px; width:300px; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            <div v-if="notifications.length === 0" style="padding:8px; text-align:center; color:var(--text-secondary);">
+              Yangi bildirishnomalar yo'q.
+            </div>
+            <div v-for="(n, i) in notifications" :key="i" style="padding:8px; border-bottom:1px solid var(--border); font-size:13px;">
+              <span v-if="n.type === 'warning'">⚠️</span>
+              <span v-else-if="n.type === 'info'">ℹ️</span>
+              {{ n.message }}
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary btn-sm" @click="toggleTheme" style="margin-right:8px; padding:6px 10px;" id="btn-theme-toggle">
+          <span v-if="theme === 'dark'">☀️ Kunduzgi</span>
+          <span v-else>🌙 Tungi</span>
+        </button>
+        <div class="topbar-date">📅 {{ today }}</div>
+        <button v-if="currentPage==='members'" class="btn btn-primary btn-sm" @click="openAddMember" id="btn-add-member">
+          ➕ Yangi A'zo
+        </button>
+        <button v-if="currentPage==='books'" class="btn btn-primary btn-sm" @click="openAddBook" id="btn-add-book">
+          ➕ Yangi Kitob
+        </button>
+        <button v-if="currentPage==='issues'" class="btn btn-success btn-sm" @click="openAddIssue" id="btn-add-issue">
+          📖 Kitob Berish
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="page-body">
+
+      <!-- ====================================================
+           DASHBOARD PAGE
+           ==================================================== -->
+      <section v-if="currentPage==='dashboard'">
+        <div v-if="dashLoading" class="loading-overlay"><div class="spinner"></div></div>
+        <template v-else-if="dashStats">
+
+          <!-- KPI Stat Cards -->
+          <div class="filters-bar" style="margin-bottom: 20px;">
+            <div style="display:flex; align-items:center; gap: 10px;">
+              <input type="date" class="form-control" v-model="dashDateFrom" @change="loadDashboard">
+              <span>-</span>
+              <input type="date" class="form-control" v-model="dashDateTo" @change="loadDashboard">
+              <select class="form-control" v-model="dashPeriod" @change="setDashPeriod" style="width: 150px;">
+                <option value="">Erkin muddat</option>
+                <option value="day">Bugun</option>
+                <option value="month">Shu oy</option>
+                <option value="quarter">Shu chorak</option>
+                <option value="half_year">So'nggi 6 oy</option>
+                <option value="all">Barchasi</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" @click="dashDateFrom=''; dashDateTo=''; dashPeriod=''; loadDashboard()">Tozalash</button>
+            </div>
+          </div>
+          
+          <div class="stats-grid">
+            <div class="stat-card c1" v-if="dashDateFrom || dashDateTo">
+              <div class="stat-icon">👥</div>
+              <div class="stat-value">{{ dashStats.total_members }}</div>
+              <div class="stat-label">Qo'shilgan A'zolar</div>
+              <div class="stat-sub">Tanlangan muddatda</div>
+            </div>
+            <div class="stat-card c3" v-if="dashDateFrom || dashDateTo">
+              <div class="stat-icon">📚</div>
+              <div class="stat-value">{{ dashStats.added_books_count }}</div>
+              <div class="stat-label">Qo'shilgan Kitoblar</div>
+              <div class="stat-sub">Tanlangan muddatda</div>
+            </div>
+            <div class="stat-card c1" v-if="!dashDateFrom && !dashDateTo">
+              <div class="stat-icon">👥</div>
+              <div class="stat-value">{{ dashStats.total_members }}</div>
+              <div class="stat-label">Jami A'zolar</div>
+              <div class="stat-sub">↑ Jami ro'yxatdagilar</div>
+            </div>
+            <div class="stat-card c2">
+              <div class="stat-icon">💰</div>
+              <div class="stat-value">{{ formatPrice(dashStats.today_income) }}</div>
+              <div class="stat-label">Bugungi Daromad</div>
+              <div class="stat-sub">↑ Tushum sanasi bo'yicha</div>
+            </div>
+            <div class="stat-card c3">
+              <div class="stat-icon">📈</div>
+              <div class="stat-value">{{ formatPrice(dashStats.monthly_income) }}</div>
+              <div class="stat-label">Oylik Daromad</div>
+              <div class="stat-sub">↑ Joriy oydagi tushum</div>
+            </div>
+            <div class="stat-card c4">
+              <div class="stat-icon">⚠️</div>
+              <div class="stat-value">{{ dashStats.debtors_count }}</div>
+              <div class="stat-label">Qarzdorlar</div>
+              <div class="stat-sub">❗ Muddati o'tganlar</div>
+            </div>
+            <div class="stat-card c5">
+              <div class="stat-icon">📖</div>
+              <div class="stat-value">{{ dashStats.overdue_issues }}</div>
+              <div class="stat-label">Kechikkan Kitoblar</div>
+              <div class="stat-sub">↑ Muddati o'tgan</div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1 -->
+          <div class="grid-2" style="margin-bottom:20px">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📈 Oylik A'zolar O'sishi</div>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="monthlyChart"></canvas>
+              </div>
+            </div>
+            <!-- Removed category chart -->
+          </div>
+
+          <!-- Charts Row 2 + Top Members -->
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">⚥ Jins Bo'yicha</div>
+              </div>
+              <div class="chart-wrapper" style="height:180px">
+                <canvas id="genderChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🏆 Eng Ko'p Kitob Olganlar</div>
+              </div>
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>#</th><th>Sigla</th><th>Familiya</th><th>Kitoblar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(m, i) in dashStats.top_members" :key="m.sigla">
+                      <td>{{ i+1 }}</td>
+                      <td><span class="badge badge-purple">{{ m.sigla }}</span></td>
+                      <td>{{ m.familiya }}</td>
+                      <td><strong>{{ m.issue_count }}</strong></td>
+                    </tr>
+                    <tr v-if="!dashStats.top_members.length">
+                      <td colspan="4" class="table-empty">Ma'lumot yo'q</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+
+        </template>
+        <div v-else class="empty-state">
+          <div class="empty-icon">📊</div>
+          <div class="empty-title">Ma'lumotlar yuklanmoqda...</div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           MEMBERS PAGE
+           ==================================================== -->
+      <!-- ======================================================
+           PAGE: BOOKS
+           ====================================================== -->
+      <section v-if="currentPage==='books'">
+        <div class="card" style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div class="filters-bar" style="margin:0; flex:1; border:none; padding:0; background:transparent;">
+              <div class="filter-search" style="flex:1">
+                <span class="search-icon">🔍</span>
+                <input class="form-control" v-model="bookSearchFilter" placeholder="Kitob nomi yoki muallif bo'yicha qidirish...">
+              </div>
+              <select class="form-control" v-model="bookBranchFilter" style="min-width:180px; margin-left:10px;">
+                <option value="">Barcha bo'limlar</option>
+                <option v-for="br in branches" :key="br.id" :value="br.id">{{ br.name }}</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:10px; margin-left:10px;">
+              <button class="btn btn-secondary btn-sm" @click="navigate('import')">
+                📥 Excel Import
+              </button>
+              <button v-if="auth.role === 'admin'" class="btn btn-danger btn-sm" @click="bulkDeleteBooks">
+                🛑 Barchasini tozalash
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nomi</th>
+                  <th>Muallif</th>
+                  <th>Nashr Yili</th>
+                  <th>Saqlash joyi / Bo'lim</th>
+                  <th>Nusxalar soni</th>
+                  <th>Inventar raqamlari (Holati)</th>
+                  <th>Amallar</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(b, i) in booksList" :key="b.id">
+                  <td>{{ (bookPage - 1) * bookPageSize + i + 1 }}</td>
+                  <td style="font-weight: 600;">{{ b.title }}</td>
+                  <td>{{ b.author || '-' }}</td>
+                  <td>{{ b.published_year || '-' }}</td>
+                  <td>
+                    <span v-for="brName in Array.from(new Set(b.items.map(i => i.branch_name).filter(Boolean)))" class="badge badge-purple" style="margin-right: 4px;">{{ brName }}</span>
+                  </td>
+                  <td><span class="badge badge-blue">{{ b.items.length }} ta</span></td>
+                  <td style="font-size: 0.75rem; color: var(--text-muted);">
+                    <span v-for="item in b.items" :key="item.id" style="display:inline-block; margin-right:8px; margin-bottom:4px; padding: 2px 6px; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 4px;">
+                      {{ item.barcode }}
+                      <span :class="{'badge-green': item.status==='available', 'badge-yellow': item.status==='borrowed'}" style="margin-left:4px; padding:2px 4px; border-radius:4px; font-size:0.65rem;">
+                        {{ item.status === 'available' ? 'Mavjud' : item.status === 'borrowed' ? 'Band' : item.status }}
+                      </span>
+                    </span>
+                  </td>
+                  <td>
+                    <div style="display:flex;gap:6px">
+                      <button v-if="auth.role === 'admin'" class="btn btn-secondary btn-sm" @click="openEditBook(b)">✏️</button>
+                      <button v-if="auth.role === 'admin'" class="btn btn-danger btn-sm" @click="deleteBook(b.id)">🗑</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="!booksList.length && !booksLoading">
+                  <td colspan="8" class="table-empty">Hech qanday kitob topilmadi.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="pagination" style="padding:12px 20px" v-if="totalBookPages > 1 || bookTotal > 0">
+            <div>Jami {{ bookTotal }} ta kitob | Sahifa {{ bookPage }} / {{ totalBookPages || 1 }}</div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <select class="form-control" style="padding:4px 8px; font-size:13px;" v-model="bookPageSize" @change="loadBooks(1)">
+                <option :value="10">10 ta qator</option>
+                <option :value="50">50 ta qator</option>
+                <option :value="100">100 ta qator</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" :disabled="bookPage === 1" @click="loadBooks(bookPage - 1)">Oldingi</button>
+              <button class="btn btn-secondary btn-sm" :disabled="bookPage === totalBookPages || totalBookPages === 0" @click="loadBooks(bookPage + 1)">Keyingi</button>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+
+      <section v-if="currentPage==='members'">
+
+        <!-- Filters -->
+        <div class="filters-bar">
+          <div class="filter-search" style="flex:2">
+            <span class="search-icon">🔍</span>
+            <input id="member-search" class="form-control" type="text"
+                   placeholder="Familiya yoki Sigla bo'yicha qidirish..."
+                   v-model="memberFilters.q">
+          </div>
+
+          <select id="filter-holati" class="form-control" style="min-width:130px" v-model="memberFilters.holati">
+            <option value="">Barcha Holat</option>
+            <option value="faol">Faol</option>
+            <option value="faol_emas">Faol Emas</option>
+          </select>
+          <input id="filter-date-from" class="form-control" type="date" v-model="memberFilters.date_from" style="min-width:140px">
+          <input id="filter-date-to" class="form-control" type="date" v-model="memberFilters.date_to" style="min-width:140px">
+          <button class="btn btn-secondary btn-sm" @click="exportMembers" id="btn-export">📤 Excel</button>
+        </div>
+
+        <!-- Members Table -->
+        <div class="card" style="padding:0">
+          <div class="card-header" style="padding:16px 20px; border-bottom:1px solid var(--border-light)">
+            <div class="card-title">👥 A'zolar Ro'yxati
+              <span class="badge badge-blue" style="margin-left:8px">{{ memberTotal }}</span>
+            </div>
+          </div>
+
+          <div v-if="membersLoading" class="loading-overlay"><div class="spinner"></div></div>
+
+          <div class="table-container" v-else>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Sigla</th>
+                  <th>Familiya</th>
+                  <!-- Removed Toifa -->
+                  <th>Jinsi</th>
+                  <th>Yoshi</th>
+                  <th>A'zo Sana</th>
+                  <th>Holati</th>
+                  <th>Amallar</th>
+                </tr>
+              </thead>
+              <tbody>
+                    <tr v-for="(m, i) in members" :key="m.id">
+                      <td>{{ (memberPage - 1) * pageSize + i + 1 }}</td>
+                      <td><span class="badge badge-purple">{{ m.sigla }}</span></td>
+                      <td>
+                        <div style="display:flex;align-items:center;gap:8px">
+                          <div class="member-avatar" :class="m.jinsi === 'erkak' ? 'avatar-male' : 'avatar-female'">
+                            {{ m.familiya ? m.familiya[0].toUpperCase() : '?' }}
+                          </div>
+                          {{ m.familiya }}
+                        </div>
+                      </td>
+                      <!-- Removed Toifa -->
+                      <td>{{ m.jinsi === 'erkak' ? '👨 Erkak' : '👩 Ayol' }}</td>
+                      <td>{{ getAge(m) }}</td>
+                      <td>{{ m.yangi_avo_sana || '—' }}</td>
+                      <td>
+                        <span class="badge" :class="m.holati === 'faol' ? 'badge-green' : (m.holati === 'kutilmoqda' ? 'badge-purple' : 'badge-red')">
+                          {{ m.holati === 'faol' ? '✅ Faol' : (m.holati === 'kutilmoqda' ? '⏳ Kutilmoqda' : '❌ Faol Emas') }}
+                        </span>
+                      </td>
+                      <td>
+                        <div style="display:flex;gap:6px">
+                          <button v-if="m.holati === 'kutilmoqda' && auth.role === 'admin'" class="btn btn-primary btn-sm" @click="approveMember(m)" title="Tasdiqlash">✅</button>
+                          <button class="btn btn-secondary btn-sm" @click="viewMember(m)" :id="'btn-view-'+m.id">👁</button>
+                          <button v-if="auth.role === 'admin'" class="btn btn-secondary btn-sm" @click="openEditMember(m)" :id="'btn-edit-'+m.id">✏️</button>
+                          <button v-if="auth.role === 'admin'" class="btn btn-danger btn-sm" @click="deleteMember(m.id)" :id="'btn-del-'+m.id">🗑</button>
+                        </div>
+                      </td>
+                    </tr>
+                <tr v-if="!members.length && !membersLoading">
+                  <td colspan="9" class="table-empty">
+                    <div class="empty-state">
+                      <div class="empty-icon">👤</div>
+                      <div class="empty-title">A'zolar topilmadi</div>
+                      <div class="empty-sub">Yangi a'zo qo'shing yoki filtrlarni o'zgartiring</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" style="padding:12px 20px" v-if="totalPages > 1">
+            <div>Jami {{ memberTotal }} ta a'zo | Sahifa {{ memberPage }} / {{ totalPages }}</div>
+            <div class="page-btns">
+              <button class="page-btn" @click="loadMembers(1)" :disabled="memberPage<=1">«</button>
+              <button class="page-btn" @click="loadMembers(memberPage-1)" :disabled="memberPage<=1">‹</button>
+              <button class="page-btn active">{{ memberPage }}</button>
+              <button class="page-btn" @click="loadMembers(memberPage+1)" :disabled="memberPage>=totalPages">›</button>
+              <button class="page-btn" @click="loadMembers(totalPages)" :disabled="memberPage>=totalPages">»</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           BOOK ISSUES PAGE
+           ==================================================== -->
+      <section v-if="currentPage==='issues'">
+        <div class="filters-bar" style="margin-bottom:20px">
+          <select class="form-control" v-model="issueFilter.qaytarildi" @change="loadIssues" id="filter-returned" style="min-width:160px">
+            <option value="">Barchasi</option>
+            <option value="false">Qaytarilmagan</option>
+            <option value="true">Qaytarilgan</option>
+          </select>
+        </div>
+
+        <div class="card" style="padding:0">
+          <div class="card-header" style="padding:16px 20px; border-bottom:1px solid var(--border-light)">
+            <div class="card-title">📖 Kitob Berish Jurnali
+              <span class="badge badge-blue" style="margin-left:8px">{{ issues.length }}</span>
+            </div>
+          </div>
+
+          <div v-if="issuesLoading" class="loading-overlay"><div class="spinner"></div></div>
+
+          <div class="table-container" v-else>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Kitob Nomi</th>
+                  <th>A'zo</th>
+                  <!-- Removed Category -->
+                  <th>Berilgan</th>
+                  <th>Qaytarish</th>
+                  <th>Holati</th>
+                  <th>Jarima</th>
+                  <th>Amal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(iss, i) in issues" :key="iss.id">
+                  <td>{{ i+1 }}</td>
+                  <td><strong>{{ iss.book_name }}</strong></td>
+                  <td>
+                    <div>
+                      <span class="badge badge-purple">{{ iss.member_sigla }}</span>
+                      <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:3px">{{ iss.member_familiya }}</div>
+                    </div>
+                  </td>
+                  <!-- Category removed -->
+                  <td>{{ iss.berilgan_sana }}</td>
+                  <td>{{ iss.qaytarish_sana }}</td>
+                  <td>
+                    <div v-if="iss.qaytarildi">
+                      <span class="badge badge-green">✅ Qaytarildi</span>
+                    </div>
+                    <div v-else>
+                      <span class="badge" :class="overdueDays(iss) > 0 ? 'badge-red' : 'badge-yellow'">
+                        {{ overdueDays(iss) > 0 ? `⚠️ ${overdueDays(iss)} kun kech` : '⏳ Kutilmoqda' }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span v-if="iss.jarima_summa > 0" class="badge badge-red">{{ iss.jarima_summa.toLocaleString() }} so'm</span>
+                    <span v-else class="badge badge-gray">—</span>
+                  </td>
+                  <td>
+                    <button v-if="!iss.qaytarildi" class="btn btn-success btn-sm"
+                            @click="returnBook(iss.id)" :id="'btn-return-'+iss.id">
+                      ✅ Qaytardi
+                    </button>
+                    <span v-else class="badge badge-gray">{{ iss.qaytarilgan_sana }}</span>
+                  </td>
+                </tr>
+                <tr v-if="!issues.length && !issuesLoading">
+                  <td colspan="9" class="table-empty">
+                    <div class="empty-state">
+                      <div class="empty-icon">📖</div>
+                      <div class="empty-title">Kitob berishlari topilmadi</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           RESERVATIONS PAGE
+           ==================================================== -->
+      <section v-if="currentPage==='reservations'">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔖 Band Qilingan Kitoblar</div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Kitob</th>
+                  <th>A'zo</th>
+                  <th>Sana</th>
+                  <th>Holati</th>
+                  <th>Harakat</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="res in reservationsList" :key="res.id">
+                  <td>{{ res.book_title }}</td>
+                  <td>{{ res.member_name }}</td>
+                  <td>{{ res.created_at }}</td>
+                  <td>
+                    <span class="badge" :class="{'badge-warning': res.status==='waiting', 'badge-success': res.status==='ready'}">{{ res.status }}</span>
+                  </td>
+                  <td>
+                    <button class="btn btn-primary btn-sm" v-if="res.status==='waiting'" @click="updateReservation(res.id, 'ready')">Tayyor</button>
+                    <button class="btn btn-secondary btn-sm" v-if="res.status!=='completed' && res.status!=='cancelled'" @click="updateReservation(res.id, 'completed')">Berish</button>
+                    <button class="btn btn-danger btn-sm" v-if="res.status!=='cancelled'" @click="updateReservation(res.id, 'cancelled')">Bekor</button>
+                  </td>
+                </tr>
+                <tr v-if="!reservationsList.length"><td colspan="5" style="text-align:center">Ma'lumot yo'q</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           EXTENSIONS PAGE
+           ==================================================== -->
+      <section v-if="currentPage==='extensions'">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⏳ Muddat Uzaytirish So'rovlari</div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Kitob</th>
+                  <th>A'zo</th>
+                  <th>Sabab</th>
+                  <th>Kun</th>
+                  <th>Holat</th>
+                  <th>Harakat</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="ext in extensionsList" :key="ext.id">
+                  <td>{{ ext.book_name }}</td>
+                  <td>{{ ext.member_name }}</td>
+                  <td>{{ ext.reason }}</td>
+                  <td>+{{ ext.requested_days }}</td>
+                  <td>
+                    <span class="badge" :class="{'badge-warning': ext.status==='pending', 'badge-success': ext.status==='approved', 'badge-danger': ext.status==='rejected'}">{{ ext.status }}</span>
+                  </td>
+                  <td>
+                    <button class="btn btn-success btn-sm" v-if="ext.status==='pending'" @click="updateExtension(ext.id, 'approve')">✔</button>
+                    <button class="btn btn-danger btn-sm" v-if="ext.status==='pending'" @click="updateExtension(ext.id, 'reject')">✕</button>
+                  </td>
+                </tr>
+                <tr v-if="!extensionsList.length"><td colspan="6" style="text-align:center">So'rovlar yo'q</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           AUDIT LOG PAGE
+           ==================================================== -->
+      <section v-if="currentPage==='audit_log'">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📝 Tizim Harakatlari (Audit Log)</div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vaqt</th>
+                  <th>Foydalanuvchi</th>
+                  <th>Modul</th>
+                  <th>Amal</th>
+                  <th>Holati</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="log in auditLogs" :key="log.id">
+                  <td>{{ new Date(log.timestamp).toLocaleString('uz-UZ') }}</td>
+                  <td>{{ log.user }}</td>
+                  <td><span class="badge badge-purple">{{ log.module }}</span></td>
+                  <td>{{ log.action }}</td>
+                  <td><span class="badge" :class="log.result === 'success' ? 'badge-success' : 'badge-danger'">{{ log.result }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           BACKUP PAGE
+           ==================================================== -->
+      <section v-if="currentPage==='backup'">
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div class="card-title">💾 Zaxira Nusxa Olish</div>
+            <button class="btn btn-primary" @click="createBackup">Zaxira Yaratish</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Oldingi Nusxalar</div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sana</th>
+                  <th>Fayl nomi</th>
+                  <th>Hajmi</th>
+                  <th>Turi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="b in backupsList" :key="b.id">
+                  <td>{{ new Date(b.created_at).toLocaleString('uz-UZ') }}</td>
+                  <td>{{ b.filename }}</td>
+                  <td>{{ (b.size / 1024).toFixed(2) }} KB</td>
+                  <td>{{ b.is_auto ? 'Avtomatik' : 'Qo\'lda' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           IMPORT PAGE
+           ==================================================== -->
+      <section v-if="currentPage==='import'">
+        <div class="tabs">
+          <div class="tab" :class="{ active: importTab==='upload' }" @click="importTab='upload'" id="tab-upload">📤 Fayl Yuklash</div>
+          <div class="tab" :class="{ active: importTab==='results' }" @click="importTab='results'" id="tab-results">📋 Natijalar</div>
+          <div class="tab" :class="{ active: importTab==='template' }" @click="importTab='template'" id="tab-template">📄 Shablon</div>
+        </div>
+
+        <!-- Upload Tab -->
+        <div v-if="importTab==='upload'">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:20px">📥 Excel Fayl Import</div>
+            
+            <div style="margin-bottom: 20px; display: flex; gap: 20px; justify-content: center; font-weight: 500;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" v-model="importType" value="members">
+                A'zolarni Import Qilish
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" v-model="importType" value="books">
+                Kitoblarni Import Qilish
+              </label>
+            </div>
+
+            <div class="upload-zone"
+                 :class="{ dragover }"
+                 @dragover.prevent="dragover=true"
+                 @dragleave="dragover=false"
+                 @drop="onDrop"
+                 @click="$refs.fileInput.click()"
+                 id="upload-zone">
+              <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" @change="onFileSelect" id="file-input">
+              <div class="upload-icon">📂</div>
+              <div class="upload-text" v-if="!importFile">
+                <strong>Faylni shu yerga tashlang</strong> yoki bosib tanlang
+              </div>
+              <div class="upload-text" v-else style="color:var(--accent-green)">
+                ✅ <strong>{{ importFile.name }}</strong> tanlandi
+              </div>
+              <div class="upload-hint">Qabul qilinadi: .xlsx .xls .csv</div>
+            </div>
+
+            <div style="margin-top:20px;display:flex;gap:12px;justify-content:center">
+              <button class="btn btn-primary" @click="doImport" :disabled="!importFile || importing" id="btn-import">
+                <span v-if="importing">⏳ Import qilinmoqda...</span>
+                <span v-else>🚀 Import Boshlash</span>
+              </button>
+              <button class="btn btn-secondary" @click="importFile=null;importResult=null" id="btn-import-clear">🗑 Tozalash</button>
+              <button v-if="auth.role === 'admin'" class="btn btn-danger" @click="bulkDeleteAll" id="btn-bulk-delete">🛑 Ma'lumotlarni Tozalash</button>
+            </div>
+          </div>
+
+          <!-- Field mapping info -->
+          <div class="card" style="margin-top:20px">
+            <div class="card-title" style="margin-bottom:16px">📋 Excel Ustun Nomlari</div>
+            <div class="table-container">
+              <table v-if="importType === 'members'">
+                <thead>
+                  <tr><th>Excel Ustun Nomi</th><th>Tizim Maydoni</th><th>Majburiy</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Sigla Raqam</td><td>Sigla raqami</td><td><span class="badge badge-red">Ha</span></td></tr>
+                  <tr><td>Familiya</td><td>Familiya</td><td><span class="badge badge-yellow">Tavsiya</span></td></tr>
+
+                  <tr><td>Jinsi</td><td>Jinsi (erkak/ayol)</td><td><span class="badge badge-gray">Yo'q</span></td></tr>
+                  <tr><td>Tug'ilgan Sanasi</td><td>Tug'ilgan sana (DD.MM.YYYY)</td><td><span class="badge badge-gray">Yo'q</span></td></tr>
+                  <tr><td>Yoshi</td><td>Yosh (avtomatik hisoblanadi)</td><td><span class="badge badge-gray">Yo'q</span></td></tr>
+                  <tr><td>Yangi A'zo Bo'lgan</td><td>A'zo qo'shilgan sana</td><td><span class="badge badge-gray">Yo'q</span></td></tr>
+                  <tr><td>Qayta A'zo Bo'lgan</td><td>Qayta a'zo sanasi</td><td><span class="badge badge-gray">Yo'q</span></td></tr>
+
+                </tbody>
+              </table>
+              <table v-if="importType === 'books'">
+                <thead>
+                  <tr><th>Excel Ustun Nomi</th><th>Tizim Maydoni</th><th>Majburiy</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Kitob nomi</td><td>Kitobning nomi (title)</td><td><span class="badge badge-red">Ha</span></td></tr>
+                  <tr><td>Inventar raqami</td><td>Inventar raqami</td><td><span class="badge badge-red">Ha</span></td></tr>
+                  <tr><td>Saqlash joyi</td><td>Bo'lim (Filial) nomi</td><td><span class="badge badge-gray">Yo'q</span></td></tr>
+                  <tr><td>Muallifi</td><td>Kitob yozuvchisi</td><td><span class="badge badge-yellow">Tavsiya</span></td></tr>
+                  <tr><td>Nashr yili</td><td>Kitob chiqqan yil</td><td><span class="badge badge-gray">Yo'q</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div v-if="importTab==='results'">
+          <div v-if="!importResult" class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">Hali import qilinmagan</div>
+            <div class="empty-sub">Fayl yuklash sahifasiga o'ting</div>
+          </div>
+          <template v-else>
+            <div class="import-result">
+              <div class="result-stats">
+                <div class="result-stat ok">✅ Qo'shildi: {{ importResult.created_count }}</div>
+                <div class="result-stat dup">⚠️ Takroriy: {{ importResult.duplicate_count }}</div>
+                <div class="result-stat err">❌ Ogohlantirish/Xato: {{ importResult.error_count }}</div>
+              </div>
+
+              <!-- Errors / Warnings -->
+              <div v-if="importResult.errors && importResult.errors.length" style="margin-top:16px">
+                <div class="card-title" style="margin-bottom:12px">❌ Xatoliklar va Ogohlantirishlar</div>
+                <div class="table-container">
+                  <table>
+                    <thead><tr><th>Qator</th><th>Ustun</th><th>Sabab / Xabar</th></tr></thead>
+                    <tbody>
+                      <tr v-for="e in importResult.errors" :key="e.row + e.column">
+                        <td>{{ e.row }}</td>
+                        <td><span class="badge badge-yellow">{{ e.column }}</span></td>
+                        <td :style="{ color: e.reason.includes('Xato') ? 'var(--accent-red)' : 'var(--text-secondary)' }">
+                          {{ e.reason }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Template Tab -->
+        <div v-if="importTab==='template'">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:16px">📄 Namuna Fayl Tuzilishi</div>
+            <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:16px">
+              Excel faylingizdagi ustun nomlari quyidagicha bo'lishi kerak (birinchi qator):
+            </p>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sigla Raqam</th>
+                    <th>Familiya</th>
+                    <!-- Removed Toifa -->
+                    <th>Jinsi</th>
+                    <th>Tug'ilgan Sanasi</th>
+                    <th>Yoshi</th>
+                    <th>Yangi A'zo Bo'lgan</th>
+                    <th>Qayta A'zo Bo'lgan</th>
+
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="color:var(--accent)">K001</td>
+                    <td>Karimov Ali</td>
+                    <td>erkak</td>
+                    <td>15.03.1990</td>
+                    <td>34</td>
+                    <td>01.01.2024</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ====================================================
+           FINANCE PAGE
+           ==================================================== -->
+      <section v-if="currentPage==='finance'">
+        <div class="section-header">
+          <div class="section-title">
+            <h2 class="h2">💰 Moliya va To'lovlar</h2>
+            <p class="text-secondary" style="font-size:0.875rem">A'zolik to'lovlari va qarzdorlar nazorati</p>
+          </div>
+        </div>
+
+        <div class="tabs" style="margin-bottom:20px">
+          <div class="tab-item" :class="{active: financeTab==='summary'}" @click="financeTab='summary'">Umumiy</div>
+          <div class="tab-item" :class="{active: financeTab==='payments'}" @click="financeTab='payments'">Oxirgi To'lovlar</div>
+          <div class="tab-item" :class="{active: financeTab==='debtors'}" @click="financeTab='debtors'">Qarzdorlar</div>
+        </div>
+
+        <!-- Summary -->
+        <div v-if="financeTab==='summary'" class="stats-grid">
+           <div class="stat-card c2">
+             <div class="stat-icon">💰</div>
+             <div class="stat-value">{{ formatPrice(dashStats?.today_income) }}</div>
+             <div class="stat-label">Bugungi Tushum</div>
+             <div class="stat-sub">↑ Bugun qilingan to'lovlar</div>
+           </div>
+           <div class="stat-card c3">
+             <div class="stat-icon">📈</div>
+             <div class="stat-value">{{ formatPrice(dashStats?.monthly_income) }}</div>
+             <div class="stat-label">Oylik Tushum</div>
+             <div class="stat-sub">↑ Joriy oydagi tushumlar</div>
+           </div>
+           <div class="stat-card c4">
+             <div class="stat-icon">🛑</div>
+             <div class="stat-value">{{ dashStats?.expired_subs }}</div>
+             <div class="stat-label">Muddati tugaganlar</div>
+             <div class="stat-sub">A'zoligi tugagan a'zolar</div>
+           </div>
+        </div>
+
+        <!-- Recent Payments Table -->
+        <div v-if="financeTab==='payments'" class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>A'zo</th>
+                  <th>Turi</th>
+                  <th>Summa</th>
+                  <th>Sana</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="p in payments" :key="p.id">
+                  <td>{{ p.member_familiya }} ({{ p.member_sigla }})</td>
+                  <td>
+                    <span class="badge" :class="p.type==='membership'?'badge-blue':'badge-red'">
+                      {{ p.type === 'membership' ? 'A\'zolik' : 'Jarima' }}
+                    </span>
+                  </td>
+                  <td><b>{{ formatPrice(p.amount) }}</b></td>
+                  <td class="text-sm text-secondary">{{ new Date(p.created_at).toLocaleString() }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Debtors Table -->
+        <div v-if="financeTab==='debtors'" class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sigla</th>
+                  <th>Familiya</th>
+                  <th>Sabab</th>
+                  <th>Qarz (Jarima)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="d in debtors" :key="d.id" class="clickable" @click="viewMemberById(d.id)">
+                  <td><span class="badge badge-yellow">{{ d.sigla }}</span></td>
+                  <td>{{ d.familiya }}</td>
+                  <td class="text-sm text-secondary">{{ d.reason }}</td>
+                  <td class="accent-red"><b>{{ formatPrice(d.fine) }}</b></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div><!-- /main-content -->
+
+  <!-- ======================================================
+       MODAL: ADD / EDIT MEMBER
+       ====================================================== -->
+  <div class="modal-overlay" v-if="showMemberModal" @click.self="showMemberModal=false" id="modal-member">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">{{ editMode ? '✏️ A\'zoni Tahrirlash' : '➕ Yangi A\'zo Qo\'shish' }}</div>
+        <button class="modal-close" @click="showMemberModal=false" id="modal-member-close">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group">
+            <label class="form-label">Sigla Raqami</label>
+            <input id="field-sigla" class="form-control" v-model="memberForm.sigla" placeholder="Avtomatik shakllanadi (FEA...)" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Familiya *</label>
+            <input id="field-familiya" class="form-control" v-model="memberForm.familiya" placeholder="Karimov Ali">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Telefon (Telegram ID)</label>
+            <input id="field-telefon" class="form-control" v-model="memberForm.telegram_id" placeholder="+998901234567">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Jinsi</label>
+            <select id="field-jinsi" class="form-control" v-model="memberForm.jinsi">
+              <option value="erkak">👨 Erkak</option>
+              <option value="ayol">👩 Ayol</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tug'ilgan Sanasi</label>
+            <input id="field-dob" class="form-control" type="date" v-model="memberForm.tugilgan_sana">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Holati</label>
+            <select id="field-holati" class="form-control" v-model="memberForm.holati">
+              <option value="faol">✅ Faol</option>
+              <option value="faol_emas">❌ Faol Emas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yangi A'zo Bo'lgan Sana</label>
+            <input id="field-yangi" class="form-control" type="date" v-model="memberForm.yangi_avo_sana">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Qayta A'zo Bo'lgan Sana</label>
+            <input id="field-qayta" class="form-control" type="date" v-model="memberForm.qayta_avo_sana">
+          </div>
+        </div>
+
+        <div style="background:var(--bg-base);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px">
+          <div class="card-title" style="margin-bottom:12px;font-size:0.85rem">🗓 A'zolik Muddati</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Boshlanish</label>
+              <input id="field-azobosh" class="form-control" type="date" v-model="memberForm.azolik_bosh">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tugash</label>
+              <input id="field-azotug" class="form-control" type="date" v-model="memberForm.azolik_tug">
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-base);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px">
+          <div class="card-title" style="margin-bottom:12px;font-size:0.85rem">💰 To'lov Ma'lumotlari</div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Summa (so'm)</label>
+              <input id="field-tolovsum" class="form-control" type="number" v-model="memberForm.tolov_summa" placeholder="50000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">To'lov Sanasi</label>
+              <input id="field-tolovsana" class="form-control" type="date" v-model="memberForm.tolov_sana">
+            </div>
+            <div class="form-group">
+              <label class="form-label">To'lov Turi</label>
+              <select id="field-tolovturi" class="form-control" v-model="memberForm.tolov_turi">
+                <option value="">— Tanlang —</option>
+                <option value="naqd">💵 Naqd</option>
+                <option value="karta">💳 Karta</option>
+                <option value="online">🌐 Online</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" @click="showMemberModal=false" id="btn-cancel-member">Bekor qilish</button>
+        <button class="btn btn-primary" @click="saveMember" id="btn-save-member">
+          {{ editMode ? '💾 Saqlash' : '➕ Qo\'shish' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       MODAL: MEMBER DETAIL
+       ====================================================== -->
+  <div class="modal-overlay" v-if="showMemberDetail" @click.self="showMemberDetail=false" id="modal-detail">
+    <div class="modal modal-lg" v-if="selectedMember">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="member-avatar" :class="selectedMember.jinsi === 'erkak' ? 'avatar-male' : 'avatar-female'" style="margin-right:10px">
+            {{ selectedMember.familiya ? selectedMember.familiya[0].toUpperCase() : '?' }}
+          </span>
+          {{ selectedMember.familiya }}
+          <span class="badge badge-purple" style="margin-left:8px">{{ selectedMember.sigla }}</span>
+        </div>
+        <button class="modal-close" @click="showMemberDetail=false" id="modal-detail-close">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="detail-grid" style="margin-bottom:20px">
+          <!-- Removed Toifa -->
+          <div class="detail-item"><div class="di-label">Jinsi</div><div class="di-value">{{ selectedMember.jinsi === 'erkak' ? '👨 Erkak' : '👩 Ayol' }}</div></div>
+          <div class="detail-item"><div class="di-label">Yoshi</div><div class="di-value">{{ getAge(selectedMember) }} yosh</div></div>
+          <div class="detail-item"><div class="di-label">Holati</div><div class="di-value"><span class="badge" :class="selectedMember.holati === 'faol' ? 'badge-green' : (selectedMember.holati === 'kutilmoqda' ? 'badge-purple' : 'badge-red')">{{ selectedMember.holati === 'faol' ? '✅ Faol' : (selectedMember.holati === 'kutilmoqda' ? '⏳ Kutilmoqda' : '❌ Faol Emas') }}</span></div></div>
+          <div class="detail-item"><div class="di-label">Yangi A'zo Sana</div><div class="di-value">{{ selectedMember.yangi_avo_sana || '—' }}</div></div>
+          <div class="detail-item"><div class="di-label">Qayta A'zo</div><div class="di-value">{{ selectedMember.qayta_avo_sana || '—' }}</div></div>
+          <div class="detail-item"><div class="di-label">A'zolik Boshi</div><div class="di-value">{{ selectedMember.azolik_bosh || '—' }}</div></div>
+          <div class="detail-item"><div class="di-label">A'zolik Tugashi</div><div class="di-value">{{ selectedMember.azolik_tug || '—' }}</div></div>
+          <div class="detail-item"><div class="di-label">To'lov</div><div class="di-value">{{ selectedMember.tolov_summa ? selectedMember.tolov_summa.toLocaleString() + ' so\'m' : '—' }}</div></div>
+        </div>
+
+
+
+        <div style="margin-top:20px">
+          <div class="card-title" style="margin-bottom:12px">📖 Kitob Tarixi</div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Kitob</th><th>Berilgan</th><th>Qaytarish</th><th>Holati</th></tr></thead>
+              <tbody>
+                <tr v-for="iss in memberIssues" :key="iss.id">
+                  <td>{{ iss.book_name }}</td>
+                  <td>{{ iss.berilgan_sana }}</td>
+                  <td>{{ iss.qaytarish_sana }}</td>
+                  <td><span class="badge" :class="iss.qaytarildi ? 'badge-green' : 'badge-yellow'">{{ iss.qaytarildi ? '✅ Qaytarildi' : '⏳ Kutilmoqda' }}</span></td>
+                </tr>
+                <tr v-if="!memberIssues.length"><td colspan="4" class="table-empty">Kitob tarixi yo'q</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button v-if="auth.role === 'admin'" class="btn btn-secondary" @click="openEditMember(selectedMember); showMemberDetail=false" id="btn-detail-edit">✏️ Tahrirlash</button>
+        <button class="btn btn-secondary" @click="showMemberDetail=false" id="btn-detail-close">Yopish</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Toast Notifications -->
+  <!-- ======================================================
+       MODAL: ADD ISSUE
+       ====================================================== -->
+  <!-- ======================================================
+       MODAL: ADD BOOK
+       ====================================================== -->
+  <div class="modal-overlay" v-if="showBookModal" @click.self="showBookModal=false" id="modal-book">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📚 Yangi Kitob Qo'shish</div>
+        <button class="modal-close" @click="showBookModal=false" id="modal-book-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group form-full">
+            <label class="form-label">Kitob Nomi *</label>
+            <input id="field-book-title" class="form-control" v-model="bookForm.title" placeholder="Kitob nomini kiriting...">
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">Muallif</label>
+            <input id="field-book-author" class="form-control" v-model="bookForm.author" placeholder="Muallif...">
+          </div>
+          <!-- Category removed -->
+          <div class="form-group">
+            <label class="form-label">Saqlash joyi / Bo'lim *</label>
+            <select class="form-control" v-model="bookForm.branch_id">
+              <option value="">Bo'limni tanlang...</option>
+              <option v-for="br in branches" :key="br.id" :value="br.id">{{ br.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nashr Yili</label>
+            <input id="field-book-year" type="number" class="form-control" v-model="bookForm.published_year" placeholder="2023">
+          </div>
+          <div class="form-group" v-if="!editBookMode">
+            <label class="form-label">Inventar raqami</label>
+            <input id="field-book-barcode" class="form-control" v-model="bookForm.barcode" placeholder="123456789">
+          </div>
+          <div class="form-group" v-if="!editBookMode">
+            <label class="form-label">Nusxa soni *</label>
+            <input id="field-book-count" type="number" class="form-control" v-model="bookForm.total_count" min="1" placeholder="1">
+          </div>
+          
+          <div class="form-group form-full" v-if="editBookMode && bookForm.items.length > 0">
+            <label class="form-label">Nusxalar (Inventar raqamlarni tahrirlash)</label>
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-light); padding: 8px; border-radius: 8px;">
+              <div v-for="(item, index) in bookForm.items" :key="item.id" style="display:flex; gap:8px; margin-bottom: 8px; align-items: center;">
+                <span style="min-width: 20px; font-weight: bold; color: var(--text-muted);">{{ index + 1 }}.</span>
+                <input class="form-control" v-model="item.barcode" placeholder="Inventar raqami" style="flex:1">
+                <span class="badge" :class="item.status==='available' ? 'badge-green' : 'badge-yellow'">
+                  {{ item.status === 'available' ? 'Mavjud' : item.status === 'borrowed' ? 'Band' : item.status }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" @click="showBookModal=false" id="btn-cancel-book">Bekor</button>
+        <button class="btn btn-success" @click="saveBook" id="btn-save-book">💾 Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" v-if="showIssueModal" @click.self="showIssueModal=false" id="modal-issue">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📖 Kitob Berish</div>
+        <button class="modal-close" @click="showIssueModal=false" id="modal-issue-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group form-full" style="position:relative">
+            <label class="form-label">A'zo Qidirish *</label>
+            <input id="issue-member-search" class="form-control" v-model="memberSearchQ"
+                   placeholder="Sigla yoki familiya...">
+            <div v-if="memberSearchResults.length" style="
+              position:absolute; top:100%; left:0; right:0; z-index:100;
+              background:var(--bg-surface); border:1px solid var(--border);
+              border-radius:var(--radius-sm); overflow:hidden; box-shadow:var(--shadow-lg);">
+              <div v-for="m in memberSearchResults" :key="m.id"
+                   @click="selectMemberForIssue(m)"
+                   style="padding:10px 14px;cursor:pointer;transition:background 0.15s"
+                   @mouseenter="$event.target.style.background='var(--bg-card)'"
+                   @mouseleave="$event.target.style.background=''">
+                <span class="badge badge-purple" style="margin-right:8px">{{ m.sigla }}</span>{{ m.familiya }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group form-full" style="position:relative">
+            <label class="form-label">Kitob Qidirish *</label>
+            <input id="issue-book-search" class="form-control" v-model="bookSearchQ"
+                    placeholder="Kitob nomi yoki inventar raqami..." autocomplete="off">
+            <div v-if="bookSearchResults.length" style="
+              position:absolute; top:100%; left:0; right:0; z-index:100; max-height:200px; overflow-y:auto;
+              background:var(--bg-surface); border:1px solid var(--border);
+              border-radius:var(--radius-sm); box-shadow:var(--shadow-lg);">
+              <div v-for="b in bookSearchResults" :key="b.id"
+                   @click="b.status === 'available' ? selectBookForIssue(b) : null"
+                   style="padding:10px 14px;transition:background 0.15s"
+                   :style="{ cursor: b.status === 'available' ? 'pointer' : 'not-allowed', opacity: b.status === 'available' ? '1' : '0.6' }"
+                   @mouseenter="b.status === 'available' ? $event.target.style.background='var(--bg-card)' : ''"
+                   @mouseleave="$event.target.style.background=''">
+                <span class="badge" :class="{'badge-green': b.status==='available', 'badge-yellow': b.status==='borrowed', 'badge-red': b.status==='lost'}" style="margin-right:8px">
+                  {{ b.status === 'available' ? 'Mavjud' : b.status === 'borrowed' ? 'Band qilingan' : b.status }}
+                </span>
+                <b>{{ b.title }}</b> <span style="color:var(--text-muted);font-size:0.8rem">({{ b.barcode }})</span>
+              </div>
+            </div>
+            
+            <div v-if="issueForm.book_item" style="margin-top:10px; padding:10px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+              <span style="color:var(--accent-green)">Tanlangan kitob:</span> 
+              <b>{{ issueForm.book_name }}</b>
+              <button class="btn btn-sm btn-secondary" style="margin-left:10px; padding:2px 6px;" @click="issueForm.book_item=null; issueForm.book_name=''">❌</button>
+            </div>
+          </div>
+
+          <!-- Category removed -->
+
+          <div class="form-group">
+            <label class="form-label">Berilgan Sana</label>
+            <input id="field-issue-date" class="form-control" type="date" v-model="issueForm.berilgan_sana">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Qaytarish Sanasi *</label>
+            <input id="field-return-date" class="form-control" type="date" v-model="issueForm.qaytarish_sana">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Jarima (1 kun, so'm)</label>
+            <input id="field-fine" class="form-control" type="number" v-model="issueForm.jarima_kun_narxi" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" @click="showIssueModal=false" id="btn-cancel-issue">Bekor</button>
+        <button class="btn btn-success" @click="saveIssue" id="btn-save-issue">📖 Berish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container">
+    <div v-for="t in toasts" :key="t.id" class="toast" :class="t.type">
+      <span v-if="t.type==='success'">✅</span>
+      <span v-else-if="t.type==='error'">❌</span>
+      <span v-else-if="t.type==='warning'">⚠️</span>
+      <span v-else>ℹ️</span>
+      {{ t.msg }}
+    </div>
+  </div>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div v-if="sidebarOpen" style="
+    position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;"
+    @click="sidebarOpen=false">
+  </div>
+
+  </template>
+
+</div><!-- /#app -->
+
+<script src="/static/js/app.js?v=2"></script>
+</body>
+</html>
