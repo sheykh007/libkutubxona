@@ -109,7 +109,7 @@
         </form>
       </div>
 
-      <div v-if="authTab === 'register'">
+      <div v-if="authTab === 'register' && !registerSuccess">
         <h2>Yangi Kitobxon</h2>
         <p>Ma'lumotlaringizni kiriting va a'zo bo'ling</p>
         
@@ -142,7 +142,25 @@
         </form>
       </div>
 
-      <div v-if="loginError" style="color: #ef4444; margin-top: 16px; font-size: 0.9rem;">
+      <!-- Registration Success / Pending Approval Screen -->
+      <div v-if="authTab === 'register' && registerSuccess" class="register-pending-screen">
+        <div class="pending-icon">⏳</div>
+        <h2 style="font-size: 1.4rem; margin-bottom: 8px;">So'rovingiz Qabul Qilindi!</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.95rem; line-height: 1.6;">
+          A'zolik so'rovingiz muvaffaqiyatli yuborildi.<br>
+          <strong>Admin tomonidan tasdiqlanishi kutilmoqda.</strong>
+        </p>
+        <div class="pending-info-box">
+          <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Tasdiqlangandan so'ng sigla raqamingiz bilan kiring:</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary); letter-spacing: 2px;" v-if="registeredSigla">{{ registeredSigla }}</div>
+          <div style="font-size: 1rem; color: var(--text-secondary);" v-else>Tez orada belgilanadi</div>
+        </div>
+        <button class="btn-login" style="margin-top: 20px;" @click="authTab = 'login'; registerSuccess = false">
+          Kirish sahifasiga o'tish
+        </button>
+      </div>
+
+      <div v-if="loginError" class="login-error-box">
         {{ loginError }}
       </div>
     </div>
@@ -450,5 +468,185 @@
 </div>
 
 <script src="/static/js/cabinet.js"></script>
+  <!-- AI Chatbot Widget -->
+  <div id="ai-chatbot-container">
+    <div id="ai-chat-button" onclick="toggleChat()">
+      <span style="font-size: 24px; margin-bottom: 2px; line-height: 1;">🤖</span>
+      <span style="font-size: 12px; font-weight: bold; line-height: 1;">AI</span>
+    </div>
+    <div id="ai-chat-window" style="display: none;">
+      <div id="ai-chat-header">
+        Kutubxona AI <span onclick="toggleChat()" style="cursor:pointer;">✖</span>
+      </div>
+      <div id="ai-chat-messages">
+        <div class="chat-message bot">Salom! Men kutubxona AI yordamchisiman. Sizga qanday kitoblar kerak?</div>
+      </div>
+      <div id="ai-chat-input-area">
+        <input type="text" id="ai-chat-input" placeholder="Xabar yozing..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
+        <button onclick="sendChatMessage()">Yuborish</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #ai-chatbot-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      font-family: 'Inter', sans-serif;
+    }
+    #ai-chat-button {
+      background: #4F46E5;
+      color: white;
+      border-radius: 50%;
+      width: 65px;
+      height: 65px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.3s;
+      user-select: none;
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    #ai-chat-button:hover {
+      transform: scale(1.1);
+    }
+    #ai-chat-window {
+      width: 320px;
+      height: 450px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      position: absolute;
+      bottom: 75px;
+      right: 0;
+    }
+    #ai-chat-header {
+      background: #4F46E5;
+      color: white;
+      padding: 15px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #ai-chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-message {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .chat-message.bot {
+      background: #e0e7ff;
+      color: #3730a3;
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+    .chat-message.user {
+      background: #4F46E5;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+    #ai-chat-input-area {
+      display: flex;
+      padding: 10px;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+    }
+    #ai-chat-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      outline: none;
+    }
+    #ai-chat-input:focus {
+      border-color: #4F46E5;
+    }
+    #ai-chat-input-area button {
+      background: #4F46E5;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      margin-left: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    #ai-chat-input-area button:hover {
+      background: #4338ca;
+    }
+  </style>
+
+  <script>
+    function toggleChat() {
+      const window = document.getElementById('ai-chat-window');
+      window.style.display = window.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('ai-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage('user', text);
+      input.value = '';
+
+      const typingId = 'typing-' + Date.now();
+      appendMessage('bot', '...', typingId);
+
+      try {
+        const response = await fetch('/api/ai/chat/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: text })
+        });
+        
+        const data = await response.json();
+        
+        const typingEl = document.getElementById(typingId);
+        if(typingEl) typingEl.remove();
+        
+        appendMessage('bot', data.response);
+      } catch (err) {
+        const typingEl = document.getElementById(typingId);
+        if(typingEl) typingEl.remove();
+        appendMessage('bot', 'Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
+      }
+    }
+
+    function appendMessage(sender, text, id = null) {
+      const messagesDiv = document.getElementById('ai-chat-messages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'chat-message ' + sender;
+      if (id) msgDiv.id = id;
+      msgDiv.innerHTML = text;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  </script>
 </body>
 </html>

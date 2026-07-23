@@ -126,18 +126,30 @@ const app = createApp({
     const auditLogs = ref([]);
     const backupsList = ref([]);
 
+    // Extension approve/reject modal
+    const showExtModal = ref(false);
+    const extModalAction = ref(''); // 'approve' or 'reject'
+    const extModalItem = ref(null);
+    const extModalDate = ref('');
+    const extModalMessage = ref('');
+
+    // Reservation detail modal
+    const showResDetail = ref(false);
+    const resDetailItem = ref(null);
+
     // Members
     const members = ref([]);
     const membersLoading = ref(false);
     const memberTotal = ref(0);
     const memberPage = ref(1);
-    const pageSize = 20;
+    const memberPageSize = ref(20);
     const memberFilters = reactive({ q: '', toifa: '', holati: '', date_from: '', date_to: '' });
     const showMemberModal = ref(false);
     const showMemberDetail = ref(false);
     const selectedMember = ref(null);
     const memberIssues = ref([]);
     const editMode = ref(false);
+    const pendingMembers = ref([]);
 
     const memberForm = reactive({
       sigla: '', familiya: '', telegram_id: '', toifa: '', jinsi: 'erkak',
@@ -163,7 +175,7 @@ const app = createApp({
     const bookPage = ref(1);
     const bookTotal = ref(0);
     const bookPageSize = ref(10);
-    const totalBookPages = computed(() => Math.ceil(bookTotal.value / bookPageSize.value));
+    const totalBookPages = computed(() => Math.ceil(bookTotal.value / bookPageSize.value) || 1);
     const bookSearchFilter = ref('');
     const bookBranchFilter = ref('');
     const showBookModal = ref(false);
@@ -204,12 +216,20 @@ const app = createApp({
     const financeLoading = ref(false);
 
     // Computed
-    const totalPages = computed(() => Math.ceil(memberTotal.value / pageSize));
+    const totalPages = computed(() => Math.ceil(memberTotal.value / memberPageSize.value) || 1);
     const today = computed(() => new Date().toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' }));
 
     const formatPrice = (val) => {
       if (!val) return '0';
       return new Intl.NumberFormat('uz-UZ').format(val) + " so'm";
+    };
+
+    const formatDate = (val) => {
+      if (!val) return '-';
+      try {
+        const d = new Date(val);
+        return d.toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' });
+      } catch { return val; }
     };
 
     // ─── Auth ────────────────────────────────────────────────
@@ -243,6 +263,7 @@ const app = createApp({
       sidebarOpen.value = false;
       if (page === 'dashboard') loadDashboard();
       if (page === 'members') loadMembers();
+      if (page === 'pending_members') loadPendingMembers();
       if (page === 'books') loadBooks();
       if (page === 'issues') loadIssues();
       if (page === 'finance') loadFinanceData();
@@ -358,6 +379,7 @@ const app = createApp({
       try {
         const params = new URLSearchParams({
           page,
+          page_size: memberPageSize.value,
           q: memberFilters.q,
           toifa: memberFilters.toifa,
           holati: memberFilters.holati,
@@ -365,8 +387,8 @@ const app = createApp({
           date_to: memberFilters.date_to,
         });
         const data = await api('GET', `/members/?${params}`);
-        members.value = data.results ?? data;
-        memberTotal.value = data.count ?? (data.results ? data.count : data.length);
+        members.value = data.results ?? [];
+        memberTotal.value = data.count ?? 0;
       } catch (e) {
         toast('A\'zolarni yuklab bo\'lmadi: ' + e.message, 'error');
       } finally {
@@ -431,12 +453,38 @@ const app = createApp({
       }
     }
 
+    async function loadPendingMembers() {
+      try {
+        const res = await api('GET', '/members/?holati=kutilmoqda&page_size=100');
+        pendingMembers.value = res.results || res;
+      } catch (e) {
+        toast("So'rovlarni yuklashda xato", 'error');
+      }
+    }
+
     async function approveMember(m) {
       if (!confirm(m.familiya + " ni tasdiqlaysizmi?")) return;
       try {
         await api('PATCH', `/members/${m.id}/`, { holati: 'faol' });
         toast("A'zo tasdiqlandi", 'success');
-        loadMembers(memberPage.value);
+        if (currentPage.value === 'pending_members') {
+          loadPendingMembers();
+        } else {
+          loadMembers(memberPage.value);
+        }
+        loadDashboard();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    }
+
+    async function rejectMember(m) {
+      if (!confirm(m.familiya + " so'rovini rad etasizmi?")) return;
+      try {
+        await api('PATCH', `/members/${m.id}/`, { holati: 'faol_emas' });
+        toast("So'rov rad etildi", 'info');
+        loadPendingMembers();
+        loadDashboard();
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -528,10 +576,9 @@ const app = createApp({
         params.append('page_size', bookPageSize.value);
         if (bookSearchFilter.value) params.append('q', bookSearchFilter.value);
         if (bookBranchFilter.value) params.append('branch', bookBranchFilter.value);
-        const qs = params.toString() ? `?${params.toString()}` : '';
-        const data = await api('GET', `/books/${qs}`);
-        booksList.value = data.results ?? data;
-        bookTotal.value = data.count ?? (data.results ? data.count : data.length);
+        const data = await api('GET', `/books/?${params.toString()}`);
+        booksList.value = data.results ?? [];
+        bookTotal.value = data.count ?? 0;
       } catch (e) {
         toast('Kitoblarni yuklab bo\'lmadi: ' + e.message, 'error');
       } finally {
@@ -749,10 +796,18 @@ const app = createApp({
       filterTimer = setTimeout(() => loadMembers(1), 450);
     });
 
+    watch(memberPageSize, () => {
+      loadMembers(1);
+    });
+
     let bookFilterTimer = null;
     watch([bookSearchFilter, bookBranchFilter], () => {
       clearTimeout(bookFilterTimer);
       bookFilterTimer = setTimeout(() => loadBooks(), 450);
+    });
+
+    watch(bookPageSize, () => {
+      loadBooks(1);
     });
 
     watch(currentPage, (newVal) => {
@@ -793,16 +848,52 @@ const app = createApp({
         extensionsList.value = data;
       } catch(e) {}
     }
-    async function updateExtension(id, action) {
-      if(!confirm('Tasdiqlaysizmi?')) return;
+
+    function openExtModal(item, action) {
+      extModalItem.value = item;
+      extModalAction.value = action;
+      extModalMessage.value = '';
+      extModalDate.value = action === 'approve' ? (item.requested_date || '') : '';
+      showExtModal.value = true;
+    }
+
+    async function submitExtModal() {
+      const item = extModalItem.value;
+      if (!item) return;
       try {
-        await api('PATCH', `/extensions/${id}/`, {action: action});
-        toast('So\'rov bajarildi', 'success');
+        const payload = {
+          action: extModalAction.value,
+          admin_message: extModalMessage.value,
+        };
+        if (extModalAction.value === 'approve' && extModalDate.value) {
+          payload.new_date = extModalDate.value;
+        }
+        const res = await api('PATCH', `/extensions/${item.id}/`, payload);
+        toast(extModalAction.value === 'approve' ? 'So\'rov tasdiqlandi!' : 'So\'rov rad etildi!', 'success');
+        showExtModal.value = false;
         loadExtensions();
         loadNotifications();
       } catch(e) { toast(e.message, 'error'); }
     }
-    
+
+    function openResDetail(item) {
+      resDetailItem.value = item;
+      showResDetail.value = true;
+    }
+
+    async function updateReservationWithConfirm(id, status, notes = '') {
+      try {
+        const payload = { status };
+        if (notes) payload.notes = notes;
+        await api('PATCH', `/reservations/${id}/`, payload);
+        toast('Holati o\'zgardi', 'success');
+        showResDetail.value = false;
+        loadReservations();
+        loadNotifications();
+      } catch(e) { toast(e.message, 'error'); }
+    }
+
+
     async function loadAuditLogs() {
       try {
         const data = await api('GET', '/audit-logs/');
@@ -828,15 +919,15 @@ const app = createApp({
       isLoggedIn, auth, loginForm, login, logout,
       currentPage, navigate, sidebarOpen,
       notifications, showNotifications,
-      reservationsList, updateReservation,
-      extensionsList, updateExtension,
+      reservationsList, updateReservation, openResDetail, showResDetail, resDetailItem, updateReservationWithConfirm,
+      extensionsList, openExtModal, submitExtModal, showExtModal, extModalAction, extModalItem, extModalDate, extModalMessage,
       auditLogs, backupsList, createBackup,
       today, TOIFA_LABELS, TOIFA_OPTIONS, BADGE_COLORS,
       dashStats, dashLoading, dashDateFrom, dashDateTo, dashPeriod, setDashPeriod,
-      members, membersLoading, memberTotal, memberPage, pageSize, totalPages,
+      members, membersLoading, memberTotal, memberPage, memberPageSize, totalPages,
       memberFilters, memberForm, editMode,
       showMemberModal, showMemberDetail, selectedMember, memberIssues,
-      openAddMember, openEditMember, saveMember, deleteMember, viewMember, loadMembers, approveMember,
+      openAddMember, openEditMember, saveMember, deleteMember, viewMember, loadMembers, approveMember, rejectMember, pendingMembers, loadPendingMembers,
       getAge,
       booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, bookForm, editBookMode, openAddBook, saveBook, openEditBook, deleteBook, bulkDeleteBooks,
       bookSearchQ, bookSearchResults, selectBookForIssue,
@@ -848,7 +939,7 @@ const app = createApp({
       financeTab, payments, debtors, financeLoading,
       onDrop, onFileSelect, doImport, exportMembers,
       bulkDeleteAll,
-      formatPrice, viewMemberById,
+      formatPrice, formatDate, viewMemberById,
       toasts, theme, toggleTheme,
     };
   }

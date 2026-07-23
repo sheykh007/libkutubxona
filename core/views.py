@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Count, Sum
 from .models import Member, BookIssue, Payment, Subscription, Branch, Book, BookItem, Reservation, Ebook
 from .serializers import (
@@ -49,10 +50,14 @@ def safe_int(val, default=0):
         return int(val)
     except (ValueError, TypeError):
         return default
-
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 class MemberListCreateView(generics.ListCreateAPIView):
     serializer_class = MemberSerializer
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         qs = Member.objects.all()
@@ -332,31 +337,50 @@ class ReturnBookView(APIView):
 class DashboardStatsView(APIView):
     def get(self, request):
         today = date.today()
-        members = Member.objects.all()
-        books = BookItem.objects.all()
-        
+        all_members = Member.objects.all()
+
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
-        
+
+        df_date = None
+        dt_date = None
         if date_from:
-            try:
-                df = datetime.strptime(date_from, '%Y-%m-%d').date()
-                members = members.filter(yangi_avo_sana__gte=df)
-                books = books.filter(created_at__date__gte=df)
+            try: df_date = datetime.strptime(date_from, '%Y-%m-%d').date()
             except: pass
-            
         if date_to:
-            try:
-                dt = datetime.strptime(date_to, '%Y-%m-%d').date()
-                members = members.filter(yangi_avo_sana__lte=dt)
-                books = books.filter(created_at__date__lte=dt)
+            try: dt_date = datetime.strptime(date_to, '%Y-%m-%d').date()
             except: pass
 
-        total = members.count()
-        faol = members.filter(holati='faol').count()
-        bugun = members.filter(yangi_avo_sana=today).count()
-        qayta = members.filter(qayta_avo_sana__isnull=False).count()
-        added_books_count = books.count()
+        # Always global counts (unaffected by date filter)
+        total_all_members = all_members.count()
+        faol_all = all_members.filter(holati='faol').count()
+        kutilmoqda_all = all_members.filter(holati='kutilmoqda').count()
+
+        # Date-filtered member counts
+        filtered_members = all_members
+        if df_date:
+            filtered_members = filtered_members.filter(yangi_avo_sana__gte=df_date)
+        if dt_date:
+            filtered_members = filtered_members.filter(yangi_avo_sana__lte=dt_date)
+
+        filtered_members_count = filtered_members.count() if (df_date or dt_date) else None
+        bugun_qoshilgan = all_members.filter(yangi_avo_sana=today).count()
+        qayta_azolar = all_members.filter(qayta_avo_sana__isnull=False).count()
+
+        # Books stats
+        all_books = BookItem.objects.all()
+        total_books = all_books.count()
+        available_books = all_books.filter(status='available').count()
+        borrowed_books = all_books.filter(status='borrowed').count()
+        unique_titles = Book.objects.count()
+
+        # Date-filtered books
+        filtered_books = all_books
+        if df_date:
+            filtered_books = filtered_books.filter(created_at__date__gte=df_date)
+        if dt_date:
+            filtered_books = filtered_books.filter(created_at__date__lte=dt_date)
+        added_books_count = filtered_books.count() if (df_date or dt_date) else total_books
 
         # Monthly growth (last 12 months)
         monthly = []
@@ -367,53 +391,62 @@ class DashboardStatsView(APIView):
             month_end_year = month_start.year if month_start.month < 12 else month_start.year + 1
             month_end = month_start.replace(year=month_end_year, month=month_end_month, day=1)
             count = Member.objects.filter(yangi_avo_sana__gte=month_start, yangi_avo_sana__lt=month_end).count()
-            monthly.append({
-                'month': month_start.strftime('%b %Y'),
-                'count': count
-            })
+            monthly.append({'month': month_start.strftime('%b %Y'), 'count': count})
 
         # Top members by book issues
         top_members = []
         for m in Member.objects.annotate(issue_count=Count('book_issues')).order_by('-issue_count')[:5]:
-            top_members.append({
-                'sigla': m.sigla,
-                'familiya': m.familiya,
-                'issue_count': m.issue_count,
-            })
+            top_members.append({'sigla': m.sigla, 'familiya': m.familiya, 'issue_count': m.issue_count})
 
         # Issues stats
         total_issues = BookIssue.objects.count()
+        active_issues = BookIssue.objects.filter(qaytarildi=False).count()
         overdue_issues_list = [i for i in BookIssue.objects.filter(qaytarildi=False) if i.kechikish_kunlar > 0]
         overdue = len(overdue_issues_list)
 
         # Financial Stats
         today_income = Payment.objects.filter(created_at__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
-        month_start = today.replace(day=1)
-        monthly_income = Payment.objects.filter(created_at__date__gte=month_start).aggregate(Sum('amount'))['amount__sum'] or 0
-        
+        month_start_date = today.replace(day=1)
+        monthly_income = Payment.objects.filter(created_at__date__gte=month_start_date).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_income = Payment.objects.aggregate(Sum('amount'))['amount__sum'] or 0
+
         expired_subs = Subscription.objects.filter(is_active=False, end_date__lt=today).count()
-        
+
         debtor_ids = set(i.member_id for i in overdue_issues_list)
         expired_ids = Subscription.objects.filter(end_date__lt=today, is_active=False).values_list('member_id', flat=True)
         debtor_ids.update(expired_ids)
         debtors_count = len(debtor_ids)
 
-        erkak = members.filter(jinsi='erkak').count()
-        ayol = members.filter(jinsi='ayol').count()
+        erkak = all_members.filter(jinsi='erkak').count()
+        ayol = all_members.filter(jinsi='ayol').count()
 
         return Response({
-            'total_members': total,
-            'faol_members': faol,
-            'bugun_qoshilgan': bugun,
-            'qayta_azolar': qayta,
+            # Member stats
+            'total_members': total_all_members,
+            'faol_members': faol_all,
+            'kutilmoqda_members': kutilmoqda_all,
+            'bugun_qoshilgan': bugun_qoshilgan,
+            'qayta_azolar': qayta_azolar,
+            'filtered_members_count': filtered_members_count,
+            # Book stats
+            'total_books': total_books,
+            'unique_titles': unique_titles,
+            'available_books': available_books,
+            'borrowed_books': borrowed_books,
             'added_books_count': added_books_count,
+            # Charts
             'monthly_growth': monthly,
             'top_members': top_members,
+            # Issue stats
             'total_issues': total_issues,
+            'active_issues': active_issues,
             'overdue_issues': overdue,
+            # Gender
             'gender_stats': {'erkak': erkak, 'ayol': ayol},
+            # Finance
             'today_income': today_income,
             'monthly_income': monthly_income,
+            'total_income': total_income,
             'debtors_count': debtors_count,
             'expired_subs': expired_subs,
         })
@@ -483,11 +516,6 @@ class BranchDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 from rest_framework.pagination import PageNumberPagination
-
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 1000
 
 class BookListCreateView(generics.ListCreateAPIView):
     serializer_class = BookSerializer

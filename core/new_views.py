@@ -12,7 +12,7 @@ from .models import (
     ExtensionRequest, AuditLog, BackupLog
 )
 from .serializers import ReservationSerializer
-from .utils import ai_smart_search, ai_recommendations
+from .utils import ai_smart_search, ai_recommendations, chat_bot_response
 
 # --- Extension Requests ---
 class ExtensionRequestListCreateView(APIView):
@@ -23,17 +23,26 @@ class ExtensionRequestListCreateView(APIView):
             qs = qs.filter(status=status_filter)
         data = []
         for er in qs:
+            m = er.issue.member
             data.append({
                 'id': er.id,
                 'issue_id': er.issue.id,
                 'book_name': er.issue.book_name,
-                'member_name': er.issue.member.familiya,
+                'member_name': m.familiya,
+                'member_sigla': m.sigla,
+                'member_id': m.id,
+                'member_yunalish': m.yunalish or '',
+                'member_holati': m.holati,
+                'member_telegram': m.telegram_username or '',
                 'old_deadline': er.issue.qaytarish_sana,
+                'new_deadline': er.issue.qaytarish_sana,
                 'reason': er.reason,
                 'requested_days': er.requested_days,
                 'requested_date': er.requested_date,
                 'status': er.status,
-                'created_at': er.created_at
+                'admin_message': er.admin_message or '',
+                'created_at': er.created_at,
+                'reviewed_at': er.reviewed_at,
             })
         return Response(data)
 
@@ -92,36 +101,51 @@ class ExtensionRequestDetailView(APIView):
         return self.put(request, pk)
 
     def put(self, request, pk):
-        action = request.data.get('action') # 'approve' or 'reject'
+        action = request.data.get('action')  # 'approve' or 'reject'
+        admin_message = request.data.get('admin_message', '')
+        new_date = request.data.get('new_date')  # override date for approval
         try:
             er = ExtensionRequest.objects.get(pk=pk)
-            import requests
+            import requests as http_requests
             TOKEN = "8545699860:AAHJoD9ckF6mkannYjh3DqRX7YgPzSVbXrk"
 
             if action == 'approve':
                 er.status = 'approved'
-                # extend the issue
-                if er.requested_date:
-                    from datetime import datetime
-                    er.issue.qaytarish_sana = datetime.strptime(str(er.requested_date), '%Y-%m-%d').date()
+                er.admin_message = admin_message
+                # Use admin-provided new_date first, then member's requested_date, else add days
+                if new_date:
+                    from datetime import datetime as dt
+                    er.issue.qaytarish_sana = dt.strptime(str(new_date), '%Y-%m-%d').date()
+                elif er.requested_date:
+                    from datetime import datetime as dt
+                    er.issue.qaytarish_sana = dt.strptime(str(er.requested_date), '%Y-%m-%d').date()
                 else:
                     er.issue.qaytarish_sana = er.issue.qaytarish_sana + timedelta(days=er.requested_days)
                 er.issue.save()
-                
+
                 if er.issue.member.chat_id:
-                    msg = f"✅ Sizning '{er.issue.book_name}' kitobingiz uchun uzaytirish so'rovingiz tasdiqlandi. Yangi qaytarish muddati: {er.issue.qaytarish_sana}"
-                    requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={'chat_id': er.issue.member.chat_id, 'text': msg})
-                    
+                    extra = f"\nAdmin izohi: {admin_message}" if admin_message else ""
+                    msg = f"✅ '{er.issue.book_name}' kitobingiz uchun uzaytirish tasdiqlandi. Yangi muddat: {er.issue.qaytarish_sana}{extra}"
+                    try:
+                        http_requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={'chat_id': er.issue.member.chat_id, 'text': msg}, timeout=5)
+                    except Exception:
+                        pass
+
             elif action == 'reject':
                 er.status = 'rejected'
-                
+                er.admin_message = admin_message
+
                 if er.issue.member.chat_id:
-                    msg = f"❌ Sizning '{er.issue.book_name}' kitobingiz uchun uzaytirish so'rovingiz rad etildi."
-                    requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={'chat_id': er.issue.member.chat_id, 'text': msg})
-                    
+                    extra = f"\nSabab: {admin_message}" if admin_message else ""
+                    msg = f"❌ '{er.issue.book_name}' kitobingiz uchun uzaytirish rad etildi.{extra}"
+                    try:
+                        http_requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={'chat_id': er.issue.member.chat_id, 'text': msg}, timeout=5)
+                    except Exception:
+                        pass
+
             er.reviewed_at = timezone.now()
             er.save()
-            return Response({'success': True, 'status': er.status})
+            return Response({'success': True, 'status': er.status, 'new_deadline': str(er.issue.qaytarish_sana)})
         except ExtensionRequest.DoesNotExist:
             return Response({'error': 'Topilmadi'}, status=404)
 
@@ -186,14 +210,18 @@ class NotificationsView(APIView):
         pending_ext = ExtensionRequest.objects.filter(status='pending').count()
         # 3. Pending reservations
         pending_res = Reservation.objects.filter(status='waiting').count()
+        # 4. Pending member registrations
+        pending_members = Member.objects.filter(holati='kutilmoqda').count()
         
         notifications = []
+        if pending_members > 0:
+            notifications.append({'type': 'info', 'message': f"⏳ {pending_members} ta yangi a'zolik so'rovi tasdiqlanishini kutmoqda!"})
         if overdue_count > 0:
-            notifications.append({'type': 'warning', 'message': f"{overdue_count} ta kitob muddati o'tgan!"})
+            notifications.append({'type': 'warning', 'message': f"⚠️ {overdue_count} ta kitob muddati o'tgan!"})
         if pending_ext > 0:
-            notifications.append({'type': 'info', 'message': f"{pending_ext} ta muddat uzaytirish so'rovi kutmoqda."})
+            notifications.append({'type': 'info', 'message': f"🔄 {pending_ext} ta muddat uzaytirish so'rovi kutmoqda."})
         if pending_res > 0:
-            notifications.append({'type': 'info', 'message': f"{pending_res} ta yangi rezervatsiya mavjud."})
+            notifications.append({'type': 'info', 'message': f"🔖 {pending_res} ta yangi rezervatsiya mavjud."})
             
         return Response(notifications)
 
@@ -242,6 +270,15 @@ class AIRecommendationView(APIView):
             'author': b.author
         } for b in recs]
         return Response(data)
+
+class AIChatbotView(APIView):
+    def post(self, request):
+        message = request.data.get('message', '')
+        if not message:
+            return Response({'response': "Iltimos, xabar kiriting."})
+        
+        reply = chat_bot_response(message)
+        return Response({'response': reply})
 
 # --- Cabinet Registration ---
 import random

@@ -78,11 +78,20 @@ class BookSerializer(serializers.ModelSerializer):
 
 class ReservationSerializer(serializers.ModelSerializer):
     member_familiya = serializers.CharField(source='member.familiya', read_only=True)
+    member_sigla = serializers.CharField(source='member.sigla', read_only=True)
+    member_holati = serializers.CharField(source='member.holati', read_only=True)
+    member_yunalish = serializers.CharField(source='member.yunalish', read_only=True)
+    member_telegram = serializers.CharField(source='member.telegram_username', read_only=True)
+    member_tugilgan_sana = serializers.DateField(source='member.tugilgan_sana', read_only=True)
     book_title = serializers.CharField(source='book.title', read_only=True)
+    book_author = serializers.SerializerMethodField()
 
     class Meta:
         model = Reservation
         fields = '__all__'
+
+    def get_book_author(self, obj):
+        return obj.book.author if obj.book else ''
 
 
 class EbookSerializer(serializers.ModelSerializer):

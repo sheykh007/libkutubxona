@@ -76,8 +76,20 @@ const app = createApp({
       loginError.value = '';
       try {
         const res = await api('POST', '/cabinet/login/', { sigla: loginSigla.value, password: loginPassword.value });
-        const found = res; // it returns user data directly now or error
+        const found = res;
         if (found && !found.error) {
+          // Block kutilmoqda users from logging in
+          if (found.holati === 'kutilmoqda') {
+            loginError.value = '⏳ Sizning a\'zolik so\'rovingiz hali admin tomonidan tasdiqlanmagan. Iltimos, kutib turing.';
+            loading.value = false;
+            return;
+          }
+          // Block faol_emas users
+          if (found.holati === 'faol_emas') {
+            loginError.value = '🚫 Sizning a\'zoligingiz to\'xtatilgan. Kutubxona bilan bog\'laning.';
+            loading.value = false;
+            return;
+          }
           localStorage.setItem('cabinet_logged_in', 'true');
           localStorage.setItem('cabinet_member_id', found.id);
           localStorage.setItem('cabinet_member', JSON.stringify(found));
@@ -95,6 +107,9 @@ const app = createApp({
       }
     }
     
+    const registerSuccess = ref(false);
+    const registeredSigla = ref('');
+
     async function registerUser() {
       if (!regForm.familiya || !regForm.telefon) return;
       loading.value = true;
@@ -106,16 +121,10 @@ const app = createApp({
         }
         
         const res = await api('POST', '/cabinet/register/', dataToSend);
-        toast(`Muvaffaqiyatli! Sizning raqamingiz: ${res.sigla}`, 'success');
-        
-        // Auto login
-        localStorage.setItem('cabinet_logged_in', 'true');
-        localStorage.setItem('cabinet_member_id', res.id);
-        const m = { id: res.id, familiya: res.familiya, sigla: res.sigla, holati: 'kutilmoqda' };
-        localStorage.setItem('cabinet_member', JSON.stringify(m));
-        member.value = m;
-        isLoggedIn.value = true;
-        initCabinet();
+        // Show pending approval screen — do NOT auto-login
+        registeredSigla.value = res.sigla || '';
+        registerSuccess.value = true;
+        toast('So\'rovingiz yuborildi! Admin tasdiqlashini kuting.', 'success');
       } catch (e) {
         loginError.value = 'Xatolik: ' + e.message;
       } finally {
@@ -333,6 +342,7 @@ const app = createApp({
     
     return {
       isLoggedIn, member, authTab, regForm, loginSigla, loginPassword, loading, loginError,
+      registerSuccess, registeredSigla,
       profileForm,
       login, registerUser, logout,
       toasts,

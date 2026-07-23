@@ -81,6 +81,13 @@
         A'zolar
       </div>
 
+      <div class="nav-item" :class="{ active: currentPage==='pending_members' }"
+           id="nav-pending-members" @click="navigate('pending_members')">
+        <span class="nav-icon">⏳</span>
+        A'zolik So'rovlari
+        <span class="nav-badge" v-if="dashStats.kutilmoqda_members > 0">{{ dashStats.kutilmoqda_members }}</span>
+      </div>
+
       <div class="nav-item" :class="{ active: currentPage==='books' }"
            id="nav-books" @click="navigate('books')">
         <span class="nav-icon">📚</span>
@@ -160,6 +167,7 @@
         <h1>
           <span v-if="currentPage==='dashboard'">📊 Dashboard</span>
           <span v-else-if="currentPage==='members'">👤 A'zolar Boshqaruvi</span>
+          <span v-else-if="currentPage==='pending_members'">⏳ A'zolik So'rovlari</span>
           <span v-else-if="currentPage==='books'">📚 Kitoblar</span>
           <span v-else-if="currentPage==='issues'">📖 Kitob Berish Jurnali</span>
           <span v-else-if="currentPage==='reservations'">🔖 Band Qilinganlar</span>
@@ -173,18 +181,20 @@
       <div class="topbar-right">
         
         <!-- Notifications Dropdown -->
-        <div class="dropdown" style="position:relative; margin-right:12px;">
-          <button class="btn btn-secondary btn-sm" @click="showNotifications = !showNotifications">
-            🔔 <span class="badge" v-if="notifications.length > 0">{{ notifications.length }}</span>
-          </button>
-          <div class="dropdown-menu" v-if="showNotifications" style="position:absolute; right:0; top:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px; width:300px; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <div style="position:relative; margin-right:12px;">
+          <div class="notification-bell" @click="showNotifications = !showNotifications">
+            <span style="font-size: 20px;">🔔</span>
+            <span class="badge" v-if="notifications.length > 0">{{ notifications.length }}</span>
+          </div>
+          <div class="notification-dropdown" v-if="showNotifications">
             <div v-if="notifications.length === 0" style="padding:8px; text-align:center; color:var(--text-secondary);">
               Yangi bildirishnomalar yo'q.
             </div>
-            <div v-for="(n, i) in notifications" :key="i" style="padding:8px; border-bottom:1px solid var(--border); font-size:13px;">
-              <span v-if="n.type === 'warning'">⚠️</span>
-              <span v-else-if="n.type === 'info'">ℹ️</span>
-              {{ n.message }}
+            <div class="notif-item" v-for="(n, i) in notifications" :key="i">
+              <span class="notif-icon" v-if="n.type === 'warning'">⚠️</span>
+              <span class="notif-icon" v-else-if="n.type === 'info'">ℹ️</span>
+              <span class="notif-icon" v-else>🔔</span>
+              <div class="notif-text">{{ n.message }}</div>
             </div>
           </div>
         </div>
@@ -216,12 +226,13 @@
         <div v-if="dashLoading" class="loading-overlay"><div class="spinner"></div></div>
         <template v-else-if="dashStats">
 
-          <!-- KPI Stat Cards -->
+          <!-- Filter Bar -->
           <div class="filters-bar" style="margin-bottom: 20px;">
-            <div style="display:flex; align-items:center; gap: 10px;">
-              <input type="date" class="form-control" v-model="dashDateFrom" @change="loadDashboard">
-              <span>-</span>
-              <input type="date" class="form-control" v-model="dashDateTo" @change="loadDashboard">
+            <div style="display:flex; align-items:center; gap: 10px; flex-wrap:wrap;">
+              <label style="font-size:13px; color:var(--text-muted)">Dan:</label>
+              <input type="date" class="form-control" v-model="dashDateFrom" @change="loadDashboard" style="max-width:160px">
+              <label style="font-size:13px; color:var(--text-muted)">Gacha:</label>
+              <input type="date" class="form-control" v-model="dashDateTo" @change="loadDashboard" style="max-width:160px">
               <select class="form-control" v-model="dashPeriod" @change="setDashPeriod" style="width: 150px;">
                 <option value="">Erkin muddat</option>
                 <option value="day">Bugun</option>
@@ -230,56 +241,114 @@
                 <option value="half_year">So'nggi 6 oy</option>
                 <option value="all">Barchasi</option>
               </select>
-              <button class="btn btn-secondary btn-sm" @click="dashDateFrom=''; dashDateTo=''; dashPeriod=''; loadDashboard()">Tozalash</button>
+              <button class="btn btn-secondary btn-sm" @click="dashDateFrom=''; dashDateTo=''; dashPeriod=''; loadDashboard()">✕ Tozalash</button>
             </div>
           </div>
-          
-          <div class="stats-grid">
-            <div class="stat-card c1" v-if="dashDateFrom || dashDateTo">
-              <div class="stat-icon">👥</div>
-              <div class="stat-value">{{ dashStats.total_members }}</div>
-              <div class="stat-label">Qo'shilgan A'zolar</div>
-              <div class="stat-sub">Tanlangan muddatda</div>
-            </div>
-            <div class="stat-card c3" v-if="dashDateFrom || dashDateTo">
-              <div class="stat-icon">📚</div>
-              <div class="stat-value">{{ dashStats.added_books_count }}</div>
-              <div class="stat-label">Qo'shilgan Kitoblar</div>
-              <div class="stat-sub">Tanlangan muddatda</div>
-            </div>
-            <div class="stat-card c1" v-if="!dashDateFrom && !dashDateTo">
+
+          <!-- Date filter banner -->
+          <div v-if="dashDateFrom || dashDateTo" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; padding: 8px 16px; margin-bottom: 16px; font-size: 13px; color: #6366f1;">
+            📅 Filtrlangan davr: <b>{{ dashDateFrom || '...' }}</b> — <b>{{ dashDateTo || '...' }}</b>
+            &nbsp;| Shu davrda qo'shilgan a'zolar: <b>{{ dashStats.filtered_members_count ?? 0 }}</b> ta
+            &nbsp;| Shu davrda qo'shilgan kitoblar: <b>{{ dashStats.added_books_count ?? 0 }}</b> ta
+          </div>
+
+          <!-- KPI Stat Cards Row 1: Members -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            <div class="stat-card c1">
               <div class="stat-icon">👥</div>
               <div class="stat-value">{{ dashStats.total_members }}</div>
               <div class="stat-label">Jami A'zolar</div>
-              <div class="stat-sub">↑ Jami ro'yxatdagilar</div>
+              <div class="stat-sub">Ro'yxatdagi jami</div>
             </div>
+            <div class="stat-card c2">
+              <div class="stat-icon">✅</div>
+              <div class="stat-value">{{ dashStats.faol_members }}</div>
+              <div class="stat-label">Faol A'zolar</div>
+              <div class="stat-sub">Holati: faol</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); color:#fff">
+              <div class="stat-icon">⏳</div>
+              <div class="stat-value">{{ dashStats.kutilmoqda_members }}</div>
+              <div class="stat-label">Kutilmoqda</div>
+              <div class="stat-sub">Tasdiqlanmagan</div>
+            </div>
+            <div class="stat-card c3">
+              <div class="stat-icon">📅</div>
+              <div class="stat-value">{{ dashStats.bugun_qoshilgan }}</div>
+              <div class="stat-label">Bugun Qo'shilgan</div>
+              <div class="stat-sub">Yangi a'zo sanasi</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff">
+              <div class="stat-icon">🔄</div>
+              <div class="stat-value">{{ dashStats.qayta_azolar }}</div>
+              <div class="stat-label">Qayta A'zolar</div>
+              <div class="stat-sub">Qayta a'zo bo'lganlar</div>
+            </div>
+          </div>
+
+          <!-- KPI Stat Cards Row 2: Books & Issues -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            <div class="stat-card c3">
+              <div class="stat-icon">📚</div>
+              <div class="stat-value">{{ dashStats.unique_titles }}</div>
+              <div class="stat-label">Noyob Sarlavha</div>
+              <div class="stat-sub">Jami kitob turi</div>
+            </div>
+            <div class="stat-card c1">
+              <div class="stat-icon">🗂️</div>
+              <div class="stat-value">{{ dashStats.total_books }}</div>
+              <div class="stat-label">Jami Nusxalar</div>
+              <div class="stat-sub">Barcha inventar</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff">
+              <div class="stat-icon">✅</div>
+              <div class="stat-value">{{ dashStats.available_books }}</div>
+              <div class="stat-label">Mavjud Kitoblar</div>
+              <div class="stat-sub">Berilishga tayyor</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg,#6366f1 0%,#4f46e5 100%); color:#fff">
+              <div class="stat-icon">📖</div>
+              <div class="stat-value">{{ dashStats.borrowed_books }}</div>
+              <div class="stat-label">Berilgan Kitoblar</div>
+              <div class="stat-sub">Hozir foydalanuvchida</div>
+            </div>
+            <div class="stat-card c4">
+              <div class="stat-icon">⚠️</div>
+              <div class="stat-value">{{ dashStats.overdue_issues }}</div>
+              <div class="stat-label">Kechikkan Kitoblar</div>
+              <div class="stat-sub">Muddati o'tgan</div>
+            </div>
+          </div>
+
+          <!-- KPI Stat Cards Row 3: Finance -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
             <div class="stat-card c2">
               <div class="stat-icon">💰</div>
               <div class="stat-value">{{ formatPrice(dashStats.today_income) }}</div>
               <div class="stat-label">Bugungi Daromad</div>
-              <div class="stat-sub">↑ Tushum sanasi bo'yicha</div>
+              <div class="stat-sub">Bugungi tushum</div>
             </div>
             <div class="stat-card c3">
               <div class="stat-icon">📈</div>
               <div class="stat-value">{{ formatPrice(dashStats.monthly_income) }}</div>
               <div class="stat-label">Oylik Daromad</div>
-              <div class="stat-sub">↑ Joriy oydagi tushum</div>
+              <div class="stat-sub">Joriy oydagi tushum</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff">
+              <div class="stat-icon">💵</div>
+              <div class="stat-value">{{ formatPrice(dashStats.total_income) }}</div>
+              <div class="stat-label">Jami Daromad</div>
+              <div class="stat-sub">Barcha vaqt uchun</div>
             </div>
             <div class="stat-card c4">
-              <div class="stat-icon">⚠️</div>
+              <div class="stat-icon">❗</div>
               <div class="stat-value">{{ dashStats.debtors_count }}</div>
               <div class="stat-label">Qarzdorlar</div>
-              <div class="stat-sub">❗ Muddati o'tganlar</div>
-            </div>
-            <div class="stat-card c5">
-              <div class="stat-icon">📖</div>
-              <div class="stat-value">{{ dashStats.overdue_issues }}</div>
-              <div class="stat-label">Kechikkan Kitoblar</div>
-              <div class="stat-sub">↑ Muddati o'tgan</div>
+              <div class="stat-sub">Kechikkan yoki muddati o'tgan</div>
             </div>
           </div>
 
-          <!-- Charts Row 1 -->
+          <!-- Charts Row -->
           <div class="grid-2" style="margin-bottom:20px">
             <div class="card">
               <div class="card-header">
@@ -289,11 +358,6 @@
                 <canvas id="monthlyChart"></canvas>
               </div>
             </div>
-            <!-- Removed category chart -->
-          </div>
-
-          <!-- Charts Row 2 + Top Members -->
-          <div class="grid-2">
             <div class="card">
               <div class="card-header">
                 <div class="card-title">⚥ Jins Bo'yicha</div>
@@ -302,36 +366,36 @@
                 <canvas id="genderChart"></canvas>
               </div>
             </div>
-
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">🏆 Eng Ko'p Kitob Olganlar</div>
-              </div>
-              <div class="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>#</th><th>Sigla</th><th>Familiya</th><th>Kitoblar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(m, i) in dashStats.top_members" :key="m.sigla">
-                      <td>{{ i+1 }}</td>
-                      <td><span class="badge badge-purple">{{ m.sigla }}</span></td>
-                      <td>{{ m.familiya }}</td>
-                      <td><strong>{{ m.issue_count }}</strong></td>
-                    </tr>
-                    <tr v-if="!dashStats.top_members.length">
-                      <td colspan="4" class="table-empty">Ma'lumot yo'q</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
 
-
+          <!-- Top Members Table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏆 Eng Ko'p Kitob Olganlar</div>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th><th>Sigla</th><th>Familiya</th><th>Kitoblar soni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(m, i) in dashStats.top_members" :key="m.sigla">
+                    <td>{{ i+1 }}</td>
+                    <td><span class="badge badge-purple">{{ m.sigla }}</span></td>
+                    <td>{{ m.familiya }}</td>
+                    <td><strong>{{ m.issue_count }}</strong> ta</td>
+                  </tr>
+                  <tr v-if="!dashStats.top_members.length">
+                    <td colspan="4" class="table-empty">Ma'lumot yo'q</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </template>
+
         <div v-else class="empty-state">
           <div class="empty-icon">📊</div>
           <div class="empty-title">Ma'lumotlar yuklanmoqda...</div>
@@ -413,19 +477,64 @@
             </table>
           </div>
           
-          <div class="pagination" style="padding:12px 20px" v-if="totalBookPages > 1 || bookTotal > 0">
-            <div>Jami {{ bookTotal }} ta kitob | Sahifa {{ bookPage }} / {{ totalBookPages || 1 }}</div>
+          <div class="pagination" style="padding:12px 20px" v-if="bookTotal > 0">
+            <div>Jami <b>{{ bookTotal }}</b> ta kitob | Sahifa {{ bookPage }} / {{ totalBookPages || 1 }}</div>
             <div style="display:flex; gap:10px; align-items:center;">
-              <select class="form-control" style="padding:4px 8px; font-size:13px;" v-model="bookPageSize" @change="loadBooks(1)">
+              <select class="form-control" style="padding:4px 8px; font-size:13px;" v-model.number="bookPageSize">
                 <option :value="10">10 ta qator</option>
+                <option :value="20">20 ta qator</option>
                 <option :value="50">50 ta qator</option>
                 <option :value="100">100 ta qator</option>
               </select>
-              <button class="btn btn-secondary btn-sm" :disabled="bookPage === 1" @click="loadBooks(bookPage - 1)">Oldingi</button>
-              <button class="btn btn-secondary btn-sm" :disabled="bookPage === totalBookPages || totalBookPages === 0" @click="loadBooks(bookPage + 1)">Keyingi</button>
+              <button class="btn btn-secondary btn-sm" :disabled="bookPage === 1" @click="loadBooks(bookPage - 1)">← Oldingi</button>
+              <span style="font-size:13px; font-weight:600;">{{ bookPage }}</span>
+              <button class="btn btn-secondary btn-sm" :disabled="bookPage >= totalBookPages" @click="loadBooks(bookPage + 1)">Keyingi →</button>
             </div>
           </div>
+
           
+        </div>
+      </section>
+
+      <section v-if="currentPage==='pending_members'">
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <div class="card-title">⏳ Tasdiqlanmagan A'zolik So'rovlari</div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>F.I.Sh.</th>
+                  <th>Telefon</th>
+                  <th>Yo'nalish</th>
+                  <th>Tug'ilgan Sana</th>
+                  <th>So'rov Sanasi</th>
+                  <th>Amallar</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="m in pendingMembers" :key="m.id">
+                  <td><strong>{{ m.familiya }}</strong></td>
+                  <td>{{ m.telegram_id }}</td>
+                  <td><span class="badge badge-purple">{{ m.yunalish }}</span></td>
+                  <td>{{ m.tugilgan_sana || '---' }}</td>
+                  <td>{{ formatDate(m.created_at) }}</td>
+                  <td>
+                    <button class="btn btn-success btn-sm" @click="approveMember(m)">✅ Tasdiqlash</button>
+                    <button class="btn btn-danger btn-sm" @click="rejectMember(m)">❌ Rad etish</button>
+                  </td>
+                </tr>
+                <tr v-if="pendingMembers.length === 0">
+                  <td colspan="6" class="empty-state" style="padding: 40px;">
+                    <div class="empty-icon">✅</div>
+                    <div class="empty-title">Kutilayotgan so'rovlar yo'q</div>
+                    <div class="empty-sub">Barcha yangi a'zolar tasdiqlangan.</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -465,51 +574,49 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Sigla</th>
-                  <th>Familiya</th>
-                  <!-- Removed Toifa -->
+                  <th>Sigla raqami</th>
+                  <th>A'zo FI</th>
                   <th>Jinsi</th>
-                  <th>Yoshi</th>
-                  <th>A'zo Sana</th>
+                  <th>Tug'ilgan sana (Yoshi)</th>
+                  <th>Yangi a'zo / Qayta a'zo</th>
                   <th>Holati</th>
                   <th>Amallar</th>
                 </tr>
               </thead>
               <tbody>
-                    <tr v-for="(m, i) in members" :key="m.id">
-                      <td>{{ (memberPage - 1) * pageSize + i + 1 }}</td>
-                      <td><span class="badge badge-purple">{{ m.sigla }}</span></td>
-                      <td>
-                        <div style="display:flex;align-items:center;gap:8px">
-                          <div class="member-avatar" :class="m.jinsi === 'erkak' ? 'avatar-male' : 'avatar-female'">
-                            {{ m.familiya ? m.familiya[0].toUpperCase() : '?' }}
-                          </div>
-                          {{ m.familiya }}
-                        </div>
-                      </td>
-                      <!-- Removed Toifa -->
-                      <td>{{ m.jinsi === 'erkak' ? '👨 Erkak' : '👩 Ayol' }}</td>
-                      <td>{{ getAge(m) }}</td>
-                      <td>{{ m.yangi_avo_sana || '—' }}</td>
-                      <td>
-                        <span class="badge" :class="m.holati === 'faol' ? 'badge-green' : (m.holati === 'kutilmoqda' ? 'badge-purple' : 'badge-red')">
-                          {{ m.holati === 'faol' ? '✅ Faol' : (m.holati === 'kutilmoqda' ? '⏳ Kutilmoqda' : '❌ Faol Emas') }}
-                        </span>
-                      </td>
-                      <td>
-                        <div style="display:flex;gap:6px">
-                          <button v-if="m.holati === 'kutilmoqda' && auth.role === 'admin'" class="btn btn-primary btn-sm" @click="approveMember(m)" title="Tasdiqlash">✅</button>
-                          <button class="btn btn-secondary btn-sm" @click="viewMember(m)" :id="'btn-view-'+m.id">👁</button>
-                          <button v-if="auth.role === 'admin'" class="btn btn-secondary btn-sm" @click="openEditMember(m)" :id="'btn-edit-'+m.id">✏️</button>
-                          <button v-if="auth.role === 'admin'" class="btn btn-danger btn-sm" @click="deleteMember(m.id)" :id="'btn-del-'+m.id">🗑</button>
-                        </div>
-                      </td>
-                    </tr>
+                <tr v-for="(m, index) in members" :key="m.id" @click="viewMember(m)" style="cursor:pointer" class="table-row-hover">
+                  <td>{{ (memberPage - 1) * memberPageSize + index + 1 }}</td>
+                  <td><span class="badge badge-purple">{{ m.sigla }}</span></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="member-avatar" :class="m.jinsi === 'erkak' ? 'avatar-male' : 'avatar-female'">
+                        {{ m.familiya ? m.familiya[0].toUpperCase() : '?' }}
+                      </div>
+                      {{ m.familiya }}
+                    </div>
+                  </td>
+                  <td>{{ m.jinsi === 'erkak' ? '👨 Erkak' : '👩 Ayol' }}</td>
+                  <td>{{ getAge(m) }}</td>
+                  <td>{{ m.yangi_avo_sana || '—' }}</td>
+                  <td>
+                    <span class="badge" :class="m.holati === 'faol' ? 'badge-green' : (m.holati === 'kutilmoqda' ? 'badge-purple' : 'badge-red')">
+                      {{ m.holati === 'faol' ? '✅ Faol' : (m.holati === 'kutilmoqda' ? '⏳ Kutilmoqda' : '❌ Faol Emas') }}
+                    </span>
+                  </td>
+                  <td>
+                    <div style="display:flex;gap:6px">
+                      <button v-if="m.holati === 'kutilmoqda' && auth.role === 'admin'" class="btn btn-primary btn-sm" @click.stop="approveMember(m)" title="Tasdiqlash">✅</button>
+                      <button class="btn btn-secondary btn-sm" @click.stop="viewMember(m)" :id="'btn-view-'+m.id">👁</button>
+                      <button v-if="auth.role === 'admin'" class="btn btn-secondary btn-sm" @click.stop="openEditMember(m)" :id="'btn-edit-'+m.id">✏️</button>
+                      <button v-if="auth.role === 'admin'" class="btn btn-danger btn-sm" @click.stop="deleteMember(m.id)" :id="'btn-del-'+m.id">🗑</button>
+                    </div>
+                  </td>
+                </tr>
                 <tr v-if="!members.length && !membersLoading">
                   <td colspan="9" class="table-empty">
-                    <div class="empty-state">
-                      <div class="empty-icon">👤</div>
-                      <div class="empty-title">A'zolar topilmadi</div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+                      <div style="font-size:32px">🕵️</div>
+                      <div class="empty-text">A'zolar topilmadi</div>
                       <div class="empty-sub">Yangi a'zo qo'shing yoki filtrlarni o'zgartiring</div>
                     </div>
                   </td>
@@ -519,14 +626,17 @@
           </div>
 
           <!-- Pagination -->
-          <div class="pagination" style="padding:12px 20px" v-if="totalPages > 1">
-            <div>Jami {{ memberTotal }} ta a'zo | Sahifa {{ memberPage }} / {{ totalPages }}</div>
-            <div class="page-btns">
-              <button class="page-btn" @click="loadMembers(1)" :disabled="memberPage<=1">«</button>
-              <button class="page-btn" @click="loadMembers(memberPage-1)" :disabled="memberPage<=1">‹</button>
-              <button class="page-btn active">{{ memberPage }}</button>
-              <button class="page-btn" @click="loadMembers(memberPage+1)" :disabled="memberPage>=totalPages">›</button>
-              <button class="page-btn" @click="loadMembers(totalPages)" :disabled="memberPage>=totalPages">»</button>
+          <div class="pagination" style="padding:12px 20px" v-if="memberTotal > 0">
+            <div>Jami <b>{{ memberTotal }}</b> ta a'zo | Sahifa {{ memberPage }} / {{ totalPages || 1 }}</div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <select class="form-control" style="padding:4px 8px; font-size:13px;" v-model.number="memberPageSize">
+                <option :value="10">10 ta qator</option>
+                <option :value="20">20 ta qator</option>
+                <option :value="50">50 ta qator</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" :disabled="memberPage === 1" @click="loadMembers(memberPage - 1)">← Oldingi</button>
+              <span style="font-size:13px; font-weight:600;">{{ memberPage }}</span>
+              <button class="btn btn-secondary btn-sm" :disabled="memberPage >= totalPages" @click="loadMembers(memberPage + 1)">Keyingi →</button>
             </div>
           </div>
         </div>
@@ -629,6 +739,7 @@
             <table>
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Kitob</th>
                   <th>A'zo</th>
                   <th>Sana</th>
@@ -637,22 +748,86 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="res in reservationsList" :key="res.id">
-                  <td>{{ res.book_title }}</td>
-                  <td>{{ res.member_name }}</td>
-                  <td>{{ res.created_at }}</td>
+                <tr v-for="(res, i) in reservationsList" :key="res.id">
+                  <td>{{ i + 1 }}</td>
                   <td>
-                    <span class="badge" :class="{'badge-warning': res.status==='waiting', 'badge-success': res.status==='ready'}">{{ res.status }}</span>
+                    <div style="font-weight:600;">{{ res.book_title }}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">{{ res.book_author }}</div>
                   </td>
                   <td>
-                    <button class="btn btn-primary btn-sm" v-if="res.status==='waiting'" @click="updateReservation(res.id, 'ready')">Tayyor</button>
-                    <button class="btn btn-secondary btn-sm" v-if="res.status!=='completed' && res.status!=='cancelled'" @click="updateReservation(res.id, 'completed')">Berish</button>
-                    <button class="btn btn-danger btn-sm" v-if="res.status!=='cancelled'" @click="updateReservation(res.id, 'cancelled')">Bekor</button>
+                    <div style="font-weight:600;">{{ res.member_familiya }}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">{{ res.member_sigla }}</div>
+                  </td>
+                  <td style="font-size:13px;">{{ formatDate(res.created_at) }}</td>
+                  <td>
+                    <span class="badge" :class="{'badge-warning': res.status==='waiting', 'badge-success': res.status==='ready', 'badge-info': res.status==='completed', 'badge-danger': res.status==='cancelled'}">{{ res.status }}</span>
+                  </td>
+                  <td style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-info btn-sm" @click="openResDetail(res)" title="Batafsil">👤</button>
+                    <button class="btn btn-primary btn-sm" v-if="res.status==='waiting'" @click="updateReservationWithConfirm(res.id, 'ready')">✅ Tayyor</button>
+                    <button class="btn btn-secondary btn-sm" v-if="res.status==='ready'" @click="updateReservationWithConfirm(res.id, 'completed')">📖 Berish</button>
+                    <button class="btn btn-danger btn-sm" v-if="res.status!=='cancelled' && res.status!=='completed'" @click="updateReservationWithConfirm(res.id, 'cancelled')">✕ Bekor</button>
                   </td>
                 </tr>
-                <tr v-if="!reservationsList.length"><td colspan="5" style="text-align:center">Ma'lumot yo'q</td></tr>
+                <tr v-if="!reservationsList.length"><td colspan="6" style="text-align:center; padding:20px;">Band qilingan kitoblar yo'q</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Reservation Detail Modal -->
+        <div class="modal-overlay" v-if="showResDetail" @click.self="showResDetail=false">
+          <div class="modal" style="max-width:500px;">
+            <div class="modal-header">
+              <div class="modal-title">👤 A'zo Ma'lumotlari – Bron Detallari</div>
+              <button class="modal-close" @click="showResDetail=false">✕</button>
+            </div>
+            <div class="modal-body" v-if="resDetailItem">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+                <div class="form-group" style="margin:0;">
+                  <label style="font-weight:600; color:var(--text-muted); font-size:12px;">KITOB</label>
+                  <div style="font-weight:700; font-size:16px;">{{ resDetailItem.book_title }}</div>
+                  <div style="font-size:13px; color:var(--text-muted);">{{ resDetailItem.book_author }}</div>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label style="font-weight:600; color:var(--text-muted); font-size:12px;">HOLATI</label>
+                  <div><span class="badge" :class="{'badge-warning': resDetailItem.status==='waiting', 'badge-success': resDetailItem.status==='ready', 'badge-info': resDetailItem.status==='completed', 'badge-danger': resDetailItem.status==='cancelled'}">{{ resDetailItem.status }}</span></div>
+                </div>
+              </div>
+              <hr style="margin:12px 0;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                  <label style="font-weight:600; color:var(--text-muted); font-size:12px;">A'ZO</label>
+                  <div style="font-weight:700;">{{ resDetailItem.member_familiya }}</div>
+                  <div style="font-size:13px; color:var(--text-muted);">{{ resDetailItem.member_sigla }}</div>
+                </div>
+                <div>
+                  <label style="font-weight:600; color:var(--text-muted); font-size:12px;">YO'NALISHI</label>
+                  <div>{{ resDetailItem.member_yunalish || '—' }}</div>
+                </div>
+                <div>
+                  <label style="font-weight:600; color:var(--text-muted); font-size:12px;">HOLATI</label>
+                  <div>{{ resDetailItem.member_holati }}</div>
+                </div>
+                <div>
+                  <label style="font-weight:600; color:var(--text-muted); font-size:12px;">TELEGRAM</label>
+                  <div>{{ resDetailItem.member_telegram || '—' }}</div>
+                </div>
+                <div>
+                  <label style="font-weight:600; color:var(--text-muted); font-size:12px;">TUG'ILGAN SANA</label>
+                  <div>{{ formatDate(resDetailItem.member_tugilgan_sana) }}</div>
+                </div>
+                <div>
+                  <label style="font-weight:600; color:var(--text-muted); font-size:12px;">BRON SANASI</label>
+                  <div>{{ formatDate(resDetailItem.created_at) }}</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px; flex-wrap:wrap;">
+                <button class="btn btn-primary" v-if="resDetailItem.status==='waiting'" @click="updateReservationWithConfirm(resDetailItem.id, 'ready')">✅ Tayyor deb belgilash</button>
+                <button class="btn btn-secondary" v-if="resDetailItem.status==='ready'" @click="updateReservationWithConfirm(resDetailItem.id, 'completed')">📖 Kitobni berish</button>
+                <button class="btn btn-danger" v-if="resDetailItem.status!=='cancelled' && resDetailItem.status!=='completed'" @click="updateReservationWithConfirm(resDetailItem.id, 'cancelled')">✕ Bekor qilish</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -669,31 +844,80 @@
             <table>
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Kitob</th>
                   <th>A'zo</th>
                   <th>Sabab</th>
-                  <th>Kun</th>
+                  <th>So'ralgan muddat</th>
                   <th>Holat</th>
                   <th>Harakat</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="ext in extensionsList" :key="ext.id">
-                  <td>{{ ext.book_name }}</td>
-                  <td>{{ ext.member_name }}</td>
-                  <td>{{ ext.reason }}</td>
-                  <td>+{{ ext.requested_days }}</td>
+                <tr v-for="(ext, i) in extensionsList" :key="ext.id">
+                  <td>{{ i + 1 }}</td>
                   <td>
-                    <span class="badge" :class="{'badge-warning': ext.status==='pending', 'badge-success': ext.status==='approved', 'badge-danger': ext.status==='rejected'}">{{ ext.status }}</span>
+                    <div style="font-weight:600;">{{ ext.book_name }}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">Muddati: {{ formatDate(ext.old_deadline) }}</div>
                   </td>
                   <td>
-                    <button class="btn btn-success btn-sm" v-if="ext.status==='pending'" @click="updateExtension(ext.id, 'approve')">✔</button>
-                    <button class="btn btn-danger btn-sm" v-if="ext.status==='pending'" @click="updateExtension(ext.id, 'reject')">✕</button>
+                    <div style="font-weight:600;">{{ ext.member_name }}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">{{ ext.member_sigla }}</div>
+                  </td>
+                  <td style="max-width:180px; font-size:13px;">{{ ext.reason }}</td>
+                  <td style="font-size:13px;">
+                    <div v-if="ext.requested_date">📅 {{ formatDate(ext.requested_date) }}</div>
+                    <div v-else>+{{ ext.requested_days }} kun</div>
+                  </td>
+                  <td>
+                    <span class="badge" :class="{'badge-warning': ext.status==='pending', 'badge-success': ext.status==='approved', 'badge-danger': ext.status==='rejected'}">{{ ext.status === 'pending' ? 'Kutilmoqda' : ext.status === 'approved' ? 'Tasdiqlandi' : 'Rad etildi' }}</span>
+                    <div v-if="ext.admin_message" style="font-size:11px; color:var(--text-muted); margin-top:4px; max-width:120px;">💬 {{ ext.admin_message }}</div>
+                  </td>
+                  <td>
+                    <div style="display:flex; gap:6px;" v-if="ext.status==='pending'">
+                      <button class="btn btn-success btn-sm" @click="openExtModal(ext, 'approve')" title="Tasdiqlash">✔ Tasdiqlash</button>
+                      <button class="btn btn-danger btn-sm" @click="openExtModal(ext, 'reject')" title="Rad etish">✕ Rad</button>
+                    </div>
+                    <span v-else style="font-size:12px; color:var(--text-muted);">{{ formatDate(ext.reviewed_at) }}</span>
                   </td>
                 </tr>
-                <tr v-if="!extensionsList.length"><td colspan="6" style="text-align:center">So'rovlar yo'q</td></tr>
+                <tr v-if="!extensionsList.length"><td colspan="7" style="text-align:center; padding:20px;">So'rovlar yo'q</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Extension Approve/Reject Modal -->
+        <div class="modal-overlay" v-if="showExtModal" @click.self="showExtModal=false">
+          <div class="modal" style="max-width:460px;">
+            <div class="modal-header">
+              <div class="modal-title">{{ extModalAction === 'approve' ? '✅ So\'rovni Tasdiqlash' : '❌ So\'rovni Rad Etish' }}</div>
+              <button class="modal-close" @click="showExtModal=false">✕</button>
+            </div>
+            <div class="modal-body" v-if="extModalItem">
+              <div style="background:var(--bg-secondary); border-radius:8px; padding:12px; margin-bottom:16px;">
+                <div style="font-weight:700; font-size:15px;">📚 {{ extModalItem.book_name }}</div>
+                <div style="font-size:13px; color:var(--text-muted); margin-top:4px;">👤 {{ extModalItem.member_name }} ({{ extModalItem.member_sigla }})</div>
+                <div style="font-size:13px; margin-top:4px;">Sabab: {{ extModalItem.reason }}</div>
+              </div>
+
+              <div class="form-group" v-if="extModalAction === 'approve'">
+                <label>Yangi qaytarish muddati <span style="color:var(--danger)">*</span></label>
+                <input type="date" class="form-control" v-model="extModalDate">
+                <small style="color:var(--text-muted);">A'zo so'ragan sana: {{ formatDate(extModalItem.requested_date) || (`+${extModalItem.requested_days} kun`) }}</small>
+              </div>
+
+              <div class="form-group">
+                <label>{{ extModalAction === 'approve' ? 'Admin izohi (ixtiyoriy)' : 'Rad etish sababi (tavsiya etiladi)' }}</label>
+                <textarea class="form-control" v-model="extModalMessage" rows="3" :placeholder="extModalAction === 'approve' ? 'Masalan: Tasdiqladim, foydalaning...' : 'Masalan: Kitob boshqa o\'quvchi tomonidan so\'ralgan'"></textarea>
+              </div>
+
+              <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+                <button class="btn btn-secondary" @click="showExtModal=false">Bekor</button>
+                <button class="btn btn-success" v-if="extModalAction === 'approve'" @click="submitExtModal()">✅ Tasdiqlash</button>
+                <button class="btn btn-danger" v-if="extModalAction === 'reject'" @click="submitExtModal()">❌ Rad Etish</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1358,5 +1582,185 @@
 </div><!-- /#app -->
 
 <script src="/static/js/app.js?v=2"></script>
+  <!-- AI Chatbot Widget -->
+  <div id="ai-chatbot-container">
+    <div id="ai-chat-button" onclick="toggleChat()">
+      <span style="font-size: 24px; margin-bottom: 2px; line-height: 1;">🤖</span>
+      <span style="font-size: 12px; font-weight: bold; line-height: 1;">AI</span>
+    </div>
+    <div id="ai-chat-window" style="display: none;">
+      <div id="ai-chat-header">
+        Kutubxona AI <span onclick="toggleChat()" style="cursor:pointer;">✖</span>
+      </div>
+      <div id="ai-chat-messages">
+        <div class="chat-message bot">Salom! Men kutubxona AI yordamchisiman. Sizga qanday kitoblar kerak?</div>
+      </div>
+      <div id="ai-chat-input-area">
+        <input type="text" id="ai-chat-input" placeholder="Xabar yozing..." onkeypress="if(event.key === 'Enter') sendChatMessage()">
+        <button onclick="sendChatMessage()">Yuborish</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #ai-chatbot-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      font-family: 'Inter', sans-serif;
+    }
+    #ai-chat-button {
+      background: #4F46E5;
+      color: white;
+      border-radius: 50%;
+      width: 65px;
+      height: 65px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.3s;
+      user-select: none;
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    #ai-chat-button:hover {
+      transform: scale(1.1);
+    }
+    #ai-chat-window {
+      width: 320px;
+      height: 450px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      position: absolute;
+      bottom: 75px;
+      right: 0;
+    }
+    #ai-chat-header {
+      background: #4F46E5;
+      color: white;
+      padding: 15px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #ai-chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chat-message {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .chat-message.bot {
+      background: #e0e7ff;
+      color: #3730a3;
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+    .chat-message.user {
+      background: #4F46E5;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+    #ai-chat-input-area {
+      display: flex;
+      padding: 10px;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+    }
+    #ai-chat-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      outline: none;
+    }
+    #ai-chat-input:focus {
+      border-color: #4F46E5;
+    }
+    #ai-chat-input-area button {
+      background: #4F46E5;
+      color: white;
+      border: none;
+      padding: 0 15px;
+      margin-left: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    #ai-chat-input-area button:hover {
+      background: #4338ca;
+    }
+  </style>
+
+  <script>
+    function toggleChat() {
+      const window = document.getElementById('ai-chat-window');
+      window.style.display = window.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('ai-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage('user', text);
+      input.value = '';
+
+      const typingId = 'typing-' + Date.now();
+      appendMessage('bot', '...', typingId);
+
+      try {
+        const response = await fetch('/api/ai/chat/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: text })
+        });
+        
+        const data = await response.json();
+        
+        const typingEl = document.getElementById(typingId);
+        if(typingEl) typingEl.remove();
+        
+        appendMessage('bot', data.response);
+      } catch (err) {
+        const typingEl = document.getElementById(typingId);
+        if(typingEl) typingEl.remove();
+        appendMessage('bot', 'Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.');
+      }
+    }
+
+    function appendMessage(sender, text, id = null) {
+      const messagesDiv = document.getElementById('ai-chat-messages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'chat-message ' + sender;
+      if (id) msgDiv.id = id;
+      msgDiv.innerHTML = text;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  </script>
 </body>
 </html>

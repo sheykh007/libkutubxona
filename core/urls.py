@@ -65,6 +65,7 @@ urlpatterns = [
     
     # AI Endpoints
     path('ai/search/', new_views.AISearchView.as_view(), name='ai-search'),
+    path('ai/chat/', new_views.AIChatbotView.as_view(), name='ai-chat'),
     path('ai/recommendations/<int:pk>/', new_views.AIRecommendationView.as_view(), name='ai-recommendations'),
     
     # Cabinet

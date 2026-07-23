@@ -266,6 +266,7 @@ class ExtensionRequest(models.Model):
     requested_days = models.PositiveIntegerField(default=7, verbose_name="So'ralgan kunlar")
     requested_date = models.DateField(null=True, blank=True, verbose_name="So'ralgan muddat (Sana)")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Holati")
+    admin_message = models.TextField(null=True, blank=True, verbose_name="Admin javobi/sababi")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan sana")
     reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name="Ko'rib chiqilgan sana")
 
