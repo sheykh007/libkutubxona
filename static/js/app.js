@@ -58,7 +58,7 @@ const BADGE_COLORS = {
 
 // ─── Chart Instances ─────────────────────────────────────────
 let monthlyChart = null;
-let categoryChart = null;
+let booksChart = null;
 let genderChart = null;
 
 // ─── Main App ─────────────────────────────────────────────────
@@ -344,7 +344,27 @@ const app = createApp({
         });
       }
 
-      // Category chart removed
+      // Books Chart
+      const bc = document.getElementById('booksChart');
+      if (bc) {
+        if (booksChart) booksChart.destroy();
+        booksChart = new Chart(bc, {
+          type: 'doughnut',
+          data: {
+            labels: ['Mavjud', 'Berilgan'],
+            datasets: [{
+              data: [s.available_books, s.borrowed_books],
+              backgroundColor: ['#10b981', '#f59e0b'],
+              borderWidth: 0,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: '#64748b' } } },
+            cutout: '70%'
+          }
+        });
+      }
       // Gender chart
       const gc = document.getElementById('genderChart');
       if (gc) {
