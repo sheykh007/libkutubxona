@@ -429,6 +429,7 @@ const app = createApp({
 
     // ─── Members ──────────────────────────────────────────────
     async function loadMembers(page = 1) {
+      page = parseInt(page) || 1;
       membersLoading.value = true;
       memberPage.value = page;
       try {
@@ -639,6 +640,7 @@ const app = createApp({
     }
 
     async function loadBooks(page = 1) {
+      page = parseInt(page) || 1;
       booksLoading.value = true;
       bookPage.value = page;
       try {

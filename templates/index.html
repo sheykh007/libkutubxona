@@ -498,9 +498,9 @@
                 <option :value="50">50 ta qator</option>
                 <option :value="100">100 ta qator</option>
               </select>
-              <button class="btn btn-secondary btn-sm" :disabled="bookPage === 1" @click="loadBooks(Number(bookPage) - 1)">← Oldingi</button>
+              <button class="btn btn-secondary btn-sm" :disabled="bookPage === 1" @click="loadBooks(bookPage - 1)">← Oldingi</button>
               <span style="font-size:13px; font-weight:600;">{{ bookPage }}</span>
-              <button class="btn btn-secondary btn-sm" :disabled="Number(bookPage) >= totalBookPages" @click="loadBooks(Number(bookPage) + 1)">Keyingi →</button>
+              <button class="btn btn-secondary btn-sm" :disabled="bookPage >= totalBookPages" @click="loadBooks(bookPage + 1)">Keyingi →</button>
             </div>
           </div>
 
@@ -646,9 +646,9 @@
                 <option :value="20">20 ta qator</option>
                 <option :value="50">50 ta qator</option>
               </select>
-              <button class="btn btn-secondary btn-sm" :disabled="memberPage === 1" @click="loadMembers(Number(memberPage) - 1)">← Oldingi</button>
+              <button class="btn btn-secondary btn-sm" :disabled="memberPage === 1" @click="loadMembers(memberPage - 1)">← Oldingi</button>
               <span style="font-size:13px; font-weight:600;">{{ memberPage }}</span>
-              <button class="btn btn-secondary btn-sm" :disabled="Number(memberPage) >= totalPages" @click="loadMembers(Number(memberPage) + 1)">Keyingi →</button>
+              <button class="btn btn-secondary btn-sm" :disabled="memberPage >= totalPages" @click="loadMembers(memberPage + 1)">Keyingi →</button>
             </div>
           </div>
         </div>
