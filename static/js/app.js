@@ -1025,7 +1025,7 @@ const app = createApp({
       showQRModal, openQRModal, closeQRModal, onScanSuccess, onScanError,
       
       // Reservation
-      issueFromReservation
+      issueFromReservation, loadReservations, loadBooks
     };
   }
 });
