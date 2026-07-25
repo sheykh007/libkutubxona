@@ -57,15 +57,7 @@ def chat_bot_response(message):
     
     # Generic greetings
     if message in ['salom', 'qalay', 'assalomu alaykum', 'hi', 'start', '/start']:
-        return "Assalomu alaykum! Men Kutubxona sun'iy intellekt yordamchisiman. 🤖<br><br>Sizga kitob topishda yoki kutubxona xizmatlaridan foydalanishda yordam bera olaman. Sizga qanday kitoblar yoqadi? (Masalan: <b>Badiiy</b>, <b>Tarixiy</b>, <b>Ilmiy</b> yoki <b>O'quv adabiyotlari</b>)"
-
-    # Define robust category keywords
-    categories = {
-        'tarixiy': ['tarix', 'temur', 'bobur', 'manguberdi', 'xonlik', 'amirlik', 'sulton', 'qadimiy', 'o\'tmish', 'qodiriy', 'navoiy', 'yassaviy', 'o\'tkan kunlar', 'tarixiy', 'biografiya', 'shajara', 'hukmdor', 'urush', 'qahramon'],
-        'badiiy': ['roman', 'qissa', 'hikoya', 'she\'r', 'doston', 'adabiyot', 'badiiy', 'ertak', 'asar', 'cho\'lpon', 'qahhor', 'hoshimov', 'detektiv', 'sarguzasht', 'fantastika', 'sevgi', 'muhabbat'],
-        'ilmiy': ['ilmiy', 'fan', 'fizika', 'matematika', 'kimyo', 'biologiya', 'texnologiya', 'tibbiyot', 'qonun', 'nazariya', 'ensiklopediya', 'lug\'at', 'akademiya', 'tadqiqot', 'oliy', 'falsafa', 'astronomiya'],
-        'oquv': ['darslik', 'qollanma', 'qo\'llanma', 'sinf', 'maktab', 'universitet', 'mashq', 'test', 'grammatika', 'o\'quv', 'talaba', 'metodika', 'pedagogika', 'lug\'at', 'abituriyent', 'masalalar', 'yechimlar']
-    }
+        return "Assalomu alaykum! Men Kutubxona sun'iy intellekt yordamchisiman. 🤖<br><br>Sizga kerakli kitob yoki adabiyotni topishda yordam bera olaman. Masalan: <i>\"Menga O'tkir Hoshimovning kitoblarini topib ber\"</i> yoki <i>\"Fizikaga oid qanday kitoblar bor?\"</i> deb yozishingiz mumkin."
 
     # Clean message from common punctuation
     for p in ['.', ',', '?', '!', ':', ';', '"', "'"]:
@@ -74,7 +66,7 @@ def chat_bot_response(message):
     words = message.split()
     
     # Stop words to ignore
-    stop_words = {'kerak', 'topib', 'ber', 'menga', 'uchun', 'iltimos', 'kitob', 'kitoblar', 'adabiyot', 'adabiyotlar', 'haqida', 'bering', 'mumkinmi', 'qidirmoqdaman', 'qidiryapman', 'bormi', 'yo\'qmi', 'va', 'yoki', 'bilan', 'esa', 'men'}
+    stop_words = {'kerak', 'topib', 'ber', 'menga', 'uchun', 'iltimos', 'kitob', 'kitoblar', 'adabiyot', 'adabiyotlar', 'haqida', 'bering', 'mumkinmi', 'qidirmoqdaman', 'qidiryapman', 'bormi', 'yo\'qmi', 'va', 'yoki', 'bilan', 'esa', 'men', 'qanday', 'qanaqa', 'qaysi', 'top'}
 
     # Suffix stripping helper for Uzbek
     def stem_uzbek(word):
@@ -86,68 +78,52 @@ def chat_bot_response(message):
     cleaned_words = [stem_uzbek(w) for w in words if w not in stop_words and len(w) > 2]
 
     if not cleaned_words:
-        return "Sizning so'rovingiz tushunarsiz. Iltimos, kitob nomi, muallifi yoki janrini (masalan: <i>\"Tarixiy kitoblar bormi?\"</i>) kiriting."
+        return "Sizning so'rovingiz tushunarsiz. Iltimos, kitob nomi, muallifi yoki janrini (masalan: <i>\"Tarixiy kitoblar bormi?\"</i>) aniqroq kiritib qidiring."
 
-    # Identify user intent based on cleaned words
-    target_categories = []
-    for w in cleaned_words:
-        if 'tarix' in w or 'o\'tmish' in w: target_categories.append('tarixiy')
-        elif 'badiiy' in w or 'roman' in w or 'hikoya' in w or 'ertak' in w: target_categories.append('badiiy')
-        elif 'ilmiy' in w or 'fan' in w or 'olim' in w: target_categories.append('ilmiy')
-        elif 'o\'quv' in w or 'oquv' in w or 'dars' in w or 'qollanma' in w: target_categories.append('oquv')
-
-    books = Book.objects.all()
-    results = []
+    from django.db.models import Q
     
+    # Create a dynamic search query
+    query = Q()
+    for w in cleaned_words:
+        query |= Q(title__icontains=w) | Q(author__icontains=w)
+    
+    # Base fallback categories logic for general queries
+    if any(w in ['tarix', 'o\'tmish'] for w in cleaned_words):
+        query |= Q(title__icontains='tarix') | Q(title__icontains='temur') | Q(title__icontains='bobur') | Q(author__icontains='qodiriy')
+    if any(w in ['badiiy', 'roman', 'hikoya'] for w in cleaned_words):
+        query |= Q(title__icontains='roman') | Q(title__icontains='qissa') | Q(title__icontains='hikoya')
+    if any(w in ['ilmiy', 'fan', 'olim'] for w in cleaned_words):
+        query |= Q(title__icontains='ilmiy') | Q(title__icontains='fizika') | Q(title__icontains='matematika')
+    if any(w in ['o\'quv', 'oquv', 'darslik'] for w in cleaned_words):
+        query |= Q(title__icontains='darslik') | Q(title__icontains='qollanma') | Q(title__icontains='sinf')
+
+    books = Book.objects.filter(query).distinct()
+    
+    results = []
     for book in books:
         score = 0
         title = book.title.lower()
         author = book.author.lower()
         
-        # Auto-classify the book by keywords in its title/author
-        book_categories = []
-        for cat, keywords in categories.items():
-            if any(kw in title or kw in author for kw in keywords):
-                book_categories.append(cat)
-                
-        # Base score if book is in target category
-        for tc in target_categories:
-            if tc in book_categories:
-                score += 30
-            
-        # Keyword matching from user's cleaned words against title and author
+        # Calculate relevance score based on matched words
         for w in cleaned_words:
-            if w in title: 
-                score += 25
-            if w in author: 
-                score += 20
-                
+            if w in title: score += 25
+            if w in author: score += 20
+        
         if score > 0:
-            cat_labels = []
-            if 'badiiy' in book_categories: cat_labels.append('🎭 Badiiy')
-            if 'tarixiy' in book_categories: cat_labels.append('🏛 Tarixiy')
-            if 'ilmiy' in book_categories: cat_labels.append('🔬 Ilmiy')
-            if 'oquv' in book_categories: cat_labels.append('📚 O\'quv')
-            
-            label_str = f" <span style='font-size:11px; color:#4F46E5;'>[{', '.join(cat_labels)}]</span>" if cat_labels else ""
-            
-            results.append({
-                'book': book, 
-                'score': score,
-                'label': label_str
-            })
+            results.append({'book': book, 'score': score})
             
     if not results:
-        return "Kechirasiz, kutubxonamiz bazasidan aynan shu so'rovga mos kitob topa olmadim. Boshqacharoq nom yoki muallifni qidirib ko'ring. Balki janr bo'yicha qidirib ko'rarmiz?"
+        return f"Kechirasiz, <b>\"{', '.join(cleaned_words)}\"</b> so'roviga mos kitoblarni bazadan topa olmadim. Boshqacharoq nom yoki muallifni qidirib ko'ring."
         
     # Sort and return top 5
     results.sort(key=lambda x: x['score'], reverse=True)
     top_books = results[:5]
     
-    response = "So'rovingiz tahlil qilindi. Sizga ushbu asarlarni o'qishni tavsiya qilaman:<br><ul>"
+    response = "Sizning so'rovingizga asosan quyidagi kitoblarni topdim:<br><ul>"
     for item in top_books:
         book = item['book']
-        response += f"<li style='margin-bottom:8px'><b>{book.title}</b> <br><i style='color:#64748b; font-size:13px;'>Mualif: {book.author}</i> {item['label']}</li>"
+        response += f"<li style='margin-bottom:8px'><b>{book.title}</b> <br><i style='color:#64748b; font-size:13px;'>Mualif: {book.author}</i></li>"
         
-    response += "</ul><p style='margin-top:12px; font-size:13px;'>Sizga yana qanday kitoblar kerak?</p>"
+    response += "</ul><p style='margin-top:12px; font-size:13px;'>Bu kitoblardan birini o'qib ko'rishni xohlaysizmi?</p>"
     return response
