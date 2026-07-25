@@ -57,7 +57,7 @@ def chat_bot_response(message):
     
     # Generic greetings
     if message in ['salom', 'qalay', 'assalomu alaykum', 'hi', 'start', '/start']:
-        return "Assalomu alaykum! Men kutubxonangizning sun'iy intellekt yordamchisiman. Sizga qanday kitoblar kerak? (Masalan: Badiiy, Tarixiy, Ilmiy yoki O'quv adabiyotlari)"
+        return "Assalomu alaykum! Men Kutubxona sun'iy intellekt yordamchisiman. 🤖<br><br>Sizga kitob topishda yoki kutubxona xizmatlaridan foydalanishda yordam bera olaman. Sizga qanday kitoblar yoqadi? (Masalan: <b>Badiiy</b>, <b>Tarixiy</b>, <b>Ilmiy</b> yoki <b>O'quv adabiyotlari</b>)"
 
     # Define robust category keywords
     categories = {
@@ -74,7 +74,7 @@ def chat_bot_response(message):
     words = message.split()
     
     # Stop words to ignore
-    stop_words = {'kerak', 'topib', 'ber', 'menga', 'uchun', 'iltimos', 'kitob', 'kitoblar', 'adabiyot', 'adabiyotlar', 'haqida', 'bering', 'mumkinmi', 'qidirmoqdaman', 'qidiryapman', 'bormi', 'yo\'qmi', 'va', 'yoki', 'bilan', 'esa'}
+    stop_words = {'kerak', 'topib', 'ber', 'menga', 'uchun', 'iltimos', 'kitob', 'kitoblar', 'adabiyot', 'adabiyotlar', 'haqida', 'bering', 'mumkinmi', 'qidirmoqdaman', 'qidiryapman', 'bormi', 'yo\'qmi', 'va', 'yoki', 'bilan', 'esa', 'men'}
 
     # Suffix stripping helper for Uzbek
     def stem_uzbek(word):
@@ -84,6 +84,9 @@ def chat_bot_response(message):
         return word
 
     cleaned_words = [stem_uzbek(w) for w in words if w not in stop_words and len(w) > 2]
+
+    if not cleaned_words:
+        return "Sizning so'rovingiz tushunarsiz. Iltimos, kitob nomi, muallifi yoki janrini (masalan: <i>\"Tarixiy kitoblar bormi?\"</i>) kiriting."
 
     # Identify user intent based on cleaned words
     target_categories = []
@@ -135,16 +138,16 @@ def chat_bot_response(message):
             })
             
     if not results:
-        return "Kechirasiz, so'rovingizga mos yoki bu mavzudagi kitoblarni bazadan topa olmadim. Boshqacharoq qidirib ko'ring, yoki kitob nomini/muallifini aniqroq yozing."
+        return "Kechirasiz, kutubxonamiz bazasidan aynan shu so'rovga mos kitob topa olmadim. Boshqacharoq nom yoki muallifni qidirib ko'ring. Balki janr bo'yicha qidirib ko'rarmiz?"
         
-    # Sort and return top 6
+    # Sort and return top 5
     results.sort(key=lambda x: x['score'], reverse=True)
-    top_books = results[:6]
+    top_books = results[:5]
     
-    response = "So'rovingiz tahlil qilinib, quyidagi kitoblar mos deb topildi:\n<br><br>"
-    for i, item in enumerate(top_books, 1):
+    response = "So'rovingiz tahlil qilindi. Sizga ushbu asarlarni o'qishni tavsiya qilaman:<br><ul>"
+    for item in top_books:
         book = item['book']
-        response += f"{i}. <b>{book.title}</b> (<i>{book.author}</i>){item['label']}<br>"
+        response += f"<li style='margin-bottom:8px'><b>{book.title}</b> <br><i style='color:#64748b; font-size:13px;'>Mualif: {book.author}</i> {item['label']}</li>"
         
-    response += "<br>Boshqa yana qanday asarlar sizni qiziqtiradi?"
+    response += "</ul><p style='margin-top:12px; font-size:13px;'>Sizga yana qanday kitoblar kerak?</p>"
     return response
