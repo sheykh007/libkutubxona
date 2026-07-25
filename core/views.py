@@ -60,7 +60,7 @@ class MemberListCreateView(generics.ListCreateAPIView):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        qs = Member.objects.all()
+        qs = Member.objects.all().order_by('-id')
         q = self.request.query_params.get('q', '')
         holati = self.request.query_params.get('holati', '')
         date_from = self.request.query_params.get('date_from', '')
@@ -93,7 +93,7 @@ class MemberListCreateView(generics.ListCreateAPIView):
 
 
 class MemberDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Member.objects.all()
+    queryset = Member.objects.all().order_by('-id')
     serializer_class = MemberSerializer
 
 
@@ -506,7 +506,7 @@ class DebtorListView(APIView):
 
 
 class BranchListCreateView(generics.ListCreateAPIView):
-    queryset = Branch.objects.all()
+    queryset = Branch.objects.all().order_by('-id')
     serializer_class = BranchSerializer
 
 
@@ -522,7 +522,7 @@ class BookListCreateView(generics.ListCreateAPIView):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        qs = Book.objects.all()
+        qs = Book.objects.all().order_by('-id')
         q = self.request.query_params.get('q', '')
         if q:
             qs = qs.filter(Q(title__icontains=q) | Q(author__icontains=q))
@@ -572,7 +572,7 @@ class BookListCreateView(generics.ListCreateAPIView):
 
 
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Book.objects.all()
+    queryset = Book.objects.all().order_by('-id')
     serializer_class = BookSerializer
 
 
@@ -692,7 +692,7 @@ class BookItemListCreateView(generics.ListCreateAPIView):
     serializer_class = BookItemSerializer
 
     def get_queryset(self):
-        qs = BookItem.objects.all()
+        qs = BookItem.objects.all().order_by('-id')
         branch_id = self.request.query_params.get('branch', '')
         status = self.request.query_params.get('status', '')
         if branch_id:
@@ -711,7 +711,7 @@ class ReservationListCreateView(generics.ListCreateAPIView):
     serializer_class = ReservationSerializer
 
     def get_queryset(self):
-        qs = Reservation.objects.all()
+        qs = Reservation.objects.all().order_by('-id')
         member_id = self.request.query_params.get('member', '')
         status = self.request.query_params.get('status', '')
         if member_id:
@@ -758,7 +758,7 @@ class ReservationDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class EbookListCreateView(generics.ListCreateAPIView):
-    queryset = Ebook.objects.all()
+    queryset = Ebook.objects.all().order_by('-id')
     serializer_class = EbookSerializer
 
 
