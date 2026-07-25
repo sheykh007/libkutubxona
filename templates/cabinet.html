@@ -77,6 +77,12 @@
     @media (max-width: 768px) {
       .grid-container { grid-template-columns: 1fr; }
     }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -293,7 +299,9 @@
           <input type="text" class="search-input" style="width: 300px; margin-bottom: 0;" v-model="catalogQuery" @input="debouncedCatalogSearch" placeholder="Kitob izlash...">
         </div>
         
-        <div v-if="catalogLoading" style="text-align:center; padding: 20px;">Yuklanmoqda...</div>
+        <div v-if="catalogLoading" class="book-grid">
+          <div v-for="i in 8" :key="i" class="book-card" style="height: 160px; background: #f1f5f9; animation: pulse 1.5s infinite; border-color: transparent;"></div>
+        </div>
         <div v-else class="book-grid">
           <div v-for="book in catalogBooks" :key="book.id" class="book-card">
             <div class="book-title">{{ book.title }}</div>
@@ -313,6 +321,10 @@
           <div v-if="catalogBooks.length === 0" style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 24px;">
             Hozircha kitoblar mavjud emas.
           </div>
+        </div>
+        
+        <div v-if="catalogNextPage && !catalogLoading" style="text-align: center; margin-top: 32px;">
+          <button class="btn btn-secondary" @click="loadMoreCatalog" style="padding: 10px 24px; border-radius: 20px; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">Yana yuklash ⬇️</button>
         </div>
 
         <!-- Settings -->

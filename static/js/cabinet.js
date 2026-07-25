@@ -64,10 +64,10 @@ const app = createApp({
     const issueHistory = ref([]);
     const currentIssues = ref([]);
     
-    // Catalog Data
     const catalogBooks = ref([]);
     const catalogLoading = ref(false);
     const catalogQuery = ref('');
+    const catalogNextPage = ref(null);
     let searchTimer = null;
     
     async function login() {
@@ -161,10 +161,31 @@ const app = createApp({
         const q = encodeURIComponent(catalogQuery.value);
         const data = await api('GET', `/books/?q=${q}`);
         catalogBooks.value = data.results || data;
+        catalogNextPage.value = data.next || null;
       } catch (e) {
         console.error(e);
       } finally {
         catalogLoading.value = false;
+      }
+    }
+    
+    async function loadMoreCatalog() {
+      if (!catalogNextPage.value) return;
+      try {
+        const opts = { method: 'GET', headers: {} };
+        const memberId = localStorage.getItem('cabinet_member_id');
+        if (memberId) opts.headers['X-Member-ID'] = memberId;
+        
+        const response = await fetch(catalogNextPage.value, opts);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        if (data.results) {
+          catalogBooks.value.push(...data.results);
+          catalogNextPage.value = data.next || null;
+        }
+      } catch (e) {
+        toast('Xatolik: ' + e.message, 'error');
       }
     }
     
@@ -347,7 +368,7 @@ const app = createApp({
       login, registerUser, logout,
       toasts,
       issueHistory, currentIssues, reservations,
-      catalogBooks, catalogLoading, catalogQuery, debouncedCatalogSearch,
+      catalogBooks, catalogLoading, catalogQuery, catalogNextPage, loadMoreCatalog, debouncedCatalogSearch,
       isLate,
       showExtensionModal, selectedIssueForExt, extForm, openExtensionModal, confirmExtension,
       showReserveModal, selectedBookForReserve, reserveForm, openReserveModal, confirmReservation,
