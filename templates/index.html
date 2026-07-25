@@ -777,7 +777,7 @@
                   <td style="display:flex; gap:6px; flex-wrap:wrap;">
                     <button class="btn btn-info btn-sm" @click="openResDetail(res)" title="Batafsil">👤</button>
                     <button class="btn btn-primary btn-sm" v-if="res.status==='waiting'" @click="updateReservationWithConfirm(res.id, 'ready')">✅ Tayyor</button>
-                    <button class="btn btn-secondary btn-sm" v-if="res.status==='ready'" @click="updateReservationWithConfirm(res.id, 'completed')">📖 Berish</button>
+                    <button class="btn btn-secondary btn-sm" v-if="res.status==='ready'" @click="issueFromReservation(res)">📖 Berish</button>
                     <button class="btn btn-danger btn-sm" v-if="res.status!=='cancelled' && res.status!=='completed'" @click="updateReservationWithConfirm(res.id, 'cancelled')">✕ Bekor</button>
                   </td>
                 </tr>

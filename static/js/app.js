@@ -591,6 +591,22 @@ const app = createApp({
       bookSearchResults.value = [];
       showIssueModal.value = true;
     }
+    
+    let currentReservationId = null;
+
+    function issueFromReservation(res) {
+      currentPage.value = 'issues';
+      currentReservationId = res.id;
+      
+      issueForm.member = res.member_id;
+      memberSearchQ.value = `${res.member_sigla} - ${res.member_familiya}`;
+      memberSearchResults.value = [];
+      
+      bookSearchQ.value = res.book_title;
+      searchBooksForIssue();
+      
+      showIssueModal.value = true;
+    }
 
     async function searchMembersForIssue() {
       if (memberSearchQ.value.length < 2) { memberSearchResults.value = []; return; }
@@ -722,6 +738,17 @@ const app = createApp({
         toast('Kitob muvaffaqiyatli berildi', 'success');
         showIssueModal.value = false;
         loadIssues();
+        
+        if (currentReservationId) {
+          try {
+            const formData = new FormData();
+            formData.append('status', 'completed');
+            // Assuming the endpoint handles PATCH. If not, maybe use custom endpoint. Actually, updateReservationWithConfirm uses /reservations/${id}/status/.
+            await api('POST', `/reservations/${currentReservationId}/status/`, { status: 'completed' });
+            currentReservationId = null;
+            loadReservations();
+          } catch(e) { console.error('Failed to complete reservation', e); }
+        }
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -996,7 +1023,10 @@ const app = createApp({
       bulkDeleteAll,
       formatPrice, formatDate, viewMemberById,
       toasts, theme, toggleTheme,
-      showQRModal, openQRModal, closeQRModal, onScanSuccess, onScanError
+      showQRModal, openQRModal, closeQRModal, onScanSuccess, onScanError,
+      
+      // Reservation
+      issueFromReservation
     };
   }
 });

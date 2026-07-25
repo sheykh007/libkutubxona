@@ -91,7 +91,9 @@ class MemberLoginView(APIView):
                 'id': member.id,
                 'sigla': member.sigla,
                 'familiya': member.familiya,
-                'holati': member.holati
+                'holati': member.holati,
+                'tugilgan_sana': str(member.tugilgan_sana) if member.tugilgan_sana else '',
+                'telegram_id': member.telegram_id or ''
             })
         except Member.DoesNotExist:
             return Response({'error': "Kiritilgan Sigla bo'yicha a'zo topilmadi."}, status=status.HTTP_404_NOT_FOUND)
@@ -318,7 +320,10 @@ class CabinetRegisterView(APIView):
                 'success': True,
                 'sigla': member.sigla,
                 'id': member.id,
-                'familiya': member.familiya
+                'familiya': member.familiya,
+                'holati': member.holati,
+                'tugilgan_sana': str(member.tugilgan_sana) if member.tugilgan_sana else '',
+                'telegram_id': member.telegram_id or ''
             })
         except Exception as e:
             return Response({'error': str(e)}, status=400)
