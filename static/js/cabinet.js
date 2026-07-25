@@ -143,6 +143,12 @@ const app = createApp({
     async function loadMemberData() {
       if (!member.value) return;
       try {
+        const profileData = await api('GET', `/cabinet/profile/${member.value.id}/`);
+        if (profileData && !profileData.error) {
+           member.value = profileData;
+           localStorage.setItem('cabinet_member', JSON.stringify(profileData));
+        }
+
         const data = await api('GET', `/issues/?member=${member.value.id}`);
         const allIssues = data.results || data;
         issueHistory.value = allIssues;

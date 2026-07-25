@@ -330,6 +330,20 @@ class CabinetRegisterView(APIView):
 
 # --- Profile & Password Management ---
 class MemberProfileUpdateView(APIView):
+    def get(self, request, pk):
+        try:
+            member = Member.objects.get(pk=pk)
+            return Response({
+                'id': member.id,
+                'sigla': member.sigla,
+                'familiya': member.familiya,
+                'holati': member.holati,
+                'tugilgan_sana': str(member.tugilgan_sana) if member.tugilgan_sana else '',
+                'telegram_id': member.telegram_id or ''
+            })
+        except Member.DoesNotExist:
+            return Response({'error': 'Topilmadi'}, status=404)
+
     def put(self, request, pk):
         try:
             member = Member.objects.get(pk=pk)

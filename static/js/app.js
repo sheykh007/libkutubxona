@@ -741,10 +741,7 @@ const app = createApp({
         
         if (currentReservationId) {
           try {
-            const formData = new FormData();
-            formData.append('status', 'completed');
-            // Assuming the endpoint handles PATCH. If not, maybe use custom endpoint. Actually, updateReservationWithConfirm uses /reservations/${id}/status/.
-            await api('POST', `/reservations/${currentReservationId}/status/`, { status: 'completed' });
+            await api('PATCH', `/reservations/${currentReservationId}/`, { status: 'completed' });
             currentReservationId = null;
             loadReservations();
           } catch(e) { console.error('Failed to complete reservation', e); }
