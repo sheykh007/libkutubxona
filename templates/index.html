@@ -17,6 +17,8 @@
   <!-- Libraries (CDN) -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- HTML5 QR Code Scanner -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 
 <body>
@@ -179,7 +181,9 @@
         <div class="breadcrumb">Kutubxona Boshqaruv Tizimi</div>
       </div>
       <div class="topbar-right">
-        
+        <button class="btn btn-primary" style="margin-right: 8px; border-radius: 20px; padding: 6px 16px;" @click="openQRModal">
+          📷 QR Skaner
+        </button>
         <!-- Notifications Dropdown -->
         <div style="position:relative; margin-right:12px;">
           <div class="notification-bell" @click="showNotifications = !showNotifications">

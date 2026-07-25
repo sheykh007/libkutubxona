@@ -162,6 +162,41 @@ const app = createApp({
     const issues = ref([]);
     const issuesLoading = ref(false);
     const showIssueModal = ref(false);
+    
+    // QR Scanner
+    const showQRModal = ref(false);
+    let html5QrcodeScanner = null;
+    
+    function openQRModal() {
+      showQRModal.value = true;
+      nextTick(() => {
+        html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+        html5QrcodeScanner.render(onScanSuccess, onScanError);
+      });
+    }
+
+    function closeQRModal() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().catch(e => console.error(e));
+      }
+      showQRModal.value = false;
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+      let siglaMatch = decodedText.match(/Sigla:\s*([A-Za-z0-9]+)/i);
+      let sigla = siglaMatch ? siglaMatch[1] : decodedText;
+      
+      closeQRModal();
+      toast('QR kod muvaffaqiyatli o\'qildi: ' + sigla, 'success');
+      
+      currentPage.value = 'members';
+      searchQuery.value = sigla;
+      loadMembers();
+    }
+    
+    function onScanError(errorMessage) {
+      // ignore
+    }
     const issueFilter = reactive({ member: '', qaytarildi: '' });
     const issueForm = reactive({
       member: '', book_item: null, book_name: '', berilgan_sana: '', qaytarish_sana: '', jarima_kun_narxi: 500,
@@ -961,6 +996,7 @@ const app = createApp({
       bulkDeleteAll,
       formatPrice, formatDate, viewMemberById,
       toasts, theme, toggleTheme,
+      showQRModal, openQRModal, closeQRModal, onScanSuccess, onScanError
     };
   }
 });
