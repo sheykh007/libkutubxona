@@ -534,12 +534,21 @@ class BookListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         title = request.data.get('title', '')
         barcode = request.data.get('barcode', '')
+        barcodes = request.data.get('barcodes', [])
+        if isinstance(barcodes, str):
+            barcodes = [b.strip() for b in barcodes.split(',') if b.strip()]
         
         raw_count = request.data.get('total_count', 1)
-        total_count = int(raw_count) if raw_count else 1
+        try:
+            total_count = int(raw_count) if raw_count else 1
+        except (ValueError, TypeError):
+            total_count = 1
             
-        # Temporarily override request.data to include total_count
-        mutable_data = request.data.copy()
+        if barcodes and len(barcodes) > total_count:
+            total_count = len(barcodes)
+            
+        # Ensure mutable data for serializer
+        mutable_data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
         mutable_data['total_count'] = total_count
         
         serializer = self.get_serializer(data=mutable_data)
@@ -555,20 +564,21 @@ class BookListCreateView(generics.ListCreateAPIView):
             branch = Branch.objects.first()
         
         if branch:
-            if barcode:
-                # Add specific barcode
-                BookItem.objects.create(book=book, barcode=barcode, branch=branch)
-                # If they requested more copies, auto-generate for the rest
-                for i in range(1, total_count):
-                    BookItem.objects.create(book=book, barcode=f"{barcode}-{i}", branch=branch)
-            else:
-                # Auto-generate barcodes
-                for i in range(total_count):
-                    auto_barcode = f"B{book.id:04d}-{i+1:02d}"
-                    BookItem.objects.create(book=book, barcode=auto_barcode, branch=branch)
+            for i in range(total_count):
+                bc = ''
+                if barcodes and i < len(barcodes) and str(barcodes[i]).strip():
+                    bc = str(barcodes[i]).strip()
+                elif barcode and i == 0:
+                    bc = str(barcode).strip()
+                elif barcode and i > 0:
+                    bc = f"{barcode}-{i+1}"
+                else:
+                    bc = f"B{book.id:04d}-{i+1:02d}"
+                
+                BookItem.objects.create(book=book, barcode=bc, branch=branch)
                     
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(self.get_serializer(book).data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):

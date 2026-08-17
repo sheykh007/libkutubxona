@@ -222,6 +222,7 @@ const app = createApp({
       published_year: '',
       barcode: '',
       total_count: 1,
+      barcodes: [''],
       branch_id: '',
       items: []
     });
@@ -659,10 +660,52 @@ const app = createApp({
       }
     }
 
+    function syncBookBarcodes(count) {
+      let c = parseInt(count) || 1;
+      if (c < 1) c = 1;
+      if (c > 100) c = 100;
+      if (!Array.isArray(bookForm.barcodes)) {
+        bookForm.barcodes = [];
+      }
+      while (bookForm.barcodes.length < c) {
+        bookForm.barcodes.push('');
+      }
+      if (bookForm.barcodes.length > c) {
+        bookForm.barcodes = bookForm.barcodes.slice(0, c);
+      }
+    }
+
+    function autoFillSequentialBarcodes() {
+      if (!bookForm.barcodes || bookForm.barcodes.length === 0) return;
+      const first = (bookForm.barcodes[0] || '').trim();
+      if (!first) {
+        toast("Birinchi nusxa uchun boshlang'ich inventar raqamini kiriting (masalan: 1001 yoki INV-001)", "warning");
+        return;
+      }
+      const match = first.match(/^(.*?)(\d+)$/);
+      if (match) {
+        const prefix = match[1];
+        const startNum = parseInt(match[2], 10);
+        const numDigits = match[2].length;
+        for (let i = 1; i < bookForm.barcodes.length; i++) {
+          const nextNum = startNum + i;
+          const padded = String(nextNum).padStart(numDigits, '0');
+          bookForm.barcodes[i] = prefix + padded;
+        }
+        toast("Inventar raqamlari ketma-ket to'ldirildi", "success");
+      } else {
+        for (let i = 1; i < bookForm.barcodes.length; i++) {
+          bookForm.barcodes[i] = `${first}-${i + 1}`;
+        }
+        toast("Inventar raqamlari to'ldirildi", "success");
+      }
+    }
+
     function openAddBook() {
       editBookMode.value = false;
       Object.keys(bookForm).forEach(k => { if(Array.isArray(bookForm[k])) bookForm[k] = []; else bookForm[k] = ''; });
       bookForm.total_count = 1;
+      bookForm.barcodes = [''];
       bookForm.branch_id = branches.value.length > 0 ? branches.value[0].id : '';
       showBookModal.value = true;
     }
@@ -675,8 +718,9 @@ const app = createApp({
       bookForm.published_year = book.published_year;
       bookForm.barcode = '';
       bookForm.items = JSON.parse(JSON.stringify(book.items || []));
-      bookForm.total_count = book.items.length;
-      bookForm.branch_id = book.items.length > 0 && book.items[0].branch ? book.items[0].branch : '';
+      bookForm.total_count = (book.items || []).length || 1;
+      bookForm.barcodes = (book.items || []).map(it => it.barcode);
+      bookForm.branch_id = book.items && book.items.length > 0 && book.items[0].branch ? book.items[0].branch : '';
       showBookModal.value = true;
     }
 
@@ -691,8 +735,10 @@ const app = createApp({
           }
           toast('Kitob va nusxalari muvaffaqiyatli tahrirlandi', 'success');
         } else {
+          payload.total_count = parseInt(payload.total_count) || 1;
+          payload.barcodes = payload.barcodes || [];
           await api('POST', '/books/', payload);
-          toast('Kitob muvaffaqiyatli qo\'shildi', 'success');
+          toast('Kitob va uning nusxalari muvaffaqiyatli qo\'shildi', 'success');
         }
         showBookModal.value = false;
         loadBooks(bookPage.value);
@@ -1010,7 +1056,7 @@ const app = createApp({
       showMemberModal, showMemberDetail, selectedMember, memberIssues,
       openAddMember, openEditMember, saveMember, deleteMember, viewMember, loadMembers, approveMember, rejectMember, pendingMembers, loadPendingMembers,
       getAge,
-      booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, bookForm, editBookMode, openAddBook, saveBook, openEditBook, deleteBook, bulkDeleteBooks,
+      booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, bookForm, editBookMode, openAddBook, saveBook, openEditBook, deleteBook, bulkDeleteBooks, syncBookBarcodes, autoFillSequentialBarcodes,
       bookSearchQ, bookSearchResults, selectBookForIssue,
       issues, issuesLoading, issueFilter, issueForm, showIssueModal,
       memberSearchQ, memberSearchResults, selectMemberForIssue,

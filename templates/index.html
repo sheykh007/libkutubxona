@@ -1464,20 +1464,41 @@
             <input id="field-book-year" type="number" class="form-control" v-model="bookForm.published_year" placeholder="2023">
           </div>
           <div class="form-group" v-if="!editBookMode">
-            <label class="form-label">Inventar raqami</label>
-            <input id="field-book-barcode" class="form-control" v-model="bookForm.barcode" placeholder="123456789">
-          </div>
-          <div class="form-group" v-if="!editBookMode">
             <label class="form-label">Nusxa soni *</label>
-            <input id="field-book-count" type="number" class="form-control" v-model="bookForm.total_count" min="1" placeholder="1">
+            <input id="field-book-count" type="number" class="form-control" v-model.number="bookForm.total_count" min="1" max="100" @input="syncBookBarcodes(bookForm.total_count)" placeholder="1">
+          </div>
+
+          <!-- Dynamic Barcode Inputs per Copy for Add Mode -->
+          <div class="form-group form-full" v-if="!editBookMode && bookForm.barcodes && bookForm.barcodes.length > 0">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+              <label class="form-label" style="margin:0; font-weight:700; color:var(--text-primary); font-size:13.5px;">
+                📋 Nusxalar inventar raqamlari ({{ bookForm.barcodes.length }} ta nusxa):
+              </label>
+              <button type="button" class="btn btn-sm btn-secondary" @click="autoFillSequentialBarcodes" v-if="bookForm.barcodes.length > 1" style="font-size:12px; padding:4px 10px; border-radius:8px;">
+                ⚡ Ketma-ket to'ldirish
+              </button>
+            </div>
+            
+            <div style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 12px; background: var(--bg-card2);">
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                <div v-for="(bc, idx) in bookForm.barcodes" :key="idx" style="display:flex; align-items:center; gap:8px; background:var(--bg-card); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                  <span class="badge badge-purple" style="min-width: 22px; text-align: center; font-size:11px; font-weight:700;">{{ idx + 1 }}</span>
+                  <input type="text" class="form-control" v-model="bookForm.barcodes[idx]" :placeholder="'Nusxa ' + (idx + 1) + ' raqami...'" style="padding:6px 10px; font-size:13px;" />
+                </div>
+              </div>
+            </div>
+            <small style="color:var(--text-secondary); font-size:11.5px; margin-top:5px; display:block;">
+              💡 <i>Eslatma: Agar inventar raqam bo'sh qoldirilsa, tizim har bir nusxaga avtomatik noyob raqam beradi.</i>
+            </small>
           </div>
           
-          <div class="form-group form-full" v-if="editBookMode && bookForm.items.length > 0">
-            <label class="form-label">Nusxalar (Inventar raqamlarni tahrirlash)</label>
-            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-light); padding: 8px; border-radius: 8px;">
-              <div v-for="(item, index) in bookForm.items" :key="item.id" style="display:flex; gap:8px; margin-bottom: 8px; align-items: center;">
-                <span style="min-width: 20px; font-weight: bold; color: var(--text-muted);">{{ index + 1 }}.</span>
-                <input class="form-control" v-model="item.barcode" placeholder="Inventar raqami" style="flex:1">
+          <!-- Edit Mode Items List -->
+          <div class="form-group form-full" v-if="editBookMode && bookForm.items && bookForm.items.length > 0">
+            <label class="form-label" style="font-weight:700; color:var(--text-primary); font-size:13.5px;">Nusxalar (Inventar raqamlarni tahrirlash)</label>
+            <div style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 12px; background: var(--bg-card2);">
+              <div v-for="(item, index) in bookForm.items" :key="item.id" style="display:flex; gap:8px; margin-bottom: 8px; align-items: center; background:var(--bg-card); padding:8px 10px; border-radius:8px; border:1px solid var(--border);">
+                <span class="badge badge-purple" style="min-width: 22px; text-align: center; font-size:11px; font-weight:700;">{{ index + 1 }}</span>
+                <input class="form-control" v-model="item.barcode" placeholder="Inventar raqami" style="flex:1; padding:6px 10px; font-size:13px;">
                 <span class="badge" :class="item.status==='available' ? 'badge-green' : 'badge-yellow'">
                   {{ item.status === 'available' ? 'Mavjud' : item.status === 'borrowed' ? 'Band' : item.status }}
                 </span>
@@ -1593,7 +1614,7 @@
 
 </div><!-- /#app -->
 
-<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/app.js?v=4"></script>
   <!-- AI Chatbot Widget -->
   <div id="ai-chatbot-container">
     <div id="ai-chat-button" onclick="toggleChat()" title="AI Yordamchi bilan suhbat">
