@@ -114,9 +114,12 @@ def chat_bot_response(message):
     lat_msg = cyrillic_to_latin(norm_msg)
     cyr_msg = latin_to_cyrillic(norm_msg)
 
+    words = norm_msg.split()
+    cleaned_words = [w for w in words if w not in STOP_WORDS and len(w) > 1]
+
     # 1. GREETINGS & INTRO
-    greetings = ['salom', 'assalomu alaykum', 'assalom', 'qalay', 'hi', 'hello', 'start', '/start', 'privet', 'zdravstvuyte']
-    if any(norm_msg == g or norm_msg.startswith(g + ' ') for g in greetings) and len(norm_msg.split()) <= 3:
+    greetings = ['salom', 'assalomu alaykum', 'assalom', 'qalay', 'hi', 'hello', 'start', '/start', 'privet', 'zdravstvuyte', 'qandaysiz', 'qalaysiz', 'kimsan', 'kim bu', 'yordam', 'help']
+    if any(norm_msg == g or norm_msg.startswith(g + ' ') for g in greetings) and len(cleaned_words) <= 2:
         return (
             "<b>Assalomu alaykum!</b> Men Kutubxona boshqaruv tizimining <b>aqlli AI yordamchisiman</b>. 🤖✨<br><br>"
             "Men sizga quyidagi amallarda yordam bera olaman:<br>"
@@ -126,6 +129,25 @@ def chat_bot_response(message):
             "• 🕒 <b>Ish vaqti va qoidalar</b> haqida ma'lumot olish<br><br>"
             "Sizga aynan qanday kitob yoki ma'lumot kerak?"
         )
+
+    # 1.1 RECOMMENDATIONS & GENERAL CATALOG
+    if any(k in lat_msg for k in ['tavsiya', 'maslahat', 'qaysi kitoblar bor', 'qanday kitoblar bor', 'eng yaxshi', 'oqishga nima', 'nimani oqiy', 'yangi kitoblar']):
+        popular = Book.objects.all().order_by('-created_at')[:5]
+        res = "🌟 <b>Sizga quyidagi eng yaxshi va ommabop kitoblarni tavsiya qilaman:</b><br><br>"
+        for idx, b in enumerate(popular, 1):
+            avail = b.items.filter(status='available').count()
+            avail_tag = f"<span style='color:#10b981;font-size:11px;font-weight:700;'>🟢 Mavjud ({avail} ta)</span>" if avail > 0 else "<span style='color:#ef4444;font-size:11px;font-weight:700;'>🔴 Band</span>"
+            res += (
+                f"<div style='background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,0.03);'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:flex-start;gap:8px;'>"
+                f"<div style='font-weight:700;color:#0f172a;font-size:14px;'>{idx}. {b.title}</div>"
+                f"{avail_tag}"
+                f"</div>"
+                f"<div style='color:#475569;font-size:12px;margin-top:6px;'>✍️ Muallif: <b>{b.author}</b>" + (f" | 📅 {b.published_year}-yil" if b.published_year else "") + f"</div>"
+                f"</div>"
+            )
+        res += "<p style='margin-top:8px;font-size:12px;color:#64748b;'>Aniq bir muallif yoki janr (masalan: <i>\"Tarix\"</i>, <i>\"Badiiy\"</i>) bo'yicha qidirish uchun nomini yozishingiz mumkin.</p>"
+        return res
 
     # 2. LIBRARY RULES, WORKING HOURS, BRANCHES & FAQ
     if any(k in lat_msg for k in ['ish vaqti', 'qachon ochiq', 'qachon ishlaydi', 'soat nechada', 'grafik', 'ish tartibi']):
@@ -215,7 +237,7 @@ def chat_bot_response(message):
     # Fallback thematic keywords
     thematic_categories = {
         'tarix': ['tarix', 'temur', 'bobur', 'manguberdi', 'amirlik', 'xonlik', 'qadimgi', 'otmish', 'urush', 'войны', 'история', 'давлат'],
-        'badiiy': ['roman', 'qissa', 'hikoya', 'doston', 'she\'r', 'asar', 'ertak', 'badiiy', 'adabiyot', 'роман', 'рассказ', 'повесть'],
+        'badiiy': ['roman', 'qissa', 'hikoya', 'doston', 'she\'r', 'asar', 'ertak', 'badiiy', 'adabiyot', 'роман', 'рассказ', 'повесть', 'navoiy', 'qodiriy', 'cholpon', 'hoshimov'],
         'ilmiy': ['ilmiy', 'fan', 'tadqiqot', 'fizika', 'matematika', 'kimyo', 'biologiya', 'iqtisod', 'falsafa', 'наука', 'исследования'],
         'oquv': ['darslik', 'qollanma', 'maktab', 'talaba', 'til', 'grammatika', 'tilshunoslik', 'учебник', 'пособие', 'язык'],
         'ensiklopediya': ['ensiklopediya', 'lugat', 'qomus', 'энциклопедия', 'словарь'],

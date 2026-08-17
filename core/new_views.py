@@ -273,9 +273,25 @@ class AIRecommendationView(APIView):
         } for b in recs]
         return Response(data)
 
+from rest_framework.permissions import AllowAny
+
 class AIChatbotView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        message = request.query_params.get('message', '')
+        if not message:
+            return Response({'response': "Iltimos, xabar kiriting."})
+        reply = chat_bot_response(message)
+        return Response({'response': reply})
+
     def post(self, request):
-        message = request.data.get('message', '')
+        message = ''
+        if isinstance(request.data, dict):
+            message = request.data.get('message', '')
+        if not message:
+            message = request.POST.get('message', '')
         if not message:
             return Response({'response': "Iltimos, xabar kiriting."})
         
