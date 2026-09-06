@@ -71,6 +71,31 @@ const app = createApp({
 
     const currentPage = ref('dashboard');
     const sidebarOpen = ref(false);
+    const sidebarCollapsed = ref(false);
+    function toggleSidebarCollapse() {
+      sidebarCollapsed.value = !sidebarCollapsed.value;
+    }
+    const bookViewMode = ref('table'); // 'table' | 'grid'
+    function setBookViewMode(mode) {
+      bookViewMode.value = mode;
+    }
+    const globalSearchQuery = ref('');
+    function handleGlobalSearch() {
+      const q = globalSearchQuery.value.trim();
+      if (!q) return;
+      if (currentPage.value !== 'books' && currentPage.value !== 'members') {
+        currentPage.value = 'books';
+      }
+      if (currentPage.value === 'books') {
+        bookSearchFilter.value = q;
+        bookPage.value = 1;
+        loadBooks();
+      } else if (currentPage.value === 'members') {
+        memberFilters.q = q;
+        memberPage.value = 1;
+        loadMembers();
+      }
+    }
 
     // Theme
     const theme = ref(localStorage.getItem('lib_theme') || 'dark');
@@ -1044,7 +1069,8 @@ const app = createApp({
 
     return {
       isLoggedIn, auth, loginForm, login, logout,
-      currentPage, navigate, sidebarOpen,
+      currentPage, navigate, sidebarOpen, sidebarCollapsed, toggleSidebarCollapse,
+      bookViewMode, setBookViewMode, globalSearchQuery, handleGlobalSearch,
       notifications, showNotifications,
       reservationsList, updateReservation, openResDetail, showResDetail, resDetailItem, updateReservationWithConfirm,
       extensionsList, openExtModal, submitExtModal, showExtModal, extModalAction, extModalItem, extModalDate, extModalMessage,

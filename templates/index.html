@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- App CSS -->
-  <link rel="stylesheet" href="/static/css/style.css?v=4">
+  <link rel="stylesheet" href="/static/css/style.css?v=5">
 
   <!-- Libraries (CDN) -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
@@ -29,17 +29,19 @@
        ====================================================== -->
   <div class="login-overlay" v-if="!isLoggedIn">
     <div class="login-card">
-      <div class="login-logo">📚</div>
+      <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+        <div class="logo-icon" style="width: 54px; height: 54px; font-size: 28px; border-radius: 14px;">📚</div>
+      </div>
       <h2 class="login-title">Kutubxona Tizimi</h2>
-      <p class="login-subtitle">Iltimos, tizimga kiring</p>
+      <p class="login-subtitle">Raqamli kutubxona va boshqaruv platformasi</p>
       
       <div class="form-group" style="margin-bottom:16px;text-align:left">
         <label class="form-label">Foydalanuvchi nomi</label>
-        <input class="form-control" v-model="loginForm.username" placeholder="admin">
+        <input class="form-control" v-model="loginForm.username" placeholder="admin" @keyup.enter="login">
       </div>
       <div class="form-group" style="margin-bottom:16px;text-align:left">
         <label class="form-label">Parol</label>
-        <input class="form-control" type="password" v-model="loginForm.password" placeholder="••••••••">
+        <input class="form-control" type="password" v-model="loginForm.password" placeholder="••••••••" @keyup.enter="login">
       </div>
       <div class="form-group" style="margin-bottom:24px;text-align:left">
         <label class="form-label">Rol</label>
@@ -49,7 +51,7 @@
         </select>
       </div>
       
-      <button class="btn btn-primary" style="width:100%" @click="login">Kirish</button>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;" @click="login">Tizimga Kirish 🚀</button>
     </div>
   </div>
 
@@ -57,92 +59,104 @@
   <!-- ======================================================
        SIDEBAR
        ====================================================== -->
-  <nav class="sidebar" :class="{ open: sidebarOpen }" id="sidebar">
+  <nav class="sidebar" :class="{ open: sidebarOpen, collapsed: sidebarCollapsed }" id="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon">📚</div>
       <div class="logo-text">
         <h2>Kutubxona</h2>
-        <span>Boshqaruv Tizimi</span>
+        <span>Raqamli Tizim</span>
       </div>
+      <button class="sidebar-collapse-btn" @click="toggleSidebarCollapse" :title="sidebarCollapsed ? 'Kengaytirish' : 'Qisqartirish'" style="margin-left:auto; background:none; border:none; color:var(--text-sidebar); cursor:pointer; font-size:14px; padding:4px;">
+        <span v-if="sidebarCollapsed">▶</span>
+        <span v-else>◀</span>
+      </button>
     </div>
 
     <div class="sidebar-nav">
       <div class="nav-section-label">Asosiy</div>
 
       <div class="nav-item" :class="{ active: currentPage==='dashboard' }"
-           id="nav-dashboard" @click="navigate('dashboard')">
+           id="nav-dashboard" @click="navigate('dashboard')" title="Dashboard">
         <span class="nav-icon">📊</span>
-        Dashboard
-      </div>
-
-      <div class="nav-section-label">Ma'lumotlar</div>
-
-      <div class="nav-item" :class="{ active: currentPage==='members' }"
-           id="nav-members" @click="navigate('members')">
-        <span class="nav-icon">👤</span>
-        A'zolar
-      </div>
-
-      <div class="nav-item" :class="{ active: currentPage==='pending_members' }"
-           id="nav-pending-members" @click="navigate('pending_members')">
-        <span class="nav-icon">⏳</span>
-        A'zolik So'rovlari
-        <span class="nav-badge" v-if="dashStats.kutilmoqda_members > 0">{{ dashStats.kutilmoqda_members }}</span>
+        <span class="nav-text">Dashboard</span>
       </div>
 
       <div class="nav-item" :class="{ active: currentPage==='books' }"
-           id="nav-books" @click="navigate('books')">
+           id="nav-books" @click="navigate('books')" title="Kitoblar">
         <span class="nav-icon">📚</span>
-        Kitoblar
+        <span class="nav-text">Kitoblar</span>
       </div>
 
+      <div class="nav-item" :class="{ active: currentPage==='members' }"
+           id="nav-members" @click="navigate('members')" title="Kitobxonlar (A'zolar)">
+        <span class="nav-icon">👤</span>
+        <span class="nav-text">Kitobxonlar</span>
+      </div>
+
+      <div class="nav-section-label">Xizmatlar</div>
+
       <div class="nav-item" :class="{ active: currentPage==='issues' }"
-           id="nav-issues" @click="navigate('issues')">
+           id="nav-issues" @click="navigate('issues')" title="Kitob Berish">
         <span class="nav-icon">📖</span>
-        Kitob Berish
+        <span class="nav-text">Kitob Berish</span>
       </div>
 
       <div class="nav-item" :class="{ active: currentPage==='reservations' }"
-           id="nav-reservations" @click="navigate('reservations')">
+           id="nav-reservations" @click="navigate('reservations')" title="Rezervatsiyalar">
         <span class="nav-icon">🔖</span>
-        Band Qilinganlar
+        <span class="nav-text">Rezervatsiyalar</span>
       </div>
 
       <div class="nav-item" :class="{ active: currentPage==='extensions' }"
-           id="nav-extensions" @click="navigate('extensions')">
+           id="nav-extensions" @click="navigate('extensions')" title="Muddat Uzaytirish">
         <span class="nav-icon">⏳</span>
-        So'rovlar
+        <span class="nav-text">Muddat Uzaytirish</span>
+      </div>
+
+      <div class="nav-item" :class="{ active: currentPage==='pending_members' }"
+           id="nav-pending-members" @click="navigate('pending_members')" title="A'zolik So'rovlari">
+        <span class="nav-icon">📝</span>
+        <span class="nav-text">A'zolik So'rovlari</span>
+        <span class="nav-badge" v-if="dashStats && dashStats.kutilmoqda_members > 0">{{ dashStats.kutilmoqda_members }}</span>
       </div>
 
       <div class="nav-item" :class="{ active: currentPage==='finance' }"
-           id="nav-finance" @click="navigate('finance')">
+           id="nav-finance" @click="navigate('finance')" title="Moliya va To'lovlar">
         <span class="nav-icon">💰</span>
-        Moliya (Beta)
+        <span class="nav-text">Moliya (Beta)</span>
+      </div>
+
+      <div class="nav-section-label">AI Modullari</div>
+
+      <div class="nav-item" @click="toggleChat()" title="AI Kutubxonachi">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-text">AI Kutubxonachi</span>
+        <span class="badge badge-gold" style="font-size:9px; padding:1px 6px; margin-left:auto;">AI</span>
       </div>
 
       <div class="nav-section-label">Boshqaruv</div>
 
       <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='import' }"
-           id="nav-import" @click="navigate('import')">
+           id="nav-import" @click="navigate('import')" title="Excel Import">
         <span class="nav-icon">📥</span>
-        Excel Import
+        <span class="nav-text">Excel Import</span>
       </div>
 
       <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='audit_log' }"
-           id="nav-audit-log" @click="navigate('audit_log')">
-        <span class="nav-icon">📝</span>
-        Audit Log
+           id="nav-audit-log" @click="navigate('audit_log')" title="Audit Log">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Audit Log</span>
       </div>
 
       <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='backup' }"
-           id="nav-backup" @click="navigate('backup')">
+           id="nav-backup" @click="navigate('backup')" title="Zaxira Nusxa">
         <span class="nav-icon">💾</span>
-        Ma'lumotlar Bazasi
+        <span class="nav-text">Zaxira Nusxa</span>
       </div>
 
-      <div class="nav-item" @click="logout" id="nav-logout">
+      <div class="nav-item" @click="logout" id="nav-logout" title="Tizimdan Chiqish">
         <span class="nav-icon">🚪</span>
-        Chiqish
+        <span class="nav-text">Chiqish</span>
       </div>
     </div>
 
@@ -150,7 +164,7 @@
       <div class="sidebar-user">
         <div class="user-avatar">{{ auth.role === 'admin' ? '🛡️' : '👤' }}</div>
         <div class="user-info">
-          <div class="user-name">{{ auth.username }}</div>
+          <div class="user-name">{{ auth.username || 'Foydalanuvchi' }}</div>
           <div class="user-role">{{ auth.role === 'admin' ? 'Administrator' : 'Operator' }}</div>
         </div>
       </div>
@@ -166,48 +180,68 @@
     <header class="topbar">
       <div class="topbar-left">
         <button class="btn-hamburger" @click="sidebarOpen = !sidebarOpen" id="btn-hamburger">☰</button>
-        <h1>
-          <span v-if="currentPage==='dashboard'">📊 Dashboard</span>
-          <span v-else-if="currentPage==='members'">👤 A'zolar Boshqaruvi</span>
-          <span v-else-if="currentPage==='pending_members'">⏳ A'zolik So'rovlari</span>
-          <span v-else-if="currentPage==='books'">📚 Kitoblar</span>
-          <span v-else-if="currentPage==='issues'">📖 Kitob Berish Jurnali</span>
-          <span v-else-if="currentPage==='reservations'">🔖 Band Qilinganlar</span>
-          <span v-else-if="currentPage==='extensions'">⏳ So'rovlar</span>
-          <span v-else-if="currentPage==='import'">📥 Excel Import</span>
-          <span v-else-if="currentPage==='audit_log'">📝 Audit Log</span>
-          <span v-else-if="currentPage==='backup'">💾 Ma'lumotlar Bazasi</span>
-        </h1>
-        <div class="breadcrumb">Kutubxona Boshqaruv Tizimi</div>
+        <div>
+          <h1 style="margin: 0; font-size: 1.15rem; font-weight: 700;">
+            <span v-if="currentPage==='dashboard'">📊 Dashboard</span>
+            <span v-else-if="currentPage==='members'">👤 Kitobxonlar Boshqaruvi</span>
+            <span v-else-if="currentPage==='pending_members'">📝 A'zolik So'rovlari</span>
+            <span v-else-if="currentPage==='books'">📚 Kitoblar Katalogi</span>
+            <span v-else-if="currentPage==='issues'">📖 Kitob Berish Jurnali</span>
+            <span v-else-if="currentPage==='reservations'">🔖 Band Qilingan Kitoblar</span>
+            <span v-else-if="currentPage==='extensions'">⏳ Muddat Uzaytirish</span>
+            <span v-else-if="currentPage==='import'">📥 Excel Import</span>
+            <span v-else-if="currentPage==='audit_log'">📋 Tizim Harakatlari (Audit)</span>
+            <span v-else-if="currentPage==='backup'">💾 Ma'lumotlar Bazasi Zaxirasi</span>
+            <span v-else-if="currentPage==='finance'">💰 Moliya va To'lovlar</span>
+          </h1>
+          <div class="breadcrumb" style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
+            Kutubxona / {{ currentPage === 'dashboard' ? 'Asosiy panel' : currentPage }}
+          </div>
+        </div>
       </div>
+
+      <!-- Topbar Global Search -->
+      <div class="topbar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Kitob, muallif yoki a'zo qidirish... (Enter)" v-model="globalSearchQuery" @keyup.enter="handleGlobalSearch">
+      </div>
+
       <div class="topbar-right">
-        <button class="btn btn-primary" style="margin-right: 8px; border-radius: 20px; padding: 6px 16px;" @click="openQRModal">
+        <!-- AI Chat quick trigger -->
+        <button class="btn btn-secondary btn-sm" @click="toggleChat()" style="border-radius:20px; font-weight:700; color:var(--primary); padding:6px 12px;" title="AI Kutubxonachi yordamchisi">
+          🤖 AI Yordamchi
+        </button>
+
+        <button class="btn btn-primary btn-sm" style="border-radius: 20px; padding: 6px 14px;" @click="openQRModal" title="Kitobxon QR kodini skanerlash">
           📷 QR Skaner
         </button>
+
         <!-- Notifications Dropdown -->
-        <div style="position:relative; margin-right:12px;">
+        <div style="position:relative;">
           <div class="notification-bell" @click="showNotifications = !showNotifications">
-            <span style="font-size: 20px;">🔔</span>
+            <span style="font-size: 19px;">🔔</span>
             <span class="badge" v-if="notifications.length > 0">{{ notifications.length }}</span>
           </div>
           <div class="notification-dropdown" v-if="showNotifications">
-            <div v-if="notifications.length === 0" style="padding:8px; text-align:center; color:var(--text-secondary);">
-              Yangi bildirishnomalar yo'q.
+            <div v-if="notifications.length === 0" style="padding:14px; text-align:center; color:var(--text-secondary); font-size:13px;">
+              ✨ Yangi bildirishnomalar yo'q
             </div>
             <div class="notif-item" v-for="(n, i) in notifications" :key="i">
               <span class="notif-icon" v-if="n.type === 'warning'">⚠️</span>
               <span class="notif-icon" v-else-if="n.type === 'info'">ℹ️</span>
               <span class="notif-icon" v-else>🔔</span>
-              <div class="notif-text">{{ n.message }}</div>
+              <div class="notif-text" style="font-size:13px;">{{ n.message }}</div>
             </div>
           </div>
         </div>
 
-        <button class="btn btn-secondary btn-sm" @click="toggleTheme" style="margin-right:8px; padding:6px 10px;" id="btn-theme-toggle">
+        <button class="btn btn-secondary btn-sm" @click="toggleTheme" style="padding:6px 12px; border-radius: 20px;" id="btn-theme-toggle">
           <span v-if="theme === 'dark'">☀️ Kunduzgi</span>
           <span v-else>🌙 Tungi</span>
         </button>
-        <div class="topbar-date">📅 {{ today }}</div>
+
+        <div class="topbar-date" style="font-size:12px; color:var(--text-muted);">📅 {{ today }}</div>
+
         <button v-if="currentPage==='members'" class="btn btn-primary btn-sm" @click="openAddMember" id="btn-add-member">
           ➕ Yangi A'zo
         </button>
@@ -230,6 +264,20 @@
         <div v-if="dashLoading" class="loading-overlay"><div class="spinner"></div></div>
         <template v-else-if="dashStats">
 
+          <!-- Welcome Banner -->
+          <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: #ffffff; border: none; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <h2 style="font-size: 1.45rem; font-weight: 800; margin-bottom: 6px; color: #ffffff;">Xush kelibsiz, {{ auth.username || 'Foydalanuvchi' }}! 👋</h2>
+                <p style="opacity: 0.88; font-size: 0.9rem; margin: 0;">Bugungi kutubxona jarayonlari, a'zolar va kitoblar tahlili</p>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <span style="background: rgba(255,255,255,0.15); padding: 7px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">📅 {{ today }}</span>
+                <button class="btn btn-gold btn-sm" @click="toggleChat()">🤖 AI Tahlil</button>
+              </div>
+            </div>
+          </div>
+
           <!-- Filter Bar -->
           <div class="filters-bar" style="margin-bottom: 20px;">
             <div style="display:flex; align-items:center; gap: 10px; flex-wrap:wrap;">
@@ -250,39 +298,58 @@
           </div>
 
           <!-- Date filter banner -->
-          <div v-if="dashDateFrom || dashDateTo" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; padding: 8px 16px; margin-bottom: 16px; font-size: 13px; color: #6366f1;">
+          <div v-if="dashDateFrom || dashDateTo" style="background: var(--primary-light); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; margin-bottom: 20px; font-size: 13px; color: var(--primary); font-weight: 500;">
             📅 Filtrlangan davr: <b>{{ dashDateFrom || '...' }}</b> — <b>{{ dashDateTo || '...' }}</b>
-            &nbsp;| Shu davrda qo'shilgan a'zolar: <b>{{ dashStats.filtered_members_count ?? 0 }}</b> ta
-            &nbsp;| Shu davrda qo'shilgan kitoblar: <b>{{ dashStats.added_books_count ?? 0 }}</b> ta
+            &nbsp;|&nbsp; Qo'shilgan a'zolar: <b>{{ dashStats.filtered_members_count ?? 0 }}</b> ta
+            &nbsp;|&nbsp; Qo'shilgan kitoblar: <b>{{ dashStats.added_books_count ?? 0 }}</b> ta
+          </div>
+
+          <!-- AI Insights Panel -->
+          <div class="ai-panel" style="margin-bottom: 24px;">
+            <div class="ai-panel-title">
+              <span>🤖 Kutubxona Sun'iy Intellekt Tahlili</span>
+              <span class="ai-badge">AI INSIGHTS</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+              <div class="ai-insight">
+                💡 <b>Kitoblar balansi:</b> Jami <b>{{ dashStats.total_books }}</b> ta nusxadan <b>{{ dashStats.available_books }}</b> tasi zaxirada mavjud ({{ dashStats.total_books ? Math.round((dashStats.available_books / dashStats.total_books)*100) : 0 }}%).
+              </div>
+              <div class="ai-insight">
+                👥 <b>A'zolik faolligi:</b> <b>{{ dashStats.faol_members }}</b> ta faol kitobxon ro'yxatda. Kutilayotgan so'rovlar: <b>{{ dashStats.kutilmoqda_members }}</b> ta.
+              </div>
+              <div class="ai-insight">
+                ⚠️ <b>Nazorat va muddat:</b> Hozirda <b>{{ dashStats.overdue_issues }}</b> ta kitob qaytarilish muddati o'tgan.
+              </div>
+            </div>
           </div>
 
           <!-- KPI Stat Cards Row 1: Members -->
-          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
-            <div class="stat-card c1">
+          <div class="stats-grid" style="margin-bottom: 16px;">
+            <div class="stat-card" data-color="primary">
               <div class="stat-icon">👥</div>
               <div class="stat-value">{{ dashStats.total_members }}</div>
               <div class="stat-label">Jami A'zolar</div>
               <div class="stat-sub">Ro'yxatdagi jami</div>
             </div>
-            <div class="stat-card c2">
+            <div class="stat-card" data-color="success">
               <div class="stat-icon">✅</div>
               <div class="stat-value">{{ dashStats.faol_members }}</div>
               <div class="stat-label">Faol A'zolar</div>
               <div class="stat-sub">Holati: faol</div>
             </div>
-            <div class="stat-card" style="background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); color:#fff">
+            <div class="stat-card" data-color="warning">
               <div class="stat-icon">⏳</div>
               <div class="stat-value">{{ dashStats.kutilmoqda_members }}</div>
               <div class="stat-label">Kutilmoqda</div>
               <div class="stat-sub">Tasdiqlanmagan</div>
             </div>
-            <div class="stat-card c3">
+            <div class="stat-card" data-color="gold">
               <div class="stat-icon">📅</div>
               <div class="stat-value">{{ dashStats.bugun_qoshilgan }}</div>
               <div class="stat-label">Bugun Qo'shilgan</div>
               <div class="stat-sub">Yangi a'zo sanasi</div>
             </div>
-            <div class="stat-card" style="background: linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff">
+            <div class="stat-card" data-color="info">
               <div class="stat-icon">🔄</div>
               <div class="stat-value">{{ dashStats.qayta_azolar }}</div>
               <div class="stat-label">Qayta A'zolar</div>
@@ -291,32 +358,32 @@
           </div>
 
           <!-- KPI Stat Cards Row 2: Books & Issues -->
-          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
-            <div class="stat-card c3">
+          <div class="stats-grid" style="margin-bottom: 16px;">
+            <div class="stat-card" data-color="primary">
               <div class="stat-icon">📚</div>
               <div class="stat-value">{{ dashStats.unique_titles }}</div>
               <div class="stat-label">Noyob Sarlavha</div>
               <div class="stat-sub">Jami kitob turi</div>
             </div>
-            <div class="stat-card c1">
+            <div class="stat-card" data-color="info">
               <div class="stat-icon">🗂️</div>
               <div class="stat-value">{{ dashStats.total_books }}</div>
               <div class="stat-label">Jami Nusxalar</div>
               <div class="stat-sub">Barcha inventar</div>
             </div>
-            <div class="stat-card" style="background: linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff">
+            <div class="stat-card" data-color="success">
               <div class="stat-icon">✅</div>
               <div class="stat-value">{{ dashStats.available_books }}</div>
               <div class="stat-label">Mavjud Kitoblar</div>
               <div class="stat-sub">Berilishga tayyor</div>
             </div>
-            <div class="stat-card" style="background: linear-gradient(135deg,#6366f1 0%,#4f46e5 100%); color:#fff">
+            <div class="stat-card" data-color="gold">
               <div class="stat-icon">📖</div>
               <div class="stat-value">{{ dashStats.borrowed_books }}</div>
               <div class="stat-label">Berilgan Kitoblar</div>
               <div class="stat-sub">Hozir foydalanuvchida</div>
             </div>
-            <div class="stat-card c4">
+            <div class="stat-card" data-color="danger">
               <div class="stat-icon">⚠️</div>
               <div class="stat-value">{{ dashStats.overdue_issues }}</div>
               <div class="stat-label">Kechikkan Kitoblar</div>
@@ -325,26 +392,26 @@
           </div>
 
           <!-- KPI Stat Cards Row 3: Finance -->
-          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
-            <div class="stat-card c2">
+          <div class="stats-grid" style="margin-bottom: 20px;">
+            <div class="stat-card" data-color="gold">
               <div class="stat-icon">💰</div>
               <div class="stat-value">{{ formatPrice(dashStats.today_income) }}</div>
               <div class="stat-label">Bugungi Daromad</div>
               <div class="stat-sub">Bugungi tushum</div>
             </div>
-            <div class="stat-card c3">
+            <div class="stat-card" data-color="info">
               <div class="stat-icon">📈</div>
               <div class="stat-value">{{ formatPrice(dashStats.monthly_income) }}</div>
               <div class="stat-label">Oylik Daromad</div>
               <div class="stat-sub">Joriy oydagi tushum</div>
             </div>
-            <div class="stat-card" style="background: linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff">
+            <div class="stat-card" data-color="success">
               <div class="stat-icon">💵</div>
               <div class="stat-value">{{ formatPrice(dashStats.total_income) }}</div>
               <div class="stat-label">Jami Daromad</div>
               <div class="stat-sub">Barcha vaqt uchun</div>
             </div>
-            <div class="stat-card c4">
+            <div class="stat-card" data-color="danger">
               <div class="stat-icon">❗</div>
               <div class="stat-value">{{ dashStats.debtors_count }}</div>
               <div class="stat-label">Qarzdorlar</div>
@@ -422,28 +489,45 @@
            ====================================================== -->
       <section v-if="currentPage==='books'">
         <div class="card" style="margin-bottom:20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
             <div class="filters-bar" style="margin:0; flex:1; border:none; padding:0; background:transparent;">
-              <div class="filter-search" style="flex:1">
+              <div class="filter-search" style="flex:1; min-width:240px;">
                 <span class="search-icon">🔍</span>
-                <input class="form-control" v-model="bookSearchFilter" placeholder="Kitob nomi yoki muallif bo'yicha qidirish...">
+                <input class="form-control" v-model="bookSearchFilter" placeholder="Kitob nomi yoki muallif bo'yicha qidirish..." @input="bookPage=1; loadBooks()">
               </div>
-              <select class="form-control" v-model="bookBranchFilter" style="min-width:180px; margin-left:10px;">
+              <select class="form-control" v-model="bookBranchFilter" @change="bookPage=1; loadBooks()" style="min-width:180px;">
                 <option value="">Barcha bo'limlar</option>
                 <option v-for="br in branches" :key="br.id" :value="br.id">{{ br.name }}</option>
               </select>
             </div>
-            <div style="display:flex; gap:10px; margin-left:10px;">
-              <button class="btn btn-secondary btn-sm" @click="navigate('import')">
-                📥 Excel Import
+
+            <div style="display:flex; gap:10px; align-items:center;">
+              <!-- View Switcher -->
+              <div class="view-switcher">
+                <button class="view-switcher-btn" :class="{ active: bookViewMode==='table' }" @click="setBookViewMode('table')" title="Jadval ko'rinishi">
+                  ☰ Jadval
+                </button>
+                <button class="view-switcher-btn" :class="{ active: bookViewMode==='grid' }" @click="setBookViewMode('grid')" title="Katalog kartochkalari">
+                  ⊞ Katalog
+                </button>
+              </div>
+
+              <button class="btn btn-primary btn-sm" @click="openAddBook" id="btn-add-book-toolbar">
+                ➕ Yangi Kitob
               </button>
-              <button v-if="auth.role === 'admin'" class="btn btn-danger btn-sm" @click="bulkDeleteBooks">
-                🛑 Barchasini tozalash
+              <button class="btn btn-secondary btn-sm" @click="navigate('import')">
+                📥 Excel
+              </button>
+              <button v-if="auth.role === 'admin'" class="btn btn-danger btn-sm" @click="bulkDeleteBooks" title="Barcha kitoblarni tozalash">
+                🛑 Tozalash
               </button>
             </div>
           </div>
-          
-          <div class="table-container">
+
+          <div v-if="booksLoading" class="loading-overlay"><div class="spinner"></div></div>
+
+          <!-- 1. Table View -->
+          <div class="table-container" v-else-if="bookViewMode === 'table'">
             <table>
               <thead>
                 <tr>
@@ -460,51 +544,92 @@
               <tbody>
                 <tr v-for="(b, i) in booksList" :key="b.id">
                   <td>{{ (bookPage - 1) * bookPageSize + i + 1 }}</td>
-                  <td style="font-weight: 600;">{{ b.title }}</td>
-                  <td>{{ b.author || '-' }}</td>
+                  <td style="font-weight: 700; color: var(--text-primary);">{{ b.title }}</td>
+                  <td style="color: var(--text-secondary);">{{ b.author || '-' }}</td>
                   <td>{{ b.published_year || '-' }}</td>
                   <td>
-                    <span v-for="brName in Array.from(new Set(b.items.map(i => i.branch_name).filter(Boolean)))" class="badge badge-purple" style="margin-right: 4px;">{{ brName }}</span>
+                    <span v-for="brName in Array.from(new Set((b.items || []).map(i => i.branch_name).filter(Boolean)))" class="badge badge-purple" style="margin-right: 4px;">{{ brName }}</span>
+                    <span v-if="!b.items || !b.items.length" style="color:var(--text-muted); font-size:12px;">—</span>
                   </td>
-                  <td><span class="badge badge-blue">{{ b.items.length }} ta</span></td>
-                  <td style="font-size: 0.75rem; color: var(--text-muted);">
-                    <span v-for="item in b.items" :key="item.id" style="display:inline-block; margin-right:8px; margin-bottom:4px; padding: 2px 6px; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 4px;">
-                      {{ item.barcode }}
-                      <span :class="{'badge-green': item.status==='available', 'badge-yellow': item.status==='borrowed'}" style="margin-left:4px; padding:2px 4px; border-radius:4px; font-size:0.65rem;">
+                  <td><span class="badge badge-blue">{{ (b.items || []).length }} ta</span></td>
+                  <td style="font-size: 0.75rem; color: var(--text-muted); max-width: 280px;">
+                    <span v-for="item in (b.items || [])" :key="item.id" style="display:inline-block; margin-right:6px; margin-bottom:4px; padding: 3px 8px; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 6px;">
+                      <b>{{ item.barcode }}</b>
+                      <span class="badge" :class="{'badge-green': item.status==='available', 'badge-yellow': item.status==='borrowed', 'badge-red': item.status==='lost'}" style="margin-left:4px; font-size:0.65rem; padding: 2px 4px;">
                         {{ item.status === 'available' ? 'Mavjud' : item.status === 'borrowed' ? 'Band' : item.status }}
                       </span>
                     </span>
                   </td>
                   <td>
-                    <div style="display:flex;gap:6px">
-                      <button v-if="auth.role === 'admin'" class="btn btn-secondary btn-sm" @click="openEditBook(b)">✏️</button>
-                      <button v-if="auth.role === 'admin'" class="btn btn-danger btn-sm" @click="deleteBook(b.id)">🗑</button>
+                    <div style="display:flex; gap:6px;">
+                      <button v-if="auth.role === 'admin'" class="btn btn-secondary btn-xs" @click="openEditBook(b)" title="Tahrirlash">✏️</button>
+                      <button v-if="auth.role === 'admin'" class="btn btn-danger btn-xs" @click="deleteBook(b.id)" title="O'chirish">🗑</button>
                     </div>
                   </td>
                 </tr>
                 <tr v-if="!booksList.length && !booksLoading">
-                  <td colspan="8" class="table-empty">Hech qanday kitob topilmadi.</td>
+                  <td colspan="8" class="table-empty">
+                    <div class="empty-state">
+                      <div class="empty-icon">📚</div>
+                      <div class="empty-title">Kitoblar topilmadi</div>
+                      <div class="empty-sub">Yangi kitob qo'shing yoki qidiruv so'rovini tekshiring</div>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          
-          <div class="pagination" style="padding:12px 20px" v-if="bookTotal > 0">
-            <div>Jami <b>{{ bookTotal }}</b> ta kitob | Sahifa {{ bookPage }} / {{ totalBookPages || 1 }}</div>
-            <div style="display:flex; gap:10px; align-items:center;">
-              <select class="form-control" style="padding:4px 8px; font-size:13px;" v-model.number="bookPageSize">
-                <option :value="10">10 ta qator</option>
-                <option :value="20">20 ta qator</option>
-                <option :value="50">50 ta qator</option>
-                <option :value="100">100 ta qator</option>
-              </select>
-              <button class="btn btn-secondary btn-sm" :disabled="bookPage === 1" @click="loadBooks(bookPage - 1)">← Oldingi</button>
-              <span style="font-size:13px; font-weight:600;">{{ bookPage }}</span>
-              <button class="btn btn-secondary btn-sm" :disabled="bookPage >= totalBookPages" @click="loadBooks(bookPage + 1)">Keyingi →</button>
+
+          <!-- 2. Grid (Catalog) View -->
+          <div v-else-if="bookViewMode === 'grid'">
+            <div class="book-grid" v-if="booksList.length">
+              <div v-for="b in booksList" :key="b.id" class="book-grid-card">
+                <div class="book-cover-placeholder">
+                  📚
+                </div>
+                <div class="book-grid-info">
+                  <div class="book-grid-title" :title="b.title">{{ b.title }}</div>
+                  <div class="book-grid-author">✍️ {{ b.author || 'Muallif ko\'rsatilmagan' }}</div>
+                  <div class="book-grid-meta">
+                    <span class="badge badge-purple">{{ b.published_year || 'Yili yo\'q' }}</span>
+                    <span class="badge" :class="(b.items?.filter(i=>i.status==='available').length || 0) > 0 ? 'badge-green' : 'badge-yellow'">
+                      {{ b.items?.filter(i=>i.status==='available').length || 0 }} / {{ b.items?.length || 0 }} mavjud
+                    </span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid var(--border-light);">
+                    <span style="font-size:11.5px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:120px;">
+                      🏛️ {{ (b.items?.map(i => i.branch_name).filter(Boolean))[0] || 'Asosiy' }}
+                    </span>
+                    <div style="display:flex; gap:6px;">
+                      <button v-if="auth.role === 'admin'" class="btn btn-secondary btn-xs" @click="openEditBook(b)" title="Tahrirlash">✏️</button>
+                      <button v-if="auth.role === 'admin'" class="btn btn-danger btn-xs" @click="deleteBook(b.id)" title="O'chirish">🗑</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="empty-state">
+              <div class="empty-icon">📚</div>
+              <div class="empty-title">Kitoblar topilmadi</div>
+              <div class="empty-sub">Yangi kitob qo'shing yoki qidiruv so'rovini tekshiring</div>
             </div>
           </div>
 
-          
+          <!-- Pagination -->
+          <div class="pagination" style="padding:16px 20px;" v-if="bookTotal > 0">
+            <div>Jami <b>{{ bookTotal }}</b> ta kitob | Sahifa <b>{{ bookPage }}</b> / {{ totalBookPages || 1 }}</div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <select class="form-control" style="padding:4px 8px; font-size:13px;" v-model.number="bookPageSize" @change="bookPage=1; loadBooks()">
+                <option :value="10">10 ta</option>
+                <option :value="20">20 ta</option>
+                <option :value="50">50 ta</option>
+                <option :value="100">100 ta</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" :disabled="bookPage === 1" @click="loadBooks(bookPage - 1)">← Oldingi</button>
+              <span style="font-size:13px; font-weight:700; padding:0 4px;">{{ bookPage }}</span>
+              <button class="btn btn-secondary btn-sm" :disabled="bookPage >= totalBookPages" @click="loadBooks(bookPage + 1)">Keyingi →</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1614,10 +1739,10 @@
 
 </div><!-- /#app -->
 
-<script src="/static/js/app.js?v=4"></script>
+<script src="/static/js/app.js?v=5"></script>
   <!-- AI Chatbot Widget -->
   <div id="ai-chatbot-container">
-    <div id="ai-chat-button" onclick="toggleChat()" title="AI Yordamchi bilan suhbat">
+    <div id="ai-chat-button" onclick="toggleChat()" title="AI Kutubxonachi bilan suhbat">
       <span style="font-size: 24px; margin-bottom: 2px; line-height: 1;">🤖</span>
       <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.5px; line-height: 1;">AI</span>
     </div>
@@ -1638,7 +1763,7 @@
         <button class="ai-chip" onclick="askQuickPrompt('Eng mashhur kitoblar qaysi?')">🔥 Mashhur kitoblar</button>
         <button class="ai-chip" onclick="askQuickPrompt('Kutubxona ish vaqti qachon?')">🕒 Ish vaqti</button>
         <button class="ai-chip" onclick="askQuickPrompt('Qaysi filial va bo\'limlar bor?')">🏛️ Bo'limlar</button>
-        <button class="ai-chip" onclick="askQuickPrompt('Shavkat Mirziyoyev asarlari')">📚 Shavkat Mirziyoyev</button>
+        <button class="ai-chip" onclick="askQuickPrompt('Badiiy adabiyotlar')">📚 Badiiy asarlar</button>
         <button class="ai-chip" onclick="askQuickPrompt('Qanday a\'zo bo\'lish mumkin?')">👤 A'zolik tartibi</button>
       </div>
 
@@ -1647,7 +1772,7 @@
           <div class="msg-avatar">AI</div>
           <div class="msg-content">
             <b>Assalomu alaykum!</b> Men Kutubxona boshqaruv tizimining sun'iy intellekt yordamchisiman. 🤖✨<br><br>
-            Sizga qanday kitob yoki ma'lumot topishda yordam beray? Yuqoridagi tezkor tugmalardan foydalanishingiz yoki o'zingiz xohlagan so'rovni yozishingiz mumkin.
+            Sizga qanday kitob yoki ma'lumot topishda yordam beray? Yuqoridagi tezkor tugmalardan foydalanishingiz yoki o'zingiz xohlagan kitob nomi, muallifi yoki mavzuni yozishingiz mumkin.
           </div>
         </div>
       </div>
@@ -1671,7 +1796,7 @@
       font-family: 'Inter', sans-serif;
     }
     #ai-chat-button {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      background: linear-gradient(135deg, #173B57, #2F6B8A);
       color: white;
       border-radius: 50%;
       width: 62px;
@@ -1681,13 +1806,13 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+      box-shadow: 0 8px 24px rgba(23, 59, 87, 0.45);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(200, 169, 81, 0.5);
     }
     #ai-chat-button:hover {
       transform: scale(1.08) translateY(-3px);
-      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.6);
+      box-shadow: 0 12px 28px rgba(23, 59, 87, 0.65);
     }
     #ai-chat-window {
       width: 380px;
@@ -1708,7 +1833,7 @@
       transform: translateY(0) scale(1) !important;
     }
     #ai-chat-header {
-      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      background: linear-gradient(135deg, #173B57, #2F6B8A);
       color: white;
       padding: 16px 20px;
       display: flex;
@@ -1803,9 +1928,9 @@
       flex-shrink: 0;
     }
     .ai-chip:hover {
-      background: #4f46e5;
+      background: #173B57;
       color: #ffffff;
-      border-color: #4f46e5;
+      border-color: #173B57;
       transform: translateY(-1px);
     }
 
@@ -1845,7 +1970,7 @@
       flex-shrink: 0;
     }
     .chat-message.bot .msg-avatar {
-      background: #4f46e5;
+      background: #173B57;
       color: white;
     }
     .chat-message.user .msg-avatar {
@@ -1866,7 +1991,7 @@
       border: 1px solid #e2e8f0;
     }
     .chat-message.user .msg-content {
-      background: #4f46e5;
+      background: #173B57;
       color: #ffffff;
       border-top-right-radius: 4px;
     }
@@ -1888,7 +2013,7 @@
     .typing-indicator span {
       width: 6px;
       height: 6px;
-      background: #6366f1;
+      background: #C8A951;
       border-radius: 50%;
       animation: typing 1.4s infinite ease-in-out;
     }
@@ -1920,12 +2045,12 @@
       font-family: inherit;
     }
     #ai-chat-input:focus {
-      border-color: #4f46e5;
+      border-color: #173B57;
       background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      box-shadow: 0 0 0 3px rgba(23, 59, 87, 0.15);
     }
     #ai-send-btn {
-      background: #4f46e5;
+      background: #173B57;
       color: white;
       border: none;
       width: 40px;
@@ -1937,14 +2062,51 @@
       cursor: pointer;
       transition: all 0.2s;
       flex-shrink: 0;
-      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+      box-shadow: 0 4px 10px rgba(23, 59, 87, 0.3);
     }
     #ai-send-btn:hover {
-      background: #4338ca;
+      background: #1E4D6E;
       transform: scale(1.06);
     }
     #ai-send-btn:active {
       transform: scale(0.94);
+    }
+
+    /* Dark Mode Support for AI Chat Window */
+    [data-theme="dark"] #ai-chat-window {
+      background: #111928;
+      border-color: rgba(255, 255, 255, 0.1);
+      color: #f0f2f5;
+    }
+    [data-theme="dark"] #ai-quick-chips {
+      background: #0d1522;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    [data-theme="dark"] .ai-chip {
+      background: #172032;
+      color: #cbd5e1;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    [data-theme="dark"] #ai-chat-messages {
+      background: #0b1120;
+    }
+    [data-theme="dark"] .chat-message.bot .msg-content {
+      background: #172032;
+      color: #f0f2f5;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    [data-theme="dark"] #ai-chat-input-area {
+      background: #111928;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    [data-theme="dark"] #ai-chat-input {
+      background: #172032;
+      color: #f0f2f5;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    [data-theme="dark"] .typing-indicator {
+      background: #172032;
+      border-color: rgba(255, 255, 255, 0.1);
     }
   </style>
 
