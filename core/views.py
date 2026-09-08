@@ -60,7 +60,7 @@ class MemberListCreateView(generics.ListCreateAPIView):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        qs = Member.objects.all().order_by('-id')
+        qs = Member.objects.annotate(issue_count=Count('book_issues')).order_by('-issue_count', '-id')
         q = self.request.query_params.get('q', '')
         holati = self.request.query_params.get('holati', '')
         date_from = self.request.query_params.get('date_from', '')
@@ -418,22 +418,15 @@ class DashboardStatsView(APIView):
 
         # Top members by book issues
         top_members = []
-        top_m_qs = Member.objects.annotate(issue_count=Count('book_issues')).order_by('-issue_count')[:5]
+        top_m_qs = Member.objects.annotate(issue_count=Count('book_issues')).order_by('-issue_count', '-id')[:5]
         for idx, m in enumerate(top_m_qs):
             top_members.append({
                 'rank': idx + 1,
+                'id': m.id,
                 'sigla': m.sigla,
                 'familiya': m.familiya,
-                'issue_count': m.issue_count if m.issue_count > 0 else (48 - idx * 5)
+                'issue_count': m.issue_count
             })
-        if not top_members:
-            top_members = [
-                {'rank': 1, 'sigla': 'KB-0001', 'familiya': 'Aliyeva Sevinch', 'issue_count': 48},
-                {'rank': 2, 'sigla': 'KB-0002', 'familiya': 'Karimov Behzod', 'issue_count': 42},
-                {'rank': 3, 'sigla': 'KB-0003', 'familiya': 'Xasanov Aziz', 'issue_count': 38},
-                {'rank': 4, 'sigla': 'KB-0004', 'familiya': "To'rayev Javohir", 'issue_count': 31},
-                {'rank': 5, 'sigla': 'KB-0005', 'familiya': 'Nurmatova Dilfuza', 'issue_count': 29},
-            ]
 
         # Issues stats
         total_issues = BookIssue.objects.count()
@@ -469,14 +462,41 @@ class DashboardStatsView(APIView):
             {'name': 'Boshqa', 'percent': 20, 'color': '#94A3B8'}
         ]
 
-        # Popular books list
-        popular_books = [
-            {'rank': 1, 'title': 'Amir Temur', 'author': 'Shukur Xolmirzayev', 'read_count': 428, 'cover_color': '#854d0e'},
-            {'rank': 2, 'title': 'Javohirnoma', 'author': 'Alisher Navoiy', 'read_count': 356, 'cover_color': '#1e3a8a'},
-            {'rank': 3, 'title': 'Kimyogar', 'author': 'Paulo Koelo', 'read_count': 298, 'cover_color': '#14532d'},
-            {'rank': 4, 'title': "O'tkan kunlar", 'author': 'Abdulla Qodiriy', 'read_count': 275, 'cover_color': '#047857'},
-            {'rank': 5, 'title': 'Mehr bilan yashash', 'author': 'Deyl Karnegi', 'read_count': 241, 'cover_color': '#312e81'},
-        ]
+        # Popular books list generated from actual BookIssue records
+        real_popular = (
+            BookIssue.objects
+            .filter(book_item__book__isnull=False)
+            .values('book_item__book__id', 'book_item__book__title', 'book_item__book__author')
+            .annotate(read_count=Count('id'))
+            .order_by('-read_count')[:5]
+        )
+        popular_books = []
+        rank = 1
+        for item in real_popular:
+            if item['book_item__book__title']:
+                popular_books.append({
+                    'rank': rank,
+                    'id': item['book_item__book__id'],
+                    'title': item['book_item__book__title'],
+                    'author': item['book_item__book__author'] or "Muallif ko'rsatilmagan",
+                    'read_count': item['read_count'],
+                    'cover_color': '#1e3a8a'
+                })
+                rank += 1
+
+        if len(popular_books) < 5:
+            existing_ids = [b.get('id') for b in popular_books if b.get('id')]
+            supplementary = Book.objects.exclude(id__in=existing_ids).order_by('-id')[:(5 - len(popular_books))]
+            for b in supplementary:
+                popular_books.append({
+                    'rank': rank,
+                    'id': b.id,
+                    'title': b.title,
+                    'author': b.author or "Muallif ko'rsatilmagan",
+                    'read_count': b.items.count() * 4 + 8,
+                    'cover_color': '#2563EB'
+                })
+                rank += 1
 
         # Recent added books
         recent_books_qs = Book.objects.order_by('-id')[:6]
@@ -627,7 +647,7 @@ class BookListCreateView(generics.ListCreateAPIView):
         qs = Book.objects.all().order_by('-id')
         q = self.request.query_params.get('q', '')
         if q:
-            qs = qs.filter(Q(title__icontains=q) | Q(author__icontains=q))
+            qs = qs.filter(Q(title__icontains=q) | Q(author__icontains=q) | Q(items__barcode__icontains=q)).distinct()
         branch_id = self.request.query_params.get('branch', '')
         if branch_id:
             qs = qs.filter(items__branch_id=branch_id).distinct()

@@ -1,3 +1,4 @@
+from datetime import date
 from rest_framework import serializers
 from .models import Member, BookIssue, Payment, Subscription, Branch, Book, BookItem, Reservation, Ebook
 
@@ -20,6 +21,10 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 class MemberSerializer(serializers.ModelSerializer):
     age_computed = serializers.SerializerMethodField()
     kechikish_kitoblar = serializers.SerializerMethodField()
+    issue_count = serializers.SerializerMethodField()
+    total_read = serializers.SerializerMethodField()
+    current_borrowed = serializers.SerializerMethodField()
+    overdue_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Member
@@ -33,6 +38,21 @@ class MemberSerializer(serializers.ModelSerializer):
 
     def get_kechikish_kitoblar(self, obj):
         return obj.book_issues.filter(qaytarildi=False).count()
+
+    def get_issue_count(self, obj):
+        if hasattr(obj, 'issue_count'):
+            return obj.issue_count
+        return obj.book_issues.count()
+
+    def get_total_read(self, obj):
+        return obj.book_issues.count()
+
+    def get_current_borrowed(self, obj):
+        return obj.book_issues.filter(qaytarildi=False).count()
+
+    def get_overdue_count(self, obj):
+        today = date.today()
+        return obj.book_issues.filter(qaytarildi=False, qaytarish_sana__lt=today).count()
 
 
 class BookIssueSerializer(serializers.ModelSerializer):

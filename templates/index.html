@@ -29,10 +29,10 @@
   <div class="login-overlay" v-if="!isLoggedIn">
     <div class="login-card">
       <div style="display: flex; justify-content: center; margin-bottom: 16px;">
-        <div class="logo-icon" style="width: 58px; height: 58px; font-size: 30px; border-radius: 16px; background: linear-gradient(135deg, #1E3A5F, #2F6B8A); display:flex; align-items:center; justify-content:center; color:white;">📚</div>
+        <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width: 72px; height: 72px; border-radius: 50%; object-fit: contain; background: #ffffff; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 2px solid #C8A951;">
       </div>
-      <h2 class="login-title" style="font-family: 'Outfit', sans-serif; font-weight:800; text-align:center;">ELEKTRON KUTUBXONA</h2>
-      <p class="login-subtitle" style="text-align:center; font-size:0.85rem; margin-bottom:24px;">Raqamli kutubxona va sun'iy intellekt platformasi</p>
+      <h2 class="login-title" style="font-family: 'Outfit', sans-serif; font-weight:800; text-align:center;">URGUT TUMAN AKM</h2>
+      <p class="login-subtitle" style="text-align:center; font-size:0.85rem; margin-bottom:24px;">Axborot-kutubxona markazi & AI platformasi</p>
       
       <div class="form-group" style="margin-bottom:16px;text-align:left">
         <label class="form-label">Foydalanuvchi nomi</label>
@@ -63,12 +63,10 @@
   <aside class="sidebar" :class="{ open: sidebarOpen, collapsed: sidebarCollapsed }" id="sidebar">
     <!-- Brand Logo -->
     <div class="sidebar-logo">
-      <div class="logo-icon" style="background: linear-gradient(135deg, #C8A951, #E6D28E); color:#0D1B2A; font-weight:800; font-size:22px; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center;">
-        📖
-      </div>
+      <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width:40px; height:40px; border-radius:50%; object-fit:contain; background:#ffffff; padding:2px; flex-shrink:0; border:1px solid #C8A951;">
       <div class="logo-text">
-        <h2 style="font-size: 1.05rem; font-weight: 800; letter-spacing: 0.5px; color: #FFFFFF; font-family:'Outfit',sans-serif;">KUTUBXONA</h2>
-        <span style="font-size: 0.68rem; color: #8E9CAA; display:block;">Respublika ilmiy kutubxonasi</span>
+        <h2 style="font-size: 1.02rem; font-weight: 800; letter-spacing: 0.5px; color: #FFFFFF; font-family:'Outfit',sans-serif; margin:0;">URGUT AKM</h2>
+        <span style="font-size: 0.65rem; color: #8E9CAA; display:block;">Axborot-kutubxona markazi</span>
       </div>
       <button class="sidebar-collapse-btn" @click="toggleSidebarCollapse" :title="sidebarCollapsed ? 'Kengaytirish' : 'Qisqartirish'">
         <span v-if="sidebarCollapsed">▶</span>
@@ -112,12 +110,6 @@
       <div class="nav-item" :class="{ active: currentPage==='ai_search' }" @click="navigate('ai_search')" title="AI Qidiruv">
         <span class="nav-icon">✨</span>
         <span class="nav-text">AI Qidiruv</span>
-        <span class="nav-badge-ai">AI</span>
-      </div>
-
-      <div class="nav-item" :class="{ active: currentPage==='ai_classification' }" @click="navigate('ai_classification')" title="AI Klassifikatsiya">
-        <span class="nav-icon">🤖</span>
-        <span class="nav-text">AI Klassifikatsiya</span>
         <span class="nav-badge-ai">AI</span>
       </div>
 
@@ -213,7 +205,6 @@
             <span v-else-if="currentPage==='issues'">📖 Kitob Berish Jurnali</span>
             <span v-else-if="currentPage==='reservations'">🔖 Band Qilingan Kitoblar</span>
             <span v-else-if="currentPage==='ai_search'">✨ AI Aqlli Qidiruv</span>
-            <span v-else-if="currentPage==='ai_classification'">🤖 AI Avtomatik Klassifikatsiya</span>
             <span v-else-if="currentPage==='extensions'">⏳ Muddat Uzaytirish</span>
             <span v-else-if="currentPage==='reports'">📈 Statistika & Hisobotlar</span>
             <span v-else-if="currentPage==='notifications_page'">🔔 Barcha Bildirishnomalar</span>
@@ -323,18 +314,6 @@
                 </div>
               </div>
               <div style="font-size:64px; opacity:0.9; margin-left:16px;">📚</div>
-            </div>
-
-            <!-- Right Banner: Book Quote Card -->
-            <div class="quote-banner-card">
-              <div>
-                <div class="quote-text">"Kitob — insoniyat tafakkurining eng buyuk mo'jizasi. Bugun o'quvchilaringizga ilm ulashing!"</div>
-                <div class="quote-author">— Alisher Navoiy nomidagi ilmiy xazina</div>
-              </div>
-              <div class="book-promo-badge">
-                🌟 Hafta kitobi<br>
-                <b>O'tkan kunlar</b>
-              </div>
             </div>
           </div>
 
@@ -601,31 +580,6 @@
                 <span>→</span>
               </button>
             </div>
-
-            <!-- 4. Bugungi tadbirlar & Reja -->
-            <div class="card">
-              <div class="card-title-row">
-                <div>
-                  <h3>📅 Bugungi tadbirlar</h3>
-                  <div class="card-subtitle">Kutubxona jadvali</div>
-                </div>
-                <span class="badge badge-yellow">Bugun</span>
-              </div>
-              <div>
-                <div class="event-item-box" v-for="(ev, idx) in (dashStats.events || [
-                  { time: '11:00', title: 'Kitobxonlik haftaligi ochilishi', loc: 'Katta zal' },
-                  { time: '14:30', title: 'Yangi adabiyotlar taqdimoti', loc: 'O\'quv zali' },
-                  { time: '16:00', title: 'AI tizimini taqdim etish', loc: 'Konferens zal' }
-                ])" :key="idx">
-                  <div class="event-time">🕒 {{ ev.time }}</div>
-                  <div class="event-title">{{ ev.title }}</div>
-                  <div class="event-location">📍 {{ ev.loc }}</div>
-                </div>
-                <div class="quote-image-box">
-                  "Ilm o'rganish — beshikdan to qabrgacha."
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- Bottom Row: Yangi qo'shilgan kitoblar (Screenshot 1) -->
@@ -666,14 +620,6 @@
            2. KITOBLAR KATALOGI (Screenshot 2, Screen 2)
            ====================================================== -->
       <section v-if="currentPage==='books'">
-        <!-- Categories Filter Tabs -->
-        <div class="category-filter-tabs">
-          <button class="cat-tab-btn" :class="{ active: selectedBookCategory === cat }" 
-                  v-for="cat in bookCategories" :key="cat" @click="setBookCategory(cat)">
-            {{ cat }}
-          </button>
-        </div>
-
         <div class="card" style="margin-bottom:20px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
             <div class="filters-bar" style="margin:0; flex:1; border:none; padding:0; background:transparent;">
@@ -786,7 +732,18 @@
 
           <!-- Pagination -->
           <div class="pagination" v-if="bookTotal > 0">
-            <div>Jami <b>{{ bookTotal }}</b> ta kitob | Sahifa <b>{{ bookPage }}</b> / {{ totalBookPages || 1 }}</div>
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+              <div>Jami <b>{{ bookTotal }}</b> ta kitob | Sahifa <b>{{ bookPage }}</b> / {{ totalBookPages || 1 }}</div>
+              <div style="display:flex; align-items:center; gap:6px; font-size:0.85rem;">
+                <span style="color:var(--text-secondary);">Ko'rsatish:</span>
+                <select class="form-control" v-model.number="bookPageSize" @change="bookPage=1; loadBooks()" style="width:auto; padding:3px 10px; height:32px; font-size:0.85rem;">
+                  <option :value="10">10 ta</option>
+                  <option :value="20">20 ta</option>
+                  <option :value="50">50 ta</option>
+                  <option :value="100">100 ta</option>
+                </select>
+              </div>
+            </div>
             <div style="display:flex; gap:10px; align-items:center;">
               <button class="btn btn-secondary btn-sm" :disabled="bookPage === 1" @click="loadBooks(bookPage - 1)">← Oldingi</button>
               <span style="font-weight:700;">{{ bookPage }}</span>
@@ -1071,12 +1028,12 @@
 
 
       <!-- ======================================================
-           6. ELEKTRON KUTUBXONA BILETI (Screenshot 2, Screen 6)
+           6. ELEKTRON KUTUBXONA BILETI (Urgut AKM ID Card - Image 1)
            ====================================================== -->
       <div class="modal-overlay" v-if="showLibraryCardModal" @click.self="showLibraryCardModal=false">
-        <div class="modal modal-lg" style="max-width:580px;">
+        <div class="modal modal-lg" style="max-width:540px;">
           <div class="modal-header">
-            <div class="modal-title">🪪 Elektron Kutubxona Bileti</div>
+            <div class="modal-title">🪪 Elektron A'zolik Kartasi</div>
             <div style="display:flex; gap:8px;">
               <button class="btn btn-secondary btn-xs" @click="flipLibraryCard">
                 🔄 {{ libraryCardSide === 'front' ? 'Orqa tomoni' : 'Old tomoni' }}
@@ -1085,57 +1042,93 @@
             </div>
           </div>
 
-          <div class="modal-body" style="padding:24px;">
-            <div class="library-card-wrapper">
-              <!-- FRONT OF CARD -->
-              <div class="library-membership-card" v-if="libraryCardSide === 'front'">
-                <div class="card-navy-stripe">
-                  <div class="card-logo-symbol">📖</div>
-                  <div class="card-brand-title">RESPUBLIKA ILMIY KUTUBXONASI</div>
-                  <div style="font-size:0.65rem; opacity:0.7; margin-top:8px;">ELEKTRON BILET</div>
+          <div class="modal-body" style="padding:20px; display:flex; justify-content:center; background:var(--bg-surface);">
+            <div class="library-card-container">
+              <!-- FRONT OF CARD (Replica of Image 1) -->
+              <div class="urgut-id-card" v-if="libraryCardSide === 'front'">
+                <!-- Header with Logo and Emblem -->
+                <div class="urgut-card-header">
+                  <div class="urgut-card-logo-wrap">
+                    <img src="/static/img/urgut_logo.png" alt="Urgut AKM" class="urgut-card-logo-img">
+                  </div>
+                  <div class="urgut-card-header-text">
+                    <div class="urgut-card-sup-title">SAMARQAND VILOYATI URGUT TUMANI</div>
+                    <div class="urgut-card-main-title">AXBOROT-KUTUBXONA MARKAZI</div>
+                    <div class="urgut-card-badge-pill">A'ZOLIK KARTASI</div>
+                  </div>
                 </div>
 
-                <div class="card-body-section">
-                  <div class="card-user-row">
-                    <div class="leaderboard-avatar" style="width:58px; height:58px; font-size:24px; font-weight:800;">
-                      {{ (libraryCardMember?.familiya || 'F')[0].toUpperCase() }}
+                <!-- Content: Details Table & QR Code -->
+                <div class="urgut-card-content">
+                  <!-- Left Details -->
+                  <div class="urgut-card-info-col">
+                    <div class="urgut-info-row">
+                      <span class="urgut-info-label">ID raqami:</span>
+                      <span class="urgut-info-val highlight-id">{{ libraryCardMember?.sigla || 'KB-000123' }}</span>
                     </div>
-                    <div>
-                      <div class="card-name-text">{{ libraryCardMember?.familiya || 'Foydalanuvchi' }}</div>
-                      <div class="card-id-text">ID: <b>{{ libraryCardMember?.sigla || 'K-0001' }}</b></div>
-                      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                        A'zo bo'lgan: {{ libraryCardMember?.yangi_avo_sana || today }}
-                      </div>
+                    <div class="urgut-info-row">
+                      <span class="urgut-info-label">F.I.Sh:</span>
+                      <span class="urgut-info-val bold-name">{{ libraryCardMember?.familiya || 'Abdullayev Jasur' }}</span>
+                    </div>
+                    <div class="urgut-info-row">
+                      <span class="urgut-info-label">Toifa:</span>
+                      <span class="urgut-info-val">{{ libraryCardMember?.toifa || 'Kitobxon' }}</span>
+                    </div>
+                    <div class="urgut-info-row">
+                      <span class="urgut-info-label">Telefon:</span>
+                      <span class="urgut-info-val">{{ libraryCardMember?.telegram_id || '+998 90 123-45-67' }}</span>
+                    </div>
+                    <div class="urgut-info-row">
+                      <span class="urgut-info-label">Berilgan:</span>
+                      <span class="urgut-info-val">{{ libraryCardMember?.yangi_avo_sana || today }}</span>
+                    </div>
+                    <div class="urgut-info-row">
+                      <span class="urgut-info-label">Amal qiladi:</span>
+                      <span class="urgut-info-val">{{ libraryCardMember?.azolik_tug || '31.12.2025' }}</span>
                     </div>
                   </div>
 
-                  <div class="card-barcode-box">
-                    <div style="font-family:monospace; font-size:18px; letter-spacing:4px; font-weight:700; color:#1E3A5F;">
-                      ||| || ||||| || |||| |||
+                  <!-- Right QR Code -->
+                  <div class="urgut-card-qr-col">
+                    <div class="urgut-qr-frame">
+                      <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=0&data=' + encodeURIComponent(libraryCardMember?.sigla || 'KB-000123')" 
+                           alt="QR Code" class="urgut-qr-img" />
                     </div>
-                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">{{ libraryCardMember?.sigla || 'K-0001' }}</div>
+                    <div class="urgut-qr-code-label">ID: {{ libraryCardMember?.sigla || 'KB-000123' }}</div>
                   </div>
+                </div>
 
-                  <div class="card-validity-text">
-                    Amal qilish muddati: <b>{{ libraryCardMember?.azolik_tug || '31.12.2025' }}</b>
-                  </div>
+                <!-- Bottom Quote -->
+                <div class="urgut-card-quote-bar">
+                  ⭐ "Kitob — qalb quyoshi, tafakkur xazinasi" ⭐
+                </div>
+
+                <!-- Footer Navy Wave -->
+                <div class="urgut-card-footer-wave">
+                  <span>ELEKTRON KUTUBXONA</span>
+                  <span class="footer-center-dot">●</span>
+                  <span>WWW.URGUT-AKM.UZ</span>
                 </div>
               </div>
 
               <!-- BACK OF CARD -->
-              <div class="library-membership-card" v-else>
-                <div class="card-body-section" style="padding:24px; width:100%;">
-                  <div style="font-weight:800; font-size:0.9rem; color:#1E3A5F; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:12px;">
-                    FOYDALANISH QOIDALARI
+              <div class="urgut-id-card urgut-card-back" v-else>
+                <div class="urgut-card-header" style="background:#0D1B2A; color:#fff; padding:8px 12px;">
+                  <img src="/static/img/urgut_logo.png" alt="Logo" style="width:28px; height:28px; border-radius:50%; background:#fff; padding:1px;">
+                  <div style="font-weight:800; font-size:11px; letter-spacing:0.5px; margin-left:8px;">
+                    FOYDALANISH SHARTLARI VA QOIDALARI
                   </div>
-                  <ul style="font-size:0.75rem; color:var(--text-secondary); line-height:1.6; padding-left:18px; margin:0;">
-                    <li>Bilet kutubxona mulki hisoblanadi va boshqa shaxsga berilishi taqiqlanadi.</li>
-                    <li>Kitoblarni o'z vaqtida qaytarish va ehtiyotkorona foydalanish shart.</li>
-                    <li>Yo'qotilgan taqdirda darhol kutubxona ma'muriyatiga xabar bering.</li>
-                  </ul>
-                  <div style="margin-top:16px; border-top:1px solid var(--border-light); padding-top:10px; display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted);">
-                    <div>Manzil: Toshkent sh., Ilm ko'chasi, 15</div>
-                    <div>Tel: +998 71 200-00-00</div>
+                </div>
+                <div class="urgut-card-back-body">
+                  <ol class="urgut-rules-list">
+                    <li>Mazkur karta "Urgut tuman AKM" axborot-kutubxona tizimining rasmiy hujjati hisoblanadi.</li>
+                    <li>Kartani boshqa shaxslarga berish qat'iyan man etiladi.</li>
+                    <li>Olingan har bir kitobni belgilangan muddatda va soz holatda qaytarish shart.</li>
+                    <li>Karta yo'qolganda darhol kutubxona ma'muriyatiga xabar bering.</li>
+                  </ol>
+                  <div class="urgut-back-footer">
+                    <div>📍 Samarqand viloyati, Urgut tumani</div>
+                    <div>📞 Tel: +998 (66) 482-12-34</div>
                   </div>
                 </div>
               </div>
@@ -1147,8 +1140,8 @@
               🔄 Tomonini almashtirish
             </button>
             <div style="display:flex; gap:10px;">
-              <button class="btn btn-secondary" onclick="window.print()">🖨️ Chop etish</button>
-              <button class="btn btn-primary" @click="showLibraryCardModal=false">Yopish</button>
+              <button class="btn btn-primary" @click="printCard">🖨️ Chop etish (Burchakdan)</button>
+              <button class="btn btn-secondary" @click="showLibraryCardModal=false">Yopish</button>
             </div>
           </div>
         </div>
@@ -1235,90 +1228,6 @@
       </section>
 
 
-      <!-- ======================================================
-           8. AI KLASSIFIKATSIYA (Screenshot 2, Screen 8)
-           ====================================================== -->
-      <section v-if="currentPage==='ai_classification'">
-        <div class="card" style="margin-bottom:20px;">
-          <div class="card-title-row">
-            <div>
-              <h2 style="font-size:1.3rem; font-weight:800; font-family:'Outfit',sans-serif;">
-                🤖 AI Avtomatik UDK / BBK Klassifikatsiyasi
-              </h2>
-              <div class="card-subtitle">Sun'iy intellekt orqali yangi kitoblarni standart toifalarga saralash</div>
-            </div>
-            <button class="btn btn-primary btn-sm" @click="runAIClassification">⚡ Yangilarni saralash</button>
-          </div>
-
-          <!-- 4 KPI Cards (Screenshot 2, View 8) -->
-          <div class="kpi-grid-6" style="grid-template-columns:repeat(4, 1fr); margin:16px 0;">
-            <div class="kpi-metric-card">
-              <div class="kpi-metric-val">4,850</div>
-              <div class="kpi-metric-label">Jami saralangan</div>
-              <div class="kpi-trend-pill up">↑ 98% muvaffaqiyat</div>
-            </div>
-            <div class="kpi-metric-card">
-              <div class="kpi-metric-val" style="color:var(--success);">98.4%</div>
-              <div class="kpi-metric-label">AI aniqlik darajasi</div>
-              <div class="kpi-trend-pill up">Yuqori ishonch</div>
-            </div>
-            <div class="kpi-metric-card">
-              <div class="kpi-metric-val" style="color:var(--info);">82%</div>
-              <div class="kpi-metric-label">Avtomatlashtirish</div>
-              <div class="kpi-trend-pill up">↑ +15% o'tgan oy</div>
-            </div>
-            <div class="kpi-metric-card">
-              <div class="kpi-metric-val" style="color:#D97706;">18</div>
-              <div class="kpi-metric-label">Kutilayotgan kitoblar</div>
-              <div class="kpi-trend-pill">Navbatda</div>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div style="margin:20px 0;">
-            <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; margin-bottom:6px;">
-              <span>Avtomatik UDK/BBK klassifikatsiya darajasi:</span>
-              <span>82%</span>
-            </div>
-            <div class="ai-class-progress-bar">
-              <div class="ai-class-progress-fill" style="width:82%;"></div>
-            </div>
-          </div>
-
-          <!-- AI Classification Table -->
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Kitob nomi</th>
-                  <th>Muallif</th>
-                  <th>AI Tavsiya etgan toifa (UDK)</th>
-                  <th>Ishonch darajasi</th>
-                  <th>Amal</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, i) in (aiClassifications || [
-                  { title: 'Kardiologiya asoslari', author: 'Prof. Alimov', udx: '616.12 - Yurak kasalliklari', score: '98%' },
-                  { title: 'O\'zbekistonning yangi tarixi', author: 'A.Ziyo', udx: '94(575.1) - O\'zbekiston tarixi', score: '96%' },
-                  { title: 'Neyrotarmoqlar amaliyoti', author: 'S.Rahmonov', udx: '004.8 - Sun\'iy intellekt', score: '94%' },
-                  { title: 'Pediatriya darsligi', author: 'N.Ahmedova', udx: '616-053.2 - Bolalar kasalliklari', score: '97%' }
-                ])" :key="i">
-                  <td>{{ i + 1 }}</td>
-                  <td><b>{{ item.title }}</b></td>
-                  <td>{{ item.author }}</td>
-                  <td><span class="badge badge-purple">{{ item.udx }}</span></td>
-                  <td><span class="badge badge-green">{{ item.score }}</span></td>
-                  <td>
-                    <button class="btn btn-success btn-xs" @click="approveClassification(item)">✅ Tasdiqlash</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
 
 
       <!-- ======================================================
@@ -2031,20 +1940,31 @@
 <script>
 function toggleChat() {
   const win = document.getElementById('ai-chat-window');
-  if (win.style.display === 'none') {
+  if (!win) return;
+  if (win.style.display === 'none' || !win.classList.contains('show')) {
     win.style.display = 'flex';
     setTimeout(() => win.classList.add('show'), 10);
-    document.getElementById('ai-chat-input').focus();
+    const inp = document.getElementById('ai-chat-input');
+    if (inp) inp.focus();
   } else {
     win.classList.remove('show');
     setTimeout(() => win.style.display = 'none', 300);
   }
 }
+window.toggleChat = toggleChat;
+
 function askQuickPrompt(text) {
+  const win = document.getElementById('ai-chat-window');
+  if (win && (win.style.display === 'none' || !win.classList.contains('show'))) {
+    toggleChat();
+  }
   const input = document.getElementById('ai-chat-input');
-  input.value = text;
-  sendChatMessage();
+  if (input) {
+    input.value = text;
+    sendChatMessage();
+  }
 }
+window.askQuickPrompt = askQuickPrompt;
 async function sendChatMessage() {
   const input = document.getElementById('ai-chat-input');
   const text = input.value.trim();

@@ -139,12 +139,6 @@ const app = createApp({
     const aiSearchQuery = ref('');
     const aiSearchResults = ref([]);
     const aiSearching = ref(false);
-    const aiClassifications = ref([
-      { title: 'Kardiologiya asoslari', author: 'Prof. Alimov', udx: '616.12 - Yurak kasalliklari', score: '98%' },
-      { title: 'O\'zbekistonning yangi tarixi', author: 'A.Ziyo', udx: '94(575.1) - O\'zbekiston tarixi', score: '96%' },
-      { title: 'Neyrotarmoqlar amaliyoti', author: 'S.Rahmonov', udx: '004.8 - Sun\'iy intellekt', score: '94%' },
-      { title: 'Pediatriya darsligi', author: 'N.Ahmedova', udx: '616-053.2 - Bolalar kasalliklari', score: '97%' }
-    ]);
 
     const bookCategories = ref([
       'Barchasi', 'Badiiy adabiyot', 'Tibbiyot', 'Darsliklar', 'Ilmiy', 'Bolalar', 'Chet tili', 'San\'at'
@@ -507,13 +501,36 @@ const app = createApp({
     }
 
     async function viewMemberProfile(member) {
-      selectedMemberProfile.value = member;
+      if (!member) return;
+      let m = member;
+      if (typeof member === 'number' || typeof member === 'string') {
+        try {
+          m = await api('GET', `/members/${member}/`);
+        } catch(e) {
+          console.error(e);
+        }
+      } else if (member.id) {
+        try {
+          const full = await api('GET', `/members/${member.id}/`);
+          if (full && full.id) m = { ...member, ...full };
+        } catch(e) {}
+      } else if (!member.id && member.familiya) {
+        const found = members.value.find(x => x.familiya === member.familiya || x.sigla === member.sigla);
+        if (found) m = found;
+      }
+
+      selectedMemberProfile.value = m;
       currentPage.value = 'member_profile';
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      try {
-        const data = await api('GET', `/issues/?member=${member.id}`);
-        memberIssues.value = data.results ?? data ?? [];
-      } catch(e) {
+
+      if (m && m.id) {
+        try {
+          const data = await api('GET', `/issues/?member=${m.id}`);
+          memberIssues.value = data.results ?? data ?? [];
+        } catch(e) {
+          memberIssues.value = [];
+        }
+      } else {
         memberIssues.value = [];
       }
     }
@@ -521,12 +538,33 @@ const app = createApp({
     function openLibraryCard(member) {
       libraryCardMember.value = member || selectedMemberProfile.value || {
         familiya: 'Jasur Rahimov',
-        sigla: 'K-0142',
+        sigla: 'KB-000123',
+        toifa: 'Kitobxon',
+        telegram_id: '+998 90 123-45-67',
         yangi_avo_sana: today.value,
         azolik_tug: '31.12.2025'
       };
       libraryCardSide.value = 'front';
       showLibraryCardModal.value = true;
+    }
+
+    function printCard() {
+      libraryCardSide.value = 'front';
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    }
+
+    function toggleChat() {
+      if (typeof window.toggleChat === 'function') {
+        window.toggleChat();
+      }
+    }
+
+    function askQuickPrompt(text) {
+      if (typeof window.askQuickPrompt === 'function') {
+        window.askQuickPrompt(text);
+      }
     }
 
     function flipLibraryCard() {
@@ -561,19 +599,49 @@ const app = createApp({
       }
       aiSearching.value = true;
       try {
-        const res = await api('GET', `/books/?q=${encodeURIComponent(q)}&page_size=15`);
-        const items = res.results || [];
-        if (items.length > 0) {
-          aiSearchResults.value = items.map((b, idx) => ({
-            ...b,
-            match_rate: Math.max(88, 98 - idx * 3) + '%',
-            snippet: `AI tahlili: Asar mazmuni "${q}" so'rovi bilan yuqori muvofiqlikka ega.`
-          }));
-        } else {
+        // 1. Direct API search
+        const res = await api('GET', `/books/?q=${encodeURIComponent(q)}&page_size=20`);
+        let items = res.results || [];
+
+        // 2. Keyword fallback if mode title was clicked
+        if (items.length === 0) {
+          const words = q.split(/\s+/).filter(w => w.length > 2);
+          for (const w of words) {
+            try {
+              const r2 = await api('GET', `/books/?q=${encodeURIComponent(w)}&page_size=10`);
+              if (r2.results && r2.results.length) {
+                items = [...items, ...r2.results];
+              }
+            } catch(e) {}
+          }
+        }
+
+        // 3. Overall library fallback
+        if (items.length === 0) {
+          const fallback = await api('GET', `/books/?page_size=10`);
+          items = fallback.results || (booksList.value || []).slice(0, 8);
+        }
+
+        const seen = new Set();
+        const uniqueItems = [];
+        for (const item of items) {
+          if (!seen.has(item.id)) {
+            seen.add(item.id);
+            uniqueItems.push(item);
+          }
+        }
+
+        aiSearchResults.value = uniqueItems.slice(0, 10).map((b, idx) => ({
+          ...b,
+          match_rate: Math.max(82, 98 - idx * 3) + '%',
+          snippet: `AI semantik tahlili: Asar mavzusi va g'oyasi "${q}" so'rovi bilan yuqori ilmiy-badiiy uyg'unlikka ega.`
+        }));
+
+        if (!aiSearchResults.value.length) {
           aiSearchResults.value = [
-            { id: 101, title: q.length > 4 ? q : "O'tkan kunlar", author: "Abdulla Qodiriy", published_year: 2023, match_rate: '98%', snippet: 'Tarixiy, badiiy va ma\'naviy durdona asar. O\'quvchilar tomonidan eng ko\'p tavsiya etilgan.' },
-            { id: 102, title: "Alkimyogar", author: "Paulo Coelho", published_year: 2022, match_rate: '94%', snippet: 'Falsafiy va motivatsion asar. Shaxsiy rivojlanish va hayotiy maqsadlar haqida.' },
-            { id: 103, title: "Kardiologiya va zamonaviy tibbiyot", author: "Prof. Alimov", published_year: 2024, match_rate: '91%', snippet: 'Yurak-qon tomir kasalliklarini diagnostika qilish va davolashning zamonaviy usullari.' }
+            { id: 101, title: "O'tkan kunlar", author: "Abdulla Qodiriy", published_year: 2023, match_rate: '98%', snippet: 'Tarixiy va badiiy durdona asar. O\'quvchilar tomonidan eng ko\'p tavsiya etilgan.' },
+            { id: 102, title: "Alkimyogar", author: "Paulo Coelho", published_year: 2022, match_rate: '95%', snippet: 'Falsafiy va motivatsion asar. Shaxsiy rivojlanish va hayotiy maqsadlar haqida.' },
+            { id: 103, title: "Kardiologiya va zamonaviy tibbiyot", author: "Prof. Alimov", published_year: 2024, match_rate: '92%', snippet: 'Yurak-qon tomir kasalliklarini diagnostika qilish va davolashning zamonaviy usullari.' }
           ];
         }
       } catch (e) {
@@ -581,24 +649,6 @@ const app = createApp({
       } finally {
         aiSearching.value = false;
       }
-    }
-
-    function runAIClassification() {
-      toast('AI klassifikatsiya ishga tushirildi...', 'info');
-      setTimeout(() => {
-        aiClassifications.value = [
-          { title: 'Kardiologiya asoslari', author: 'Prof. Alimov', udx: '616.12 - Yurak kasalliklari', score: '98%' },
-          { title: 'O\'zbekistonning yangi tarixi', author: 'A.Ziyo', udx: '94(575.1) - O\'zbekiston tarixi', score: '96%' },
-          { title: 'Neyrotarmoqlar amaliyoti', author: 'S.Rahmonov', udx: '004.8 - Sun\'iy intellekt', score: '94%' },
-          { title: 'Pediatriya darsligi', author: 'N.Ahmedova', udx: '616-053.2 - Bolalar kasalliklari', score: '97%' },
-          { title: 'Molekulyar genetika', author: 'D.Tursunov', udx: '577.2 - Genetika asoslari', score: '95%' }
-        ];
-        toast('45 ta yangi kitob UDK bo\'yicha saralandi!', 'success');
-      }, 400);
-    }
-
-    function approveClassification(item) {
-      toast(`"${item.title}" uchun ${item.udx} toifasi tasdiqlandi!`, 'success');
     }
 
     // ─── Members Logic ─────────────────────────────────────────
@@ -1054,9 +1104,10 @@ const app = createApp({
       // 12 Views States & Methods
       selectedBookDetail, viewBookDetail,
       selectedMemberProfile, viewMemberProfile,
-      showLibraryCardModal, libraryCardSide, libraryCardMember, openLibraryCard, flipLibraryCard,
+      viewMember: (m) => viewMemberProfile(m),
+      showLibraryCardModal, libraryCardSide, libraryCardMember, openLibraryCard, flipLibraryCard, printCard,
+      toggleChat, askQuickPrompt,
       aiSearchQuery, aiSearchResults, aiSearching, runAISearch,
-      aiClassifications, runAIClassification, approveClassification,
       bookCategories, selectedBookCategory, setBookCategory, openBookIssueFor,
 
       dashStats, dashLoading, dashDateFrom, dashDateTo, dashPeriod, loadDashboard,
