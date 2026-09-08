@@ -306,7 +306,7 @@
             <div class="welcome-banner-card">
               <div>
                 <h2>Xush kelibsiz, {{ auth.username || 'Zamira' }}! 👋</h2>
-                <p>Bugun <b>{{ today }}</b>. Tizimda <b>{{ notifications.length || 3 }} ta</b> yangi bildirishnoma va <b>{{ dashStats.kutilmoqda_members || 5 }} ta</b> kutilayotgan so'rov mavjud.</p>
+                <p>Bugun <b>{{ today }}</b>. Tizimda <b>{{ notifications.length || 0 }} ta</b> bildirishnoma va <b>{{ dashStats.kutilmoqda_members ?? 0 }} ta</b> kutilayotgan so'rov mavjud.</p>
                 <div style="display:flex; gap:10px; margin-top:14px;">
                   <button class="btn btn-primary btn-sm" @click="navigate('reports')">📊 To'liq hisobot</button>
                   <button class="btn btn-secondary btn-sm" @click="openAddBook">➕ Kitob qo'shish</button>
@@ -323,14 +323,14 @@
             <div class="kpi-metric-card" @click="navigate('books')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ (dashStats.total_books || 12540).toLocaleString() }}</div>
+                  <div class="kpi-metric-val">{{ (dashStats.total_books ?? 0).toLocaleString() }}</div>
                   <div class="kpi-metric-label">Jami kitoblar</div>
                 </div>
                 <div class="kpi-metric-icon gold">📚</div>
               </div>
               <div class="kpi-trend-pill up">
-                <span>↑ {{ dashStats.books_trend || dashStats.trend_books || '+8.4%' }}</span>
-                <span class="kpi-trend-sub">o'tgan oyga nisbatan</span>
+                <span>↑ {{ dashStats.books_trend || '+8.4%' }}</span>
+                <span class="kpi-trend-sub">fonddagi adabiyotlar</span>
               </div>
             </div>
 
@@ -338,29 +338,29 @@
             <div class="kpi-metric-card" @click="navigate('members')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ (dashStats.faol_members || 3820).toLocaleString() }}</div>
+                  <div class="kpi-metric-val">{{ (dashStats.faol_members ?? 0).toLocaleString() }}</div>
                   <div class="kpi-metric-label">Faol kitobxonlar</div>
                 </div>
                 <div class="kpi-metric-icon blue">👤</div>
               </div>
               <div class="kpi-trend-pill up">
-                <span>↑ {{ dashStats.members_trend || dashStats.trend_members || '+12.1%' }}</span>
-                <span class="kpi-trend-sub">o'tgan oyga nisbatan</span>
+                <span>↑ {{ dashStats.members_trend || '+12.1%' }}</span>
+                <span class="kpi-trend-sub">a'zolar safi</span>
               </div>
             </div>
 
-            <!-- Card 3: Bugungi berilgan -->
+            <!-- Card 3: Berilgan kitoblar -->
             <div class="kpi-metric-card" @click="navigate('issues')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ dashStats.today_issues || 147 }}</div>
-                  <div class="kpi-metric-label">Bugungi berilgan</div>
+                  <div class="kpi-metric-val">{{ dashStats.active_issues !== undefined && dashStats.active_issues !== null ? dashStats.active_issues : (dashStats.today_issues ?? 0) }}</div>
+                  <div class="kpi-metric-label">Berilgan kitoblar</div>
                 </div>
                 <div class="kpi-metric-icon cyan">📖</div>
               </div>
               <div class="kpi-trend-pill up">
-                <span>↑ {{ dashStats.today_issues_trend || dashStats.trend_issues || '+6.3%' }}</span>
-                <span class="kpi-trend-sub">kechagiga nisbatan</span>
+                <span>Bugun: {{ dashStats.today_issues ?? 0 }} ta</span>
+                <span class="kpi-trend-sub">hozirda qo'lda</span>
               </div>
             </div>
 
@@ -368,14 +368,14 @@
             <div class="kpi-metric-card" @click="navigate('issues')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ dashStats.returned_books || 89 }}</div>
+                  <div class="kpi-metric-val">{{ dashStats.returned_books ?? 0 }}</div>
                   <div class="kpi-metric-label">Qaytarilgan kitoblar</div>
                 </div>
                 <div class="kpi-metric-icon green">↩️</div>
               </div>
               <div class="kpi-trend-pill up">
-                <span>↑ {{ dashStats.returned_trend || dashStats.trend_returns || '+18.5%' }}</span>
-                <span class="kpi-trend-sub">kechagiga nisbatan</span>
+                <span>↑ {{ dashStats.returned_trend || '+18.5%' }}</span>
+                <span class="kpi-trend-sub">jami qaytarilgan</span>
               </div>
             </div>
 
@@ -383,14 +383,14 @@
             <div class="kpi-metric-card" @click="navigate('members')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ dashStats.kutilmoqda_members || 23 }}</div>
+                  <div class="kpi-metric-val">{{ dashStats.kutilmoqda_members ?? 0 }}</div>
                   <div class="kpi-metric-label">Kutilayotgan a'zolar</div>
                 </div>
                 <div class="kpi-metric-icon gold">⏳</div>
               </div>
               <div class="kpi-trend-pill up">
-                <span>↑ {{ dashStats.pending_trend || dashStats.trend_pending || '+11.2%' }}</span>
-                <span class="kpi-trend-sub">yangi so'rovlar</span>
+                <span>{{ dashStats.kutilmoqda_members ?? 0 }} ta</span>
+                <span class="kpi-trend-sub">tasdiqlash kutilmoqda</span>
               </div>
             </div>
 
@@ -398,14 +398,14 @@
             <div class="kpi-metric-card" @click="navigate('issues')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ dashStats.overdue_issues || 14 }}</div>
+                  <div class="kpi-metric-val">{{ dashStats.overdue_issues ?? 0 }}</div>
                   <div class="kpi-metric-label">Muddati o'tgan</div>
                 </div>
                 <div class="kpi-metric-icon red">⚠️</div>
               </div>
-              <div class="kpi-trend-pill up">
-                <span>↓ {{ dashStats.overdue_trend || dashStats.trend_overdue || '-25.0%' }}</span>
-                <span class="kpi-trend-sub">o'tgan haftaga nisbatan</span>
+              <div class="kpi-trend-pill" :class="(dashStats.overdue_issues ?? 0) > 0 ? 'down' : 'up'">
+                <span>{{ dashStats.overdue_issues ?? 0 }} ta</span>
+                <span class="kpi-trend-sub">muddati o'tgan kitob</span>
               </div>
             </div>
           </div>
@@ -973,20 +973,85 @@
           <!-- 4 Stat Cards (Screenshot 2, View 5) -->
           <div class="member-profile-stats-grid">
             <div class="member-stat-box">
-              <div class="member-stat-val">{{ selectedMemberProfile.total_read || 38 }}</div>
+              <div class="member-stat-val">{{ selectedMemberProfile.total_read ?? 0 }}</div>
               <div class="member-stat-lbl">O'qilgan kitoblar</div>
             </div>
             <div class="member-stat-box">
-              <div class="member-stat-val" style="color:var(--info);">{{ selectedMemberProfile.current_borrowed || 2 }}</div>
+              <div class="member-stat-val" style="color:var(--info);">{{ selectedMemberProfile.current_borrowed ?? 0 }}</div>
               <div class="member-stat-lbl">Hozirda qo'lida</div>
             </div>
             <div class="member-stat-box">
-              <div class="member-stat-val" style="color:var(--danger);">{{ selectedMemberProfile.overdue_count || 0 }}</div>
+              <div class="member-stat-val" style="color:var(--danger);">{{ selectedMemberProfile.overdue_count ?? 0 }}</div>
               <div class="member-stat-lbl">Kechiktirilgan</div>
             </div>
             <div class="member-stat-box">
-              <div class="member-stat-val" style="color:#D97706;">1-o'rin 🥇</div>
-              <div class="member-stat-lbl">Kutubxona reytingida</div>
+              <div class="member-stat-val" style="color:#D97706;">{{ (selectedMemberProfile.issue_count || selectedMemberProfile.total_read || 0) > 0 ? (selectedMemberProfile.issue_count || selectedMemberProfile.total_read) + ' ta' : 'Faol' }}</div>
+              <div class="member-stat-lbl">Jami aylanma</div>
+            </div>
+          </div>
+
+          <!-- Comprehensive Member Details Grid -->
+          <div class="card" style="margin-bottom:20px; background:var(--bg-surface);">
+            <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:14px; font-family:'Outfit',sans-serif;">📋 Shaxsiy va A'zolik Ma'lumotlari</h3>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px;">
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Sigla Raqami</div>
+                <div style="font-size:0.95rem; font-weight:700; color:var(--primary); margin-top:2px;">{{ selectedMemberProfile.sigla }}</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">F.I.Sh.</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">{{ selectedMemberProfile.familiya }}</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Telefon / Telegram ID</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">{{ selectedMemberProfile.telegram_id || 'Kiritilmagan' }}</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Jinsi</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">{{ selectedMemberProfile.jinsi === 'erkak' ? '👨 Erkak' : '👩 Ayol' }}</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Tug'ilgan Sanasi & Yoshi</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">{{ selectedMemberProfile.tugilgan_sana || '—' }} ({{ getAge(selectedMemberProfile) }} yosh)</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Toifa / Yo'nalishi</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">{{ selectedMemberProfile.yunalish || selectedMemberProfile.toifa || 'Umumiy kitobxon' }}</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Filial / Bo'lim</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">{{ selectedMemberProfile.branch_name || 'Asosiy filial' }}</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">A'zolik Turi</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">
+                  <span class="badge" :class="selectedMemberProfile.qayta_avo_sana ? 'badge-blue' : 'badge-green'">
+                    {{ selectedMemberProfile.qayta_avo_sana ? '🔄 Qayta a\'zo' : '🆕 Yangi a\'zo' }}
+                  </span>
+                </div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">A'zolik Boshlanishi</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">{{ selectedMemberProfile.azolik_bosh || selectedMemberProfile.yangi_avo_sana || '—' }}</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">A'zolik Tugashi</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px; color:var(--warning);">{{ selectedMemberProfile.azolik_tug || '—' }}</div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">To'lov Holati</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">
+                  {{ selectedMemberProfile.tolov_summa ? (Number(selectedMemberProfile.tolov_summa).toLocaleString() + ' so\'m (' + (selectedMemberProfile.tolov_turi || 'naqd') + ')') : 'To\'lovsiz' }}
+                </div>
+              </div>
+              <div style="padding:10px 14px; background:var(--bg-card); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">A'zolik Holati</div>
+                <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">
+                  <span class="badge" :class="selectedMemberProfile.holati === 'faol' ? 'badge-green' : (selectedMemberProfile.holati === 'kutilmoqda' ? 'badge-purple' : 'badge-red')">
+                    {{ selectedMemberProfile.holati === 'faol' ? '✅ Faol' : (selectedMemberProfile.holati === 'kutilmoqda' ? '⏳ Kutilmoqda' : '❌ Bloklangan') }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1700,7 +1765,7 @@
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">Sigla Raqami</label>
-            <input class="form-control" v-model="memberForm.sigla" placeholder="Avtomatik (K-...)">
+            <input class="form-control" v-model="memberForm.sigla" placeholder="Avtomatik (FEA000001)">
           </div>
           <div class="form-group">
             <label class="form-label">Familiya va Ism *</label>
@@ -1722,10 +1787,37 @@
             <input class="form-control" type="date" v-model="memberForm.tugilgan_sana">
           </div>
           <div class="form-group">
+            <label class="form-label">Toifa / Yo'nalishi</label>
+            <input class="form-control" v-model="memberForm.yunalish" placeholder="Masalan: Talaba, O'qituvchi, Shifokor...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Filial / Bo'lim</label>
+            <select class="form-control" v-model="memberForm.branch">
+              <option value="">Filialni tanlang...</option>
+              <option v-for="br in branches" :key="br.id" :value="br.id">{{ br.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">A'zolik Turi *</label>
+            <select class="form-control" v-model="memberForm.azolik_turi" @change="onMembershipTypeChange">
+              <option value="yangi">🆕 Yangi a'zo</option>
+              <option value="qayta">🔄 Qayta a'zo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">A'zolik Boshlanishi *</label>
+            <input class="form-control" type="date" v-model="memberForm.azolik_bosh" @change="onMembershipStartDateChange" @input="onMembershipStartDateChange">
+          </div>
+          <div class="form-group">
+            <label class="form-label">A'zolik Tugashi (+1 yil avtomatik) *</label>
+            <input class="form-control" type="date" v-model="memberForm.azolik_tug">
+          </div>
+          <div class="form-group">
             <label class="form-label">Holati</label>
             <select class="form-control" v-model="memberForm.holati">
               <option value="faol">✅ Faol</option>
-              <option value="faol_emas">❌ Faol Emas</option>
+              <option value="kutilmoqda">⏳ Kutilmoqda</option>
+              <option value="faol_emas">❌ Bloklangan / Faol Emas</option>
             </select>
           </div>
         </div>
@@ -1733,6 +1825,127 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" @click="showMemberModal=false">Bekor qilish</button>
         <button class="btn btn-primary" @click="saveMember">{{ editMode ? '💾 Saqlash' : '➕ Qo\'shish' }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Member Detail Modal (Pop-up when clicking kitobxon) -->
+  <div class="modal-overlay" v-if="showMemberDetailModal && selectedMemberDetail" @click.self="showMemberDetailModal=false">
+    <div class="modal modal-lg" style="max-width:680px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="leaderboard-avatar" style="width:42px; height:42px; font-size:16px; font-weight:800;">
+            {{ selectedMemberDetail.familiya ? selectedMemberDetail.familiya[0].toUpperCase() : 'U' }}
+          </div>
+          <div>
+            <div class="modal-title" style="margin:0; font-size:1.15rem;">{{ selectedMemberDetail.familiya }}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">
+              Sigla: <span class="badge badge-purple">{{ selectedMemberDetail.sigla }}</span>
+              <span class="badge" style="margin-left:6px;" :class="selectedMemberDetail.holati === 'faol' ? 'badge-green' : (selectedMemberDetail.holati === 'kutilmoqda' ? 'badge-purple' : 'badge-red')">
+                {{ selectedMemberDetail.holati === 'faol' ? '✅ Faol' : (selectedMemberDetail.holati === 'kutilmoqda' ? '⏳ Kutilmoqda' : '❌ Bloklangan') }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close" @click="showMemberDetailModal=false">✕</button>
+      </div>
+      <div class="modal-body" style="padding:20px;">
+        <!-- Quick Stats Row -->
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:18px;">
+          <div style="padding:10px; background:var(--bg-surface); border-radius:var(--radius-sm); text-align:center; border:1px solid var(--border-light);">
+            <div style="font-size:1.3rem; font-weight:800; color:var(--primary);">{{ selectedMemberDetail.total_read ?? 0 }}</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">O'qilgan kitoblar</div>
+          </div>
+          <div style="padding:10px; background:var(--bg-surface); border-radius:var(--radius-sm); text-align:center; border:1px solid var(--border-light);">
+            <div style="font-size:1.3rem; font-weight:800; color:var(--info);">{{ selectedMemberDetail.current_borrowed ?? 0 }}</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Hozirda qo'lida</div>
+          </div>
+          <div style="padding:10px; background:var(--bg-surface); border-radius:var(--radius-sm); text-align:center; border:1px solid var(--border-light);">
+            <div style="font-size:1.3rem; font-weight:800; color:var(--danger);">{{ selectedMemberDetail.overdue_count ?? 0 }}</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Muddati o'tgan</div>
+          </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:18px;">
+          <div style="padding:8px 12px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Telefon raqami</div>
+            <div style="font-size:0.88rem; font-weight:700;">{{ selectedMemberDetail.telegram_id || 'Kiritilmagan' }}</div>
+          </div>
+          <div style="padding:8px 12px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Jinsi</div>
+            <div style="font-size:0.88rem; font-weight:700;">{{ selectedMemberDetail.jinsi === 'erkak' ? '👨 Erkak' : '👩 Ayol' }}</div>
+          </div>
+          <div style="padding:8px 12px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Tug'ilgan sana & Yoshi</div>
+            <div style="font-size:0.88rem; font-weight:700;">{{ selectedMemberDetail.tugilgan_sana || '—' }} ({{ getAge(selectedMemberDetail) }} yosh)</div>
+          </div>
+          <div style="padding:8px 12px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Toifa / Yo'nalish</div>
+            <div style="font-size:0.88rem; font-weight:700;">{{ selectedMemberDetail.yunalish || selectedMemberDetail.toifa || 'Umumiy kitobxon' }}</div>
+          </div>
+          <div style="padding:8px 12px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">A'zolik turi</div>
+            <div style="font-size:0.88rem; font-weight:700;">
+              <span class="badge" :class="selectedMemberDetail.qayta_avo_sana ? 'badge-blue' : 'badge-green'">
+                {{ selectedMemberDetail.qayta_avo_sana ? '🔄 Qayta a\'zo' : '🆕 Yangi a\'zo' }}
+              </span>
+            </div>
+          </div>
+          <div style="padding:8px 12px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Filial</div>
+            <div style="font-size:0.88rem; font-weight:700;">{{ selectedMemberDetail.branch_name || 'Asosiy filial' }}</div>
+          </div>
+          <div style="padding:8px 12px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">A'zolik Boshlanishi</div>
+            <div style="font-size:0.88rem; font-weight:700;">{{ selectedMemberDetail.azolik_bosh || selectedMemberDetail.yangi_avo_sana || '—' }}</div>
+          </div>
+          <div style="padding:8px 12px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">A'zolik Tugashi</div>
+            <div style="font-size:0.88rem; font-weight:700; color:var(--warning);">{{ selectedMemberDetail.azolik_tug || '—' }}</div>
+          </div>
+        </div>
+
+        <!-- Member's Loan History Table -->
+        <div>
+          <div style="font-size:0.85rem; font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <span>📖 O'qilgan Kitoblar Tarixi</span>
+            <span class="badge badge-blue">{{ memberIssues.length }} ta yozuv</span>
+          </div>
+          <div class="table-container" style="max-height:160px; overflow-y:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th><th>Kitob</th><th>Berilgan</th><th>Qaytarish</th><th>Holat</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(iss, idx) in memberIssues" :key="iss.id">
+                  <td>{{ idx + 1 }}</td>
+                  <td><b>{{ iss.book_name }}</b></td>
+                  <td>{{ iss.berilgan_sana }}</td>
+                  <td>{{ iss.qaytarish_sana }}</td>
+                  <td>
+                    <span class="badge" :class="iss.qaytarildi ? 'badge-green' : 'badge-yellow'">
+                      {{ iss.qaytarildi ? '✅ Qaytarilgan' : '⏳ Qo\'lda' }}
+                    </span>
+                  </td>
+                </tr>
+                <tr v-if="!memberIssues.length">
+                  <td colspan="5" class="table-empty" style="padding:16px;">Hozircha kitob o'qish tarixi mavjud emas</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary btn-sm" @click="openLibraryCard(selectedMemberDetail)">🪪 Bilet</button>
+          <button class="btn btn-secondary btn-sm" @click="openEditMember(selectedMemberDetail); showMemberDetailModal=false">✏️ Tahrirlash</button>
+          <button class="btn btn-primary btn-sm" @click="goToMemberProfile(selectedMemberDetail)">👤 To'liq Profil</button>
+        </div>
+        <button class="btn btn-secondary btn-sm" @click="showMemberDetailModal=false">Yopish</button>
       </div>
     </div>
   </div>
@@ -1826,11 +2039,11 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Berilgan Sana</label>
-            <input class="form-control" type="date" v-model="issueForm.berilgan_sana">
+            <label class="form-label">Berilgan Sana *</label>
+            <input class="form-control" type="date" v-model="issueForm.berilgan_sana" @change="onIssueDateChange" @input="onIssueDateChange">
           </div>
           <div class="form-group">
-            <label class="form-label">Qaytarish Sanasi *</label>
+            <label class="form-label">Qaytarish Sanasi (+15 kun avtomatik) *</label>
             <input class="form-control" type="date" v-model="issueForm.qaytarish_sana">
           </div>
         </div>

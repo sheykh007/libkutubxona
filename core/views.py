@@ -433,8 +433,8 @@ class DashboardStatsView(APIView):
         active_issues = BookIssue.objects.filter(qaytarildi=False).count()
         today_issued_count = BookIssue.objects.filter(berilgan_sana=today).count()
         returned_count = BookIssue.objects.filter(qaytarildi=True).count()
-        overdue_issues_list = [i for i in BookIssue.objects.filter(qaytarildi=False) if i.kechikish_kunlar > 0]
-        overdue = len(overdue_issues_list)
+        overdue_count = BookIssue.objects.filter(qaytarildi=False, qaytarish_sana__lt=today).count()
+        overdue = overdue_count
 
         # Financial Stats
         today_income = Payment.objects.filter(created_at__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
@@ -444,7 +444,7 @@ class DashboardStatsView(APIView):
 
         expired_subs = Subscription.objects.filter(is_active=False, end_date__lt=today).count()
 
-        debtor_ids = set(i.member_id for i in overdue_issues_list)
+        debtor_ids = set(BookIssue.objects.filter(qaytarildi=False, qaytarish_sana__lt=today).values_list('member_id', flat=True))
         expired_ids = Subscription.objects.filter(end_date__lt=today, is_active=False).values_list('member_id', flat=True)
         debtor_ids.update(expired_ids)
         debtors_count = len(debtor_ids)
@@ -527,28 +527,30 @@ class DashboardStatsView(APIView):
         ]
 
         return Response({
-            # Member stats
-            'total_members': total_all_members if total_all_members > 0 else 3248,
-            'faol_members': faol_all if faol_all > 0 else 2876,
+            # Member stats (real counts)
+            'total_members': total_all_members,
+            'faol_members': faol_all,
             'kutilmoqda_members': kutilmoqda_all,
             'bugun_qoshilgan': bugun_qoshilgan,
             'qayta_azolar': qayta_azolar,
             'filtered_members_count': filtered_members_count,
             'members_trend': '+12.1%',
             'faol_trend': '+6.3%',
-            # Book stats
-            'total_books': total_books if total_books > 0 else 12540,
-            'unique_titles': unique_titles if unique_titles > 0 else 767,
+            # Book stats (real counts)
+            'total_books': total_books,
+            'unique_titles': unique_titles,
             'available_books': available_books,
             'borrowed_books': borrowed_books,
             'added_books_count': added_books_count,
             'books_trend': '+8.4%',
-            # Issue stats
-            'today_issues': today_issued_count if today_issued_count > 0 else 126,
+            # Issue stats (real counts)
+            'total_issues': total_issues,
+            'active_issues': active_issues,
+            'today_issues': today_issued_count,
             'today_issues_trend': '+18.5%',
-            'returned_books': returned_count if returned_count > 0 else 98,
+            'returned_books': returned_count,
             'returned_trend': '+11.2%',
-            'overdue_issues': overdue if overdue > 0 else 12,
+            'overdue_issues': overdue_count,
             'overdue_trend': '-25.0%',
             # Charts
             'monthly_growth': monthly,

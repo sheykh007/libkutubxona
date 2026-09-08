@@ -83,6 +83,14 @@ class Member(models.Model):
                 self.yosh = today.year - self.tugilgan_sana.year - (
                     (today.month, today.day) < (self.tugilgan_sana.month, self.tugilgan_sana.day)
                 )
+
+        if self.azolik_bosh and not self.azolik_tug:
+            from datetime import timedelta
+            try:
+                self.azolik_tug = self.azolik_bosh.replace(year=self.azolik_bosh.year + 1)
+            except Exception:
+                self.azolik_tug = self.azolik_bosh + timedelta(days=365)
+
         super().save(*args, **kwargs)
 
     def get_age(self):
@@ -120,6 +128,12 @@ class BookIssue(models.Model):
 
     def __str__(self):
         return f"{self.book_name} -> {self.member.familiya}"
+
+    def save(self, *args, **kwargs):
+        if self.berilgan_sana and not self.qaytarish_sana:
+            from datetime import timedelta
+            self.qaytarish_sana = self.berilgan_sana + timedelta(days=15)
+        super().save(*args, **kwargs)
 
     @property
     def kechikish_kunlar(self):

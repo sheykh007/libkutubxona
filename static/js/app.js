@@ -164,6 +164,8 @@ const app = createApp({
     const memberPageSize = ref(20);
     const memberFilters = reactive({ q: '', toifa: '', holati: '', date_from: '', date_to: '' });
     const showMemberModal = ref(false);
+    const showMemberDetailModal = ref(false);
+    const selectedMemberDetail = ref(null);
     const showMemberDetail = ref(false);
     const selectedMember = ref(null);
     const memberIssues = ref([]);
@@ -171,10 +173,10 @@ const app = createApp({
     const pendingMembers = ref([]);
 
     const memberForm = reactive({
-      sigla: '', familiya: '', telegram_id: '', toifa: '', jinsi: 'erkak',
-      tugilgan_sana: '', yangi_avo_sana: '', qayta_avo_sana: '',
-      holati: 'faol', azolik_bosh: '', azolik_tug: '',
-      tolov_summa: '', tolov_sana: '', tolov_turi: ''
+      sigla: '', familiya: '', telegram_id: '', toifa: '', yunalish: '', jinsi: 'erkak',
+      tugilgan_sana: '', azolik_turi: 'yangi', yangi_avo_sana: '', qayta_avo_sana: '',
+      holati: 'faol', azolik_bosh: '', azolik_tug: '', branch: '',
+      tolov_summa: '', tolov_sana: '', tolov_turi: 'naqd'
     });
 
     // Book Issues
@@ -502,41 +504,93 @@ const app = createApp({
 
     async function viewMemberProfile(member) {
       if (!member) return;
-      let m = member;
+      let m = { ...member };
       if (typeof member === 'number' || typeof member === 'string') {
         try {
           m = await api('GET', `/members/${member}/`);
         } catch(e) {
           console.error(e);
         }
-      } else if (member.id) {
-        try {
-          const full = await api('GET', `/members/${member.id}/`);
-          if (full && full.id) m = { ...member, ...full };
-        } catch(e) {}
       } else if (!member.id && member.familiya) {
         const found = members.value.find(x => x.familiya === member.familiya || x.sigla === member.sigla);
-        if (found) m = found;
+        if (found) m = { ...found };
       }
 
+      selectedMemberDetail.value = m;
       selectedMemberProfile.value = m;
-      currentPage.value = 'member_profile';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showMemberDetailModal.value = true;
 
       if (m && m.id) {
         try {
-          const data = await api('GET', `/issues/?member=${m.id}`);
+          const [full, data] = await Promise.all([
+            api('GET', `/members/${m.id}/`),
+            api('GET', `/issues/?member=${m.id}`)
+          ]);
+          if (full && full.id) {
+            m = { ...m, ...full };
+            selectedMemberDetail.value = m;
+            selectedMemberProfile.value = m;
+          }
           memberIssues.value = data.results ?? data ?? [];
         } catch(e) {
-          memberIssues.value = [];
+          console.error(e);
         }
       } else {
         memberIssues.value = [];
       }
     }
 
+    function goToMemberProfile(m) {
+      showMemberDetailModal.value = false;
+      if (m) {
+        selectedMemberProfile.value = m;
+        selectedMemberDetail.value = m;
+      }
+      currentPage.value = 'member_profile';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function onMembershipStartDateChange() {
+      if (!memberForm.azolik_bosh) return;
+      try {
+        const parts = memberForm.azolik_bosh.split('-');
+        if (parts.length === 3) {
+          const year = parseInt(parts[0]) + 1;
+          memberForm.azolik_tug = `${year}-${parts[1]}-${parts[2]}`;
+        } else {
+          const d = new Date(memberForm.azolik_bosh);
+          d.setFullYear(d.getFullYear() + 1);
+          memberForm.azolik_tug = d.toISOString().split('T')[0];
+        }
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    function onMembershipTypeChange() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (memberForm.azolik_turi === 'yangi') {
+        memberForm.yangi_avo_sana = memberForm.azolik_bosh || todayStr;
+      } else {
+        memberForm.qayta_avo_sana = memberForm.azolik_bosh || todayStr;
+      }
+    }
+
+    function onIssueDateChange() {
+      if (!issueForm.berilgan_sana) return;
+      try {
+        const d = new Date(issueForm.berilgan_sana);
+        if (!isNaN(d.getTime())) {
+          d.setDate(d.getDate() + 15);
+          issueForm.qaytarish_sana = d.toISOString().split('T')[0];
+        }
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
     function openLibraryCard(member) {
-      libraryCardMember.value = member || selectedMemberProfile.value || {
+      libraryCardMember.value = member || selectedMemberProfile.value || selectedMemberDetail.value || {
         familiya: 'Jasur Rahimov',
         sigla: 'KB-000123',
         toifa: 'Kitobxon',
@@ -584,9 +638,10 @@ const app = createApp({
       if (availableItem) {
         issueForm.book_item = availableItem.id;
       }
-      issueForm.berilgan_sana = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toISOString().split('T')[0];
+      issueForm.berilgan_sana = todayStr;
       const ret = new Date();
-      ret.setDate(ret.getDate() + 14);
+      ret.setDate(ret.getDate() + 15);
       issueForm.qaytarish_sana = ret.toISOString().split('T')[0];
       showIssueModal.value = true;
     }
@@ -687,12 +742,36 @@ const app = createApp({
     function openAddMember() {
       resetMemberForm();
       editMode.value = false;
+      const todayStr = new Date().toISOString().split('T')[0];
+      memberForm.azolik_turi = 'yangi';
+      memberForm.yangi_avo_sana = todayStr;
+      memberForm.azolik_bosh = todayStr;
+      
+      const nextYear = new Date();
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      memberForm.azolik_tug = nextYear.toISOString().split('T')[0];
+
+      if (branches.value && branches.value.length > 0) {
+        memberForm.branch = branches.value[0].id;
+      }
       showMemberModal.value = true;
     }
 
     function openEditMember(m) {
+      resetMemberForm();
       Object.assign(memberForm, m);
       editMode.value = true;
+      if (m.qayta_avo_sana) {
+        memberForm.azolik_turi = 'qayta';
+      } else {
+        memberForm.azolik_turi = 'yangi';
+      }
+      if (!memberForm.azolik_bosh) {
+        memberForm.azolik_bosh = m.yangi_avo_sana || m.qayta_avo_sana || new Date().toISOString().split('T')[0];
+      }
+      if (!memberForm.azolik_tug && memberForm.azolik_bosh) {
+        onMembershipStartDateChange();
+      }
       showMemberModal.value = true;
     }
 
@@ -700,6 +779,13 @@ const app = createApp({
       try {
         const payload = { ...memberForm };
         if (!payload.familiya) throw new Error('Familiyani kiriting');
+
+        if (payload.azolik_turi === 'qayta') {
+          payload.qayta_avo_sana = payload.azolik_bosh || new Date().toISOString().split('T')[0];
+        } else {
+          payload.yangi_avo_sana = payload.azolik_bosh || new Date().toISOString().split('T')[0];
+        }
+
         if (editMode.value) {
           await api('PUT', `/members/${payload.id}/`, payload);
           toast('Kitobxon muvaffaqiyatli saqlandi', 'success');
@@ -875,9 +961,10 @@ const app = createApp({
     function openAddIssue() {
       Object.keys(issueForm).forEach(k => { issueForm[k] = ''; });
       issueForm.jarima_kun_narxi = 500;
-      issueForm.berilgan_sana = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toISOString().split('T')[0];
+      issueForm.berilgan_sana = todayStr;
       const ret = new Date();
-      ret.setDate(ret.getDate() + 14);
+      ret.setDate(ret.getDate() + 15);
       issueForm.qaytarish_sana = ret.toISOString().split('T')[0];
       memberSearchQ.value = '';
       memberSearchResults.value = [];
@@ -1089,6 +1176,12 @@ const app = createApp({
     // ─── Watchers & Init ───────────────────────────────────────
     watch(memberSearchQ, searchMembersForIssue);
     watch(bookSearchQ, searchBooksForIssue);
+    watch(() => memberForm.azolik_bosh, (newVal) => {
+      if (newVal) onMembershipStartDateChange();
+    });
+    watch(() => issueForm.berilgan_sana, (newVal) => {
+      if (newVal) onIssueDateChange();
+    });
 
     onMounted(() => {
       loadBranches();
@@ -1103,7 +1196,7 @@ const app = createApp({
       
       // 12 Views States & Methods
       selectedBookDetail, viewBookDetail,
-      selectedMemberProfile, viewMemberProfile,
+      selectedMemberProfile, selectedMemberDetail, showMemberDetailModal, viewMemberProfile, goToMemberProfile,
       viewMember: (m) => viewMemberProfile(m),
       showLibraryCardModal, libraryCardSide, libraryCardMember, openLibraryCard, flipLibraryCard, printCard,
       toggleChat, askQuickPrompt,
@@ -1113,6 +1206,8 @@ const app = createApp({
       dashStats, dashLoading, dashDateFrom, dashDateTo, dashPeriod, loadDashboard,
       members, membersLoading, memberTotal, memberPage, memberPageSize, totalPages,
       memberFilters, memberForm, editMode, showMemberModal, openAddMember, openEditMember, saveMember, deleteMember, getAge, loadMembers,
+      onMembershipStartDateChange, onMembershipTypeChange, onIssueDateChange,
+      memberIssues,
       booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, editBookMode, bookForm, openAddBook, openEditBook, saveBook, deleteBook, syncBookBarcodes, autoFillSequentialBarcodes, loadBooks,
       issues, issuesLoading, issueFilter, issueForm, showIssueModal, openAddIssue, saveIssue, returnBook, loadIssues, overdueDays,
       reservationsList, loadReservations, updateReservationWithConfirm, issueFromReservation,

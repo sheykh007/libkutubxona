@@ -19,6 +19,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 
 class MemberSerializer(serializers.ModelSerializer):
+    branch_name = serializers.CharField(source='branch.name', read_only=True)
     age_computed = serializers.SerializerMethodField()
     kechikish_kitoblar = serializers.SerializerMethodField()
     issue_count = serializers.SerializerMethodField()
@@ -64,6 +65,9 @@ class BookIssueSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookIssue
         fields = '__all__'
+        extra_kwargs = {
+            'qaytarish_sana': {'required': False}
+        }
 
 
 class BranchSerializer(serializers.ModelSerializer):
