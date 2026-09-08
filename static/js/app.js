@@ -49,6 +49,247 @@ const TOIFA_LABELS = {
 
 const TOIFA_OPTIONS = Object.entries(TOIFA_LABELS).map(([v, l]) => ({ value: v, label: l }));
 
+// ─── Multi-Language Translations (UZ, RU, EN) ────────────────
+const TRANSLATIONS = {
+  uz: {
+    main_menu: "Asosiy menyu",
+    dashboard: "Dashboard",
+    books: "Kitoblar",
+    members: "Kitobxonlar",
+    issues: "Kitob Berish",
+    reservations: "Rezervatsiyalar",
+    ai_modules: "AI Modullari",
+    ai_search: "AI Qidiruv",
+    services_analysis: "Xizmatlar & Tahlil",
+    extensions: "Muddat Uzaytirish",
+    reports: "Hisobotlar",
+    notifications: "Bildirishnomalar",
+    finance: "Moliya",
+    management: "Boshqaruv",
+    excel_import: "Excel Import",
+    audit_log: "Audit Log",
+    backup: "Zaxira Nusxa",
+    settings: "Sozlamalar",
+    logout: "Chiqish",
+    
+    digital_library: "ELEKTRON KUTUBXONA",
+    search_placeholder: "Kitob, muallif, kitobxon yoki mavzu bo'yicha qidiring...",
+    qr_scanner: "📷 QR Skaner",
+    administrator: "Administrator",
+    operator: "Operator",
+    save: "Saqlash",
+    cancel: "Bekor qilish",
+    search: "Qidirish",
+    export: "Eksport",
+    add: "Qo'shish",
+    edit: "Tahrirlash",
+    delete: "O'chirish",
+    status: "Holati",
+    actions: "Harakatlar",
+    
+    total_books: "Jami Kitoblar",
+    active_members: "Faol Kitobxonlar",
+    issued_books: "Berilgan Kitoblar",
+    returned_books: "Qaytarilgan Kitoblar",
+    pending_members: "Kutilayotgan A'zolar",
+    overdue_books: "Muddati O'tgan",
+    popular_books_chart: "Eng ko'p o'qilgan kitoblar",
+    active_readers_chart: "Eng faol kitobxonlar reytingi",
+    
+    system_settings_title: "⚙️ Tizim Sozlamalari & Ko'rinish",
+    system_settings_subtitle: "Platforma parametrlari, tizim tili va tashqi ko'rinish sozlamalari",
+    interface_theme: "Interfeys mavzusi",
+    theme_light: "Kunduzgi rejim (Light)",
+    theme_dark: "Tungi rejim (Dark)",
+    theme_auto: "Tizim rejimi (Auto)",
+    general_params: "Umumiy parametrlar",
+    library_name: "Kutubxona nomi",
+    system_language: "Tizim tili",
+    max_loan_days: "Kitob berishning maksimal muddati (kun)",
+    daily_overdue_fine: "Kunlik kechikish jarimasi (so'm)",
+    save_settings: "💾 Saqlash",
+    settings_saved: "Sozlamalar muvaffaqiyatli saqlandi! Tizim tili yangilandi.",
+    
+    ai_search_title: "AI Aqlli Qidiruv & Semantik Tavsiyalar",
+    ai_search_desc: "Kitob mazmuni, muallif, qahramonlar yoki mavzuni erkin tilda tasvirlang. AI mos asarlarni topib beradi.",
+    ai_search_input_placeholder: "Masalan: Tibbiyotda kardiologiya yangiliklari yoki Navoiy g'azallari...",
+    popular_topics: "Mashhur mavzular:",
+    mode_semantic: "Semantik qidiruv",
+    mode_semantic_desc: "Ma'no va g'oya bo'yicha",
+    mode_qa: "Savol-javob",
+    mode_qa_desc: "Kitobdan aniq javob olish",
+    mode_recommend: "Tavsiya tizimi",
+    mode_recommend_desc: "Shaxsiy qiziqishlarga mos",
+    mode_summary: "Xulosa chiqarish",
+    mode_summary_desc: "Katta kitoblarning sarasi",
+    results_found: "ta kitob topildi",
+    match_rate: "moslik",
+    give_book: "📖 Kitob berish",
+    view_detail: "Batafsil ko'rish →",
+    available_copies: "ta nusxa mavjud",
+    currently_borrowed: "Hozirda band",
+    searching: "AI tahlil qilmoqda..."
+  },
+  ru: {
+    main_menu: "Главное меню",
+    dashboard: "Панель управления",
+    books: "Книги",
+    members: "Читатели",
+    issues: "Выдача книг",
+    reservations: "Бронирование",
+    ai_modules: "Модули AI",
+    ai_search: "AI Поиск",
+    services_analysis: "Сервисы и аналитика",
+    extensions: "Продление сроков",
+    reports: "Отчеты",
+    notifications: "Уведомления",
+    finance: "Финансы",
+    management: "Управление",
+    excel_import: "Импорт Excel",
+    audit_log: "Журнал аудита",
+    backup: "Резервные копии",
+    settings: "Настройки",
+    logout: "Выход",
+    
+    digital_library: "ЭЛЕКТРОННАЯ БИБЛИОТЕКА",
+    search_placeholder: "Поиск по названию, автору, читателю или теме...",
+    qr_scanner: "📷 QR Сканер",
+    administrator: "Администратор",
+    operator: "Оператор",
+    save: "Сохранить",
+    cancel: "Отмена",
+    search: "Поиск",
+    export: "Экспорт",
+    add: "Добавить",
+    edit: "Редактировать",
+    delete: "Удалить",
+    status: "Статус",
+    actions: "Действия",
+    
+    total_books: "Всего книг",
+    active_members: "Активные читатели",
+    issued_books: "Выданные книги",
+    returned_books: "Возвращенные книги",
+    pending_members: "Ожидающие заявки",
+    overdue_books: "Просроченные книги",
+    popular_books_chart: "Самые популярные книги",
+    active_readers_chart: "Рейтинг самых активных читателей",
+    
+    system_settings_title: "⚙️ Системные настройки и внешний вид",
+    system_settings_subtitle: "Параметры платформы, язык системы и темы оформления",
+    interface_theme: "Тема интерфейса",
+    theme_light: "Дневной режим (Light)",
+    theme_dark: "Ночной режим (Dark)",
+    theme_auto: "Системный режим (Auto)",
+    general_params: "Общие параметры",
+    library_name: "Название библиотеки",
+    system_language: "Язык системы",
+    max_loan_days: "Максимальный срок выдачи (дней)",
+    daily_overdue_fine: "Штраф за день просрочки (сум)",
+    save_settings: "💾 Сохранить",
+    settings_saved: "Настройки успешно сохранены! Язык системы обновлен.",
+    
+    ai_search_title: "AI Умный поиск и семантические рекомендации",
+    ai_search_desc: "Опишите содержание, автора, персонажей или тему своими словами. AI найдет подходящие произведения.",
+    ai_search_input_placeholder: "Например: Новости кардиологии в медицине или газели Навои...",
+    popular_topics: "Популярные темы:",
+    mode_semantic: "Семантический поиск",
+    mode_semantic_desc: "По смыслу и идее",
+    mode_qa: "Вопрос-ответ",
+    mode_qa_desc: "Точный ответ из книги",
+    mode_recommend: "Система рекомендаций",
+    mode_recommend_desc: "По личным интересам",
+    mode_summary: "Краткие тезисы",
+    mode_summary_desc: "Квинтэссенция больших книг",
+    results_found: "книг найдено",
+    match_rate: "соответствие",
+    give_book: "📖 Выдать книгу",
+    view_detail: "Подробнее →",
+    available_copies: "экз. доступно",
+    currently_borrowed: "В данный момент на руках",
+    searching: "AI анализирует библиотеку..."
+  },
+  en: {
+    main_menu: "Main Menu",
+    dashboard: "Dashboard",
+    books: "Books Catalog",
+    members: "Readers",
+    issues: "Book Loans",
+    reservations: "Reservations",
+    ai_modules: "AI Modules",
+    ai_search: "AI Search",
+    services_analysis: "Services & Analytics",
+    extensions: "Due Extensions",
+    reports: "Reports",
+    notifications: "Notifications",
+    finance: "Finance",
+    management: "Management",
+    excel_import: "Excel Import",
+    audit_log: "Audit Log",
+    backup: "Backups",
+    settings: "Settings",
+    logout: "Sign Out",
+    
+    digital_library: "DIGITAL LIBRARY",
+    search_placeholder: "Search by title, author, reader, or topic...",
+    qr_scanner: "📷 QR Scanner",
+    administrator: "Administrator",
+    operator: "Operator",
+    save: "Save",
+    cancel: "Cancel",
+    search: "Search",
+    export: "Export",
+    add: "Add",
+    edit: "Edit",
+    delete: "Delete",
+    status: "Status",
+    actions: "Actions",
+    
+    total_books: "Total Books",
+    active_members: "Active Readers",
+    issued_books: "Borrowed Books",
+    returned_books: "Returned Books",
+    pending_members: "Pending Members",
+    overdue_books: "Overdue Books",
+    popular_books_chart: "Most Popular Books",
+    active_readers_chart: "Top Active Readers",
+    
+    system_settings_title: "⚙️ System Settings & Appearance",
+    system_settings_subtitle: "Platform parameters, language and interface theme",
+    interface_theme: "Interface Theme",
+    theme_light: "Light Mode",
+    theme_dark: "Dark Mode",
+    theme_auto: "System (Auto)",
+    general_params: "General Parameters",
+    library_name: "Library Name",
+    system_language: "System Language",
+    max_loan_days: "Maximum Loan Duration (days)",
+    daily_overdue_fine: "Daily Overdue Fine (UZS)",
+    save_settings: "💾 Save Settings",
+    settings_saved: "Settings successfully saved! Language updated.",
+    
+    ai_search_title: "AI Smart Search & Semantic Recommendations",
+    ai_search_desc: "Describe the content, author, characters, or topic freely. AI will find matching literature.",
+    ai_search_input_placeholder: "e.g., Cardiology advances in medicine or Navoi ghazals...",
+    popular_topics: "Popular topics:",
+    mode_semantic: "Semantic Search",
+    mode_semantic_desc: "By meaning and concept",
+    mode_qa: "Question & Answer",
+    mode_qa_desc: "Precise answers from books",
+    mode_recommend: "Recommendation System",
+    mode_recommend_desc: "Tailored to interests",
+    mode_summary: "Key Summaries",
+    mode_summary_desc: "Essence of large books",
+    results_found: "books found",
+    match_rate: "match",
+    give_book: "📖 Issue Book",
+    view_detail: "View details →",
+    available_copies: "copies available",
+    currently_borrowed: "Currently checked out",
+    searching: "AI is analyzing library..."
+  }
+};
+
 const BADGE_COLORS = {
   'gazeta': 'badge-blue', 'jurnal': 'badge-cyan',
   '0': 'badge-purple', '1': 'badge-purple', '2': 'badge-yellow',
@@ -112,6 +353,32 @@ const app = createApp({
     
     function toggleTheme() {
       theme.value = theme.value === 'dark' ? 'light' : 'dark';
+    }
+
+    function setTheme(m) {
+      theme.value = m;
+    }
+
+    // Multi-Language Localization System
+    const currentLang = ref(localStorage.getItem('system_lang') || 'uz');
+    function t(key) {
+      const dict = TRANSLATIONS[currentLang.value] || TRANSLATIONS.uz;
+      return dict[key] || TRANSLATIONS.uz[key] || key;
+    }
+    const systemSettings = reactive({
+      language: currentLang.value,
+      libraryName: localStorage.getItem('system_lib_name') || "Samarqand viloyati Urgut tumani Axborot-kutubxona markazi",
+      maxDays: parseInt(localStorage.getItem('system_max_days')) || 15,
+      dailyFine: parseInt(localStorage.getItem('system_daily_fine')) || 500
+    });
+
+    function saveSystemSettings() {
+      currentLang.value = systemSettings.language;
+      localStorage.setItem('system_lang', currentLang.value);
+      localStorage.setItem('system_lib_name', systemSettings.libraryName);
+      localStorage.setItem('system_max_days', systemSettings.maxDays);
+      localStorage.setItem('system_daily_fine', systemSettings.dailyFine);
+      toast(t('settings_saved'), 'success');
     }
 
     // Dashboard
@@ -646,64 +913,58 @@ const app = createApp({
       showIssueModal.value = true;
     }
 
-    async function runAISearch() {
-      const q = aiSearchQuery.value.trim();
-      if (!q) {
-        aiSearchResults.value = [];
-        return;
+    const aiSearchMode = ref('semantic');
+
+    async function runAISearch(mode = null, customQ = null) {
+      if (mode && typeof mode === 'string') {
+        aiSearchMode.value = mode;
       }
+      if (customQ && typeof customQ === 'string') {
+        aiSearchQuery.value = customQ;
+      }
+      
+      let q = aiSearchQuery.value.trim();
+      if (!q && aiSearchMode.value === 'recommend') {
+        q = "Eng yaxshi tavsiya etilgan kitoblar";
+        aiSearchQuery.value = q;
+      } else if (!q && aiSearchMode.value === 'summary') {
+        q = "Kutubxonadagi asosiy durdona asarlar";
+        aiSearchQuery.value = q;
+      } else if (!q && aiSearchMode.value === 'qa') {
+        q = "Kutubxona xizmatlari va kitoblar";
+        aiSearchQuery.value = q;
+      } else if (!q) {
+        q = "Ommabop kitoblar";
+        aiSearchQuery.value = q;
+      }
+
       aiSearching.value = true;
       try {
-        // 1. Direct API search
-        const res = await api('GET', `/books/?q=${encodeURIComponent(q)}&page_size=20`);
-        let items = res.results || [];
-
-        // 2. Keyword fallback if mode title was clicked
-        if (items.length === 0) {
-          const words = q.split(/\s+/).filter(w => w.length > 2);
-          for (const w of words) {
-            try {
-              const r2 = await api('GET', `/books/?q=${encodeURIComponent(w)}&page_size=10`);
-              if (r2.results && r2.results.length) {
-                items = [...items, ...r2.results];
-              }
-            } catch(e) {}
-          }
-        }
-
-        // 3. Overall library fallback
-        if (items.length === 0) {
-          const fallback = await api('GET', `/books/?page_size=10`);
-          items = fallback.results || (booksList.value || []).slice(0, 8);
-        }
-
-        const seen = new Set();
-        const uniqueItems = [];
-        for (const item of items) {
-          if (!seen.has(item.id)) {
-            seen.add(item.id);
-            uniqueItems.push(item);
-          }
-        }
-
-        aiSearchResults.value = uniqueItems.slice(0, 10).map((b, idx) => ({
-          ...b,
-          match_rate: Math.max(82, 98 - idx * 3) + '%',
-          snippet: `AI semantik tahlili: Asar mavzusi va g'oyasi "${q}" so'rovi bilan yuqori ilmiy-badiiy uyg'unlikka ega.`
-        }));
-
+        const res = await api('GET', `/ai/search/?q=${encodeURIComponent(q)}&mode=${encodeURIComponent(aiSearchMode.value)}`);
+        aiSearchResults.value = Array.isArray(res) ? res : (res.results || []);
         if (!aiSearchResults.value.length) {
-          aiSearchResults.value = [
-            { id: 101, title: "O'tkan kunlar", author: "Abdulla Qodiriy", published_year: 2023, match_rate: '98%', snippet: 'Tarixiy va badiiy durdona asar. O\'quvchilar tomonidan eng ko\'p tavsiya etilgan.' },
-            { id: 102, title: "Alkimyogar", author: "Paulo Coelho", published_year: 2022, match_rate: '95%', snippet: 'Falsafiy va motivatsion asar. Shaxsiy rivojlanish va hayotiy maqsadlar haqida.' },
-            { id: 103, title: "Kardiologiya va zamonaviy tibbiyot", author: "Prof. Alimov", published_year: 2024, match_rate: '92%', snippet: 'Yurak-qon tomir kasalliklarini diagnostika qilish va davolashning zamonaviy usullari.' }
-          ];
+          toast(t('results_found') + ': 0', 'warning');
         }
       } catch (e) {
         toast('AI qidiruvda xatolik: ' + e.message, 'error');
       } finally {
         aiSearching.value = false;
       }
+    }
+
+    function issueBookFromSearch(book) {
+      if (!book) return;
+      issueForm.book_name = book.title;
+      if (book.items && book.items.length) {
+        const avail = book.items.find(i => i.status === 'available');
+        if (avail) issueForm.book_item = avail.id;
+      }
+      const todayStr = new Date().toISOString().split('T')[0];
+      issueForm.berilgan_sana = todayStr;
+      const ret = new Date();
+      ret.setDate(ret.getDate() + 15);
+      issueForm.qaytarish_sana = ret.toISOString().split('T')[0];
+      showIssueModal.value = true;
     }
 
     // ─── Members Logic ─────────────────────────────────────────
@@ -1194,13 +1455,16 @@ const app = createApp({
       bookViewMode, setBookViewMode, globalSearchQuery, handleGlobalSearch,
       notifications, showNotifications,
       
+      // Multi-Language & Settings
+      currentLang, t, systemSettings, saveSystemSettings,
+      
       // 12 Views States & Methods
       selectedBookDetail, viewBookDetail,
       selectedMemberProfile, selectedMemberDetail, showMemberDetailModal, viewMemberProfile, goToMemberProfile,
       viewMember: (m) => viewMemberProfile(m),
       showLibraryCardModal, libraryCardSide, libraryCardMember, openLibraryCard, flipLibraryCard, printCard,
       toggleChat, askQuickPrompt,
-      aiSearchQuery, aiSearchResults, aiSearching, runAISearch,
+      aiSearchQuery, aiSearchResults, aiSearching, aiSearchMode, runAISearch, issueBookFromSearch,
       bookCategories, selectedBookCategory, setBookCategory, openBookIssueFor,
 
       dashStats, dashLoading, dashDateFrom, dashDateTo, dashPeriod, loadDashboard,
@@ -1215,7 +1479,7 @@ const app = createApp({
       auditLogs, loadAuditLogs, backupsList, loadBackups, createBackup,
       importFile, importResult, importing, dragover, importTab, importType, onDrop, onFileSelect, doImport, bulkDeleteAll, exportMembers,
       financeTab, payments, debtors, financeLoading,
-      today, formatPrice, formatDate, toasts, theme, toggleTheme,
+      today, formatPrice, formatDate, toasts, theme, toggleTheme, setTheme,
       showQRModal, openQRModal, closeQRModal, onScanSuccess, onScanError,
       memberSearchQ, memberSearchResults, selectMemberForIssue,
       bookSearchQ, bookSearchResults, selectBookForIssue

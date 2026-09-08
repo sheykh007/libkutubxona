@@ -271,17 +271,12 @@ class LeaderboardView(APIView):
 # --- AI Search & Recommendations ---
 class AISearchView(APIView):
     def get(self, request):
-        q = request.GET.get('q', '')
-        if not q:
+        q = request.GET.get('q', '').strip()
+        mode = request.GET.get('mode', 'semantic').strip()
+        if not q and mode != 'recommend':
             return Response([])
-        results = ai_smart_search(q)
-        data = [{
-            'id': b.id,
-            'title': b.title,
-            'author': b.author,
-            'year': b.published_year
-        } for b in results]
-        return Response(data)
+        results = ai_smart_search(q, mode=mode)
+        return Response(results)
 
 class AIRecommendationView(APIView):
     def get(self, request, pk):

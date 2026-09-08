@@ -76,91 +76,91 @@
 
     <!-- Navigation Menu -->
     <div class="sidebar-nav">
-      <div class="nav-section-label">Asosiy menyu</div>
+      <div class="nav-section-label">{{ t('main_menu') }}</div>
 
-      <div class="nav-item" :class="{ active: currentPage==='dashboard' }" @click="navigate('dashboard')" title="Dashboard">
+      <div class="nav-item" :class="{ active: currentPage==='dashboard' }" @click="navigate('dashboard')" :title="t('dashboard')">
         <span class="nav-icon">📊</span>
-        <span class="nav-text">Dashboard</span>
+        <span class="nav-text">{{ t('dashboard') }}</span>
       </div>
 
-      <div class="nav-item" :class="{ active: currentPage==='books' || currentPage==='book_detail' }" @click="navigate('books')" title="Kitoblar">
+      <div class="nav-item" :class="{ active: currentPage==='books' || currentPage==='book_detail' }" @click="navigate('books')" :title="t('books')">
         <span class="nav-icon">📚</span>
-        <span class="nav-text">Kitoblar</span>
+        <span class="nav-text">{{ t('books') }}</span>
       </div>
 
-      <div class="nav-item" :class="{ active: currentPage==='members' || currentPage==='member_profile' }" @click="navigate('members')" title="Kitobxonlar">
+      <div class="nav-item" :class="{ active: currentPage==='members' || currentPage==='member_profile' }" @click="navigate('members')" :title="t('members')">
         <span class="nav-icon">👤</span>
-        <span class="nav-text">Kitobxonlar</span>
+        <span class="nav-text">{{ t('members') }}</span>
         <span class="nav-badge" v-if="dashStats && dashStats.kutilmoqda_members > 0">{{ dashStats.kutilmoqda_members }}</span>
       </div>
 
-      <div class="nav-item" :class="{ active: currentPage==='issues' }" @click="navigate('issues')" title="Kitob Berish">
+      <div class="nav-item" :class="{ active: currentPage==='issues' }" @click="navigate('issues')" :title="t('issues')">
         <span class="nav-icon">📖</span>
-        <span class="nav-text">Kitob Berish</span>
+        <span class="nav-text">{{ t('issues') }}</span>
       </div>
 
-      <div class="nav-item" :class="{ active: currentPage==='reservations' }" @click="navigate('reservations')" title="Rezervatsiyalar">
+      <div class="nav-item" :class="{ active: currentPage==='reservations' }" @click="navigate('reservations')" :title="t('reservations')">
         <span class="nav-icon">🔖</span>
-        <span class="nav-text">Rezervatsiyalar</span>
+        <span class="nav-text">{{ t('reservations') }}</span>
         <span class="nav-badge" v-if="reservationsList && reservationsList.length > 0">{{ reservationsList.length }}</span>
       </div>
 
-      <div class="nav-section-label">AI Modullari</div>
+      <div class="nav-section-label">{{ t('ai_modules') }}</div>
 
-      <div class="nav-item" :class="{ active: currentPage==='ai_search' }" @click="navigate('ai_search')" title="AI Qidiruv">
+      <div class="nav-item" :class="{ active: currentPage==='ai_search' }" @click="navigate('ai_search')" :title="t('ai_search')">
         <span class="nav-icon">✨</span>
-        <span class="nav-text">AI Qidiruv</span>
+        <span class="nav-text">{{ t('ai_search') }}</span>
         <span class="nav-badge-ai">AI</span>
       </div>
 
-      <div class="nav-section-label">Xizmatlar & Tahlil</div>
+      <div class="nav-section-label">{{ t('services_analysis') }}</div>
 
-      <div class="nav-item" :class="{ active: currentPage==='extensions' }" @click="navigate('extensions')" title="Muddat Uzaytirish">
+      <div class="nav-item" :class="{ active: currentPage==='extensions' }" @click="navigate('extensions')" :title="t('extensions')">
         <span class="nav-icon">⏳</span>
-        <span class="nav-text">Muddat Uzaytirish</span>
+        <span class="nav-text">{{ t('extensions') }}</span>
       </div>
 
-      <div class="nav-item" :class="{ active: currentPage==='reports' }" @click="navigate('reports')" title="Hisobotlar">
+      <div class="nav-item" :class="{ active: currentPage==='reports' }" @click="navigate('reports')" :title="t('reports')">
         <span class="nav-icon">📈</span>
-        <span class="nav-text">Hisobotlar</span>
+        <span class="nav-text">{{ t('reports') }}</span>
       </div>
 
-      <div class="nav-item" :class="{ active: currentPage==='notifications_page' }" @click="navigate('notifications_page')" title="Bildirishnomalar">
+      <div class="nav-item" :class="{ active: currentPage==='notifications_page' }" @click="navigate('notifications_page')" :title="t('notifications')">
         <span class="nav-icon">🔔</span>
-        <span class="nav-text">Bildirishnomalar</span>
+        <span class="nav-text">{{ t('notifications') }}</span>
         <span class="nav-badge" v-if="notifications && notifications.length > 0">{{ notifications.length }}</span>
       </div>
 
-      <div class="nav-item" :class="{ active: currentPage==='finance' }" @click="navigate('finance')" title="Moliya">
+      <div class="nav-item" :class="{ active: currentPage==='finance' }" @click="navigate('finance')" :title="t('finance')">
         <span class="nav-icon">💰</span>
-        <span class="nav-text">Moliya</span>
+        <span class="nav-text">{{ t('finance') }}</span>
       </div>
 
-      <div class="nav-section-label">Boshqaruv</div>
+      <div class="nav-section-label">{{ t('management') }}</div>
 
-      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='import' }" @click="navigate('import')" title="Excel Import">
+      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='import' }" @click="navigate('import')" :title="t('excel_import')">
         <span class="nav-icon">📥</span>
-        <span class="nav-text">Excel Import</span>
+        <span class="nav-text">{{ t('excel_import') }}</span>
       </div>
 
-      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='audit_log' }" @click="navigate('audit_log')" title="Audit Log">
+      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='audit_log' }" @click="navigate('audit_log')" :title="t('audit_log')">
         <span class="nav-icon">📋</span>
-        <span class="nav-text">Audit Log</span>
+        <span class="nav-text">{{ t('audit_log') }}</span>
       </div>
 
-      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='backup' }" @click="navigate('backup')" title="Zaxira Nusxa">
+      <div class="nav-item" v-if="auth.role === 'admin'" :class="{ active: currentPage==='backup' }" @click="navigate('backup')" :title="t('backup')">
         <span class="nav-icon">💾</span>
-        <span class="nav-text">Zaxira Nusxa</span>
+        <span class="nav-text">{{ t('backup') }}</span>
       </div>
 
-      <div class="nav-item" :class="{ active: currentPage==='settings' }" @click="navigate('settings')" title="Sozlamalar">
+      <div class="nav-item" :class="{ active: currentPage==='settings' }" @click="navigate('settings')" :title="t('settings')">
         <span class="nav-icon">⚙️</span>
-        <span class="nav-text">Sozlamalar</span>
+        <span class="nav-text">{{ t('settings') }}</span>
       </div>
 
-      <div class="nav-item" @click="logout" title="Tizimdan Chiqish">
+      <div class="nav-item" @click="logout" :title="t('logout')">
         <span class="nav-icon">🚪</span>
-        <span class="nav-text">Chiqish</span>
+        <span class="nav-text">{{ t('logout') }}</span>
       </div>
     </div>
 
@@ -180,7 +180,7 @@
         </div>
         <div class="user-info">
           <div class="user-name">{{ auth.username || 'Zamira Murtazoyeva' }}</div>
-          <div class="user-role">{{ auth.role === 'admin' ? 'Administrator' : 'Operator' }}</div>
+          <div class="user-role">{{ auth.role === 'admin' ? t('administrator') : t('operator') }}</div>
         </div>
       </div>
     </div>
@@ -197,25 +197,25 @@
         <button class="btn-hamburger" @click="sidebarOpen = !sidebarOpen">☰</button>
         <div>
           <h1 style="margin:0; font-size:1.15rem; font-weight:800; font-family:'Outfit',sans-serif; letter-spacing:-0.3px;">
-            <span v-if="currentPage==='dashboard'">📊 Dashboard</span>
-            <span v-else-if="currentPage==='books'">📚 Kitoblar Katalogi</span>
-            <span v-else-if="currentPage==='book_detail'">📖 Kitob Tafsilotlari</span>
-            <span v-else-if="currentPage==='members'">👤 Kitobxonlar Boshqaruvi</span>
-            <span v-else-if="currentPage==='member_profile'">👤 Kitobxon Profili</span>
-            <span v-else-if="currentPage==='issues'">📖 Kitob Berish Jurnali</span>
-            <span v-else-if="currentPage==='reservations'">🔖 Band Qilingan Kitoblar</span>
-            <span v-else-if="currentPage==='ai_search'">✨ AI Aqlli Qidiruv</span>
-            <span v-else-if="currentPage==='extensions'">⏳ Muddat Uzaytirish</span>
-            <span v-else-if="currentPage==='reports'">📈 Statistika & Hisobotlar</span>
-            <span v-else-if="currentPage==='notifications_page'">🔔 Barcha Bildirishnomalar</span>
-            <span v-else-if="currentPage==='finance'">💰 Moliya va To'lovlar</span>
-            <span v-else-if="currentPage==='import'">📥 Excel Import</span>
-            <span v-else-if="currentPage==='audit_log'">📋 Tizim Harakatlari (Audit)</span>
-            <span v-else-if="currentPage==='backup'">💾 Zaxira Nusxalar</span>
-            <span v-else-if="currentPage==='settings'">⚙️ Tizim Sozlamalari</span>
+            <span v-if="currentPage==='dashboard'">📊 {{ t('dashboard') }}</span>
+            <span v-else-if="currentPage==='books'">📚 {{ t('books') }}</span>
+            <span v-else-if="currentPage==='book_detail'">📖 {{ t('books') }}</span>
+            <span v-else-if="currentPage==='members'">👤 {{ t('members') }}</span>
+            <span v-else-if="currentPage==='member_profile'">👤 {{ t('members') }}</span>
+            <span v-else-if="currentPage==='issues'">📖 {{ t('issues') }}</span>
+            <span v-else-if="currentPage==='reservations'">🔖 {{ t('reservations') }}</span>
+            <span v-else-if="currentPage==='ai_search'">✨ {{ t('ai_search') }}</span>
+            <span v-else-if="currentPage==='extensions'">⏳ {{ t('extensions') }}</span>
+            <span v-else-if="currentPage==='reports'">📈 {{ t('reports') }}</span>
+            <span v-else-if="currentPage==='notifications_page'">🔔 {{ t('notifications') }}</span>
+            <span v-else-if="currentPage==='finance'">💰 {{ t('finance') }}</span>
+            <span v-else-if="currentPage==='import'">📥 {{ t('excel_import') }}</span>
+            <span v-else-if="currentPage==='audit_log'">📋 {{ t('audit_log') }}</span>
+            <span v-else-if="currentPage==='backup'">💾 {{ t('backup') }}</span>
+            <span v-else-if="currentPage==='settings'">⚙️ {{ t('settings') }}</span>
           </h1>
           <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-            ELEKTRON KUTUBXONA / {{ currentPage === 'dashboard' ? 'Boshqaruv paneli' : currentPage }}
+            {{ t('digital_library') }} / {{ t(currentPage) || currentPage }}
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@
       <!-- Topbar Global Search with Mic Icon -->
       <div class="topbar-search-box">
         <span class="icon-left">🔍</span>
-        <input type="text" placeholder="Kitob, muallif, kitobxon yoki mavzu bo'yicha qidiring..." 
+        <input type="text" :placeholder="t('search_placeholder')" 
                v-model="globalSearchQuery" @keyup.enter="handleGlobalSearch">
         <span class="icon-mic" title="Ovozli qidiruv" @click="navigate('ai_search')">🎤</span>
       </div>
@@ -231,13 +231,13 @@
       <!-- Topbar Right Actions -->
       <div class="topbar-right">
         <!-- AI Search Button -->
-        <button class="btn-ai-glow" @click="navigate('ai_search')" title="AI orqali semantik qidiruv">
-          <span>✨ AI qidiruv</span>
+        <button class="btn-ai-glow" @click="navigate('ai_search')" :title="t('ai_search')">
+          <span>✨ {{ t('ai_search') }}</span>
         </button>
 
         <!-- QR Scanner Button -->
-        <button class="btn btn-secondary btn-sm" @click="openQRModal" title="QR kod orqali kitobxonni topish" style="border-radius:var(--radius-full);">
-          📷 QR Skaner
+        <button class="btn btn-secondary btn-sm" @click="openQRModal" :title="t('qr_scanner')" style="border-radius:var(--radius-full);">
+          {{ t('qr_scanner') }}
         </button>
 
         <!-- Theme Toggle Pill -->
@@ -254,7 +254,7 @@
           </button>
           <div class="notification-dropdown" v-if="showNotifications" style="position:absolute; top:calc(100% + 10px); right:0; width:340px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); z-index:200; overflow:hidden;">
             <div style="padding:12px 16px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:700; font-size:0.85rem;">🔔 Bildirishnomalar</span>
+              <span style="font-weight:700; font-size:0.85rem;">🔔 {{ t('notifications') }}</span>
               <span class="badge badge-blue">{{ notifications.length }} ta</span>
             </div>
             <div style="max-height:300px; overflow-y:auto;">
@@ -278,13 +278,13 @@
         </div>
 
         <!-- User Profile Widget -->
-        <div class="user-profile-widget" @click="navigate('settings')" title="Profil sozlamalari">
+        <div class="user-profile-widget" @click="navigate('settings')" :title="t('settings')">
           <div class="leaderboard-avatar" style="width:34px; height:34px; font-size:13px; font-weight:800;">
             {{ auth.username ? auth.username[0].toUpperCase() : 'Z' }}
           </div>
           <div class="user-text-info">
             <span class="user-name">{{ auth.username || 'Zamira Murtazoyeva' }}</span>
-            <span class="user-role">{{ auth.role === 'admin' ? 'Administrator' : 'Operator' }}</span>
+            <span class="user-role">{{ auth.role === 'admin' ? t('administrator') : t('operator') }}</span>
           </div>
         </div>
       </div>
@@ -324,7 +324,7 @@
               <div class="kpi-card-header">
                 <div>
                   <div class="kpi-metric-val">{{ (dashStats.total_books ?? 0).toLocaleString() }}</div>
-                  <div class="kpi-metric-label">Jami kitoblar</div>
+                  <div class="kpi-metric-label">{{ t('total_books') }}</div>
                 </div>
                 <div class="kpi-metric-icon gold">📚</div>
               </div>
@@ -339,7 +339,7 @@
               <div class="kpi-card-header">
                 <div>
                   <div class="kpi-metric-val">{{ (dashStats.faol_members ?? 0).toLocaleString() }}</div>
-                  <div class="kpi-metric-label">Faol kitobxonlar</div>
+                  <div class="kpi-metric-label">{{ t('active_members') }}</div>
                 </div>
                 <div class="kpi-metric-icon blue">👤</div>
               </div>
@@ -354,7 +354,7 @@
               <div class="kpi-card-header">
                 <div>
                   <div class="kpi-metric-val">{{ dashStats.active_issues !== undefined && dashStats.active_issues !== null ? dashStats.active_issues : (dashStats.today_issues ?? 0) }}</div>
-                  <div class="kpi-metric-label">Berilgan kitoblar</div>
+                  <div class="kpi-metric-label">{{ t('issued_books') }}</div>
                 </div>
                 <div class="kpi-metric-icon cyan">📖</div>
               </div>
@@ -369,7 +369,7 @@
               <div class="kpi-card-header">
                 <div>
                   <div class="kpi-metric-val">{{ dashStats.returned_books ?? 0 }}</div>
-                  <div class="kpi-metric-label">Qaytarilgan kitoblar</div>
+                  <div class="kpi-metric-label">{{ t('returned_books') }}</div>
                 </div>
                 <div class="kpi-metric-icon green">↩️</div>
               </div>
@@ -384,7 +384,7 @@
               <div class="kpi-card-header">
                 <div>
                   <div class="kpi-metric-val">{{ dashStats.kutilmoqda_members ?? 0 }}</div>
-                  <div class="kpi-metric-label">Kutilayotgan a'zolar</div>
+                  <div class="kpi-metric-label">{{ t('pending_members') }}</div>
                 </div>
                 <div class="kpi-metric-icon gold">⏳</div>
               </div>
@@ -399,7 +399,7 @@
               <div class="kpi-card-header">
                 <div>
                   <div class="kpi-metric-val">{{ dashStats.overdue_issues ?? 0 }}</div>
-                  <div class="kpi-metric-label">Muddati o'tgan</div>
+                  <div class="kpi-metric-label">{{ t('overdue_books') }}</div>
                 </div>
                 <div class="kpi-metric-icon red">⚠️</div>
               </div>
@@ -1220,72 +1220,98 @@
         <div class="ai-search-center-box">
           <div style="font-size:52px; margin-bottom:10px;">🤖✨</div>
           <h2 style="font-size:1.8rem; font-weight:800; font-family:'Outfit',sans-serif; margin-bottom:8px;">
-            AI Aqlli Qidiruv & Semantik Tavsiyalar
+            {{ t('ai_search_title') }}
           </h2>
           <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:24px;">
-            Kitob mazmuni, muallif, qahramonlar yoki mavzuni erkin tilda tasvirlang. AI mos asarlarni topib beradi.
+            {{ t('ai_search_desc') }}
           </p>
 
           <!-- Large AI Input -->
           <div class="ai-search-big-input">
             <span style="font-size:20px; color:var(--info); margin-right:12px;">✨</span>
-            <input type="text" v-model="aiSearchQuery" placeholder="Masalan: Tibbiyotda kardiologiya yangiliklari yoki Navoiy g'azallari..." @keyup.enter="runAISearch">
-            <button class="btn btn-primary" style="border-radius:var(--radius-full); padding:8px 20px;" @click="runAISearch">
-              Qidirish 🚀
+            <input type="text" v-model="aiSearchQuery" :placeholder="t('ai_search_input_placeholder')" @keyup.enter="runAISearch(null)">
+            <button class="btn btn-primary" style="border-radius:var(--radius-full); padding:8px 24px; font-weight:700;" @click="runAISearch(null)" :disabled="aiSearching">
+              <span v-if="aiSearching" class="spinner" style="width:14px; height:14px; border-width:2px; margin-right:6px;"></span>
+              <span>{{ aiSearching ? t('searching') : (t('search') + ' 🚀') }}</span>
             </button>
           </div>
 
           <!-- Popular Search Chips -->
           <div class="ai-search-chips">
-            <span style="font-size:0.75rem; color:var(--text-muted); align-self:center;">Mashhur mavzular:</span>
-            <span class="ai-chip-pill" @click="aiSearchQuery='Sun\'iy intellekt va neyrotarmoqlar'; runAISearch()">🤖 Sun'iy intellekt</span>
-            <span class="ai-chip-pill" @click="aiSearchQuery='O\'zbekiston tarixi 20-asr'; runAISearch()">🏛️ O'zbekiston tarixi</span>
-            <span class="ai-chip-pill" @click="aiSearchQuery='Kardiologiya va ichki kasalliklar'; runAISearch()">🩺 Kardiologiya</span>
-            <span class="ai-chip-pill" @click="aiSearchQuery='Alisher Navoiy g\'azallari'; runAISearch()">📜 Alisher Navoiy</span>
-            <span class="ai-chip-pill" @click="aiSearchQuery='Badiiy jahon adabiyoti durdonalari'; runAISearch()">📚 Badiiy adabiyot</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); align-self:center;">{{ t('popular_topics') }}</span>
+            <span class="ai-chip-pill" @click="runAISearch('semantic', 'Sun\'iy intellekt va neyrotarmoqlar')">🤖 Sun'iy intellekt</span>
+            <span class="ai-chip-pill" @click="runAISearch('semantic', 'O\'zbekiston tarixi 20-asr')">🏛️ O'zbekiston tarixi</span>
+            <span class="ai-chip-pill" @click="runAISearch('semantic', 'Kardiologiya va ichki kasalliklar')">🩺 Kardiologiya</span>
+            <span class="ai-chip-pill" @click="runAISearch('semantic', 'Alisher Navoiy g\'azallari')">📜 Alisher Navoiy</span>
+            <span class="ai-chip-pill" @click="runAISearch('semantic', 'Badiiy jahon adabiyoti durdonalari')">📚 Badiiy adabiyot</span>
           </div>
 
-          <!-- 4 AI Mode Cards (Screenshot 2, View 7) -->
+          <!-- 4 AI Mode Cards -->
           <div class="ai-search-modes-grid">
-            <div class="ai-mode-card" @click="aiSearchQuery='Semantik ma\'no bo\'yicha saralash'; runAISearch()">
-              <div style="font-size:24px; margin-bottom:6px;">🧠</div>
-              <div>Semantik qidiruv</div>
-              <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Ma'no va g'oya bo'yicha</div>
+            <div class="ai-mode-card" :class="{ active: aiSearchMode === 'semantic' }" @click="runAISearch('semantic', 'Kutubxonadagi ilmiy va badiiy asarlar')" style="cursor:pointer;">
+              <div style="font-size:26px; margin-bottom:6px;">🧠</div>
+              <div style="font-weight:700;">{{ t('mode_semantic') }}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">{{ t('mode_semantic_desc') }}</div>
             </div>
-            <div class="ai-mode-card" @click="aiSearchQuery='Savol-javob rejimi'; runAISearch()">
-              <div style="font-size:24px; margin-bottom:6px;">💬</div>
-              <div>Savol-javob</div>
-              <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Kitobdan aniq javob olish</div>
+            <div class="ai-mode-card" :class="{ active: aiSearchMode === 'qa' }" @click="runAISearch('qa', 'Kitobxonlik va ta\'lim bo\'yicha muhim savollar')" style="cursor:pointer;">
+              <div style="font-size:26px; margin-bottom:6px;">💬</div>
+              <div style="font-weight:700;">{{ t('mode_qa') }}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">{{ t('mode_qa_desc') }}</div>
             </div>
-            <div class="ai-mode-card" @click="aiSearchQuery='Eng yaxshi tavsiyalar'; runAISearch()">
-              <div style="font-size:24px; margin-bottom:6px;">📚</div>
-              <div>Tavsiya tizimi</div>
-              <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Shaxsiy qiziqishlarga mos</div>
+            <div class="ai-mode-card" :class="{ active: aiSearchMode === 'recommend' }" @click="runAISearch('recommend', 'Eng yaxshi tavsiya etilgan kitoblar')" style="cursor:pointer;">
+              <div style="font-size:26px; margin-bottom:6px;">📚</div>
+              <div style="font-weight:700;">{{ t('mode_recommend') }}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">{{ t('mode_recommend_desc') }}</div>
             </div>
-            <div class="ai-mode-card" @click="aiSearchQuery='Qisqacha xulosalar'; runAISearch()">
-              <div style="font-size:24px; margin-bottom:6px;">📑</div>
-              <div>Xulosa chiqarish</div>
-              <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Katta kitoblarning sarasi</div>
+            <div class="ai-mode-card" :class="{ active: aiSearchMode === 'summary' }" @click="runAISearch('summary', 'Kutubxonadagi asosiy durdona asarlar')" style="cursor:pointer;">
+              <div style="font-size:26px; margin-bottom:6px;">📑</div>
+              <div style="font-weight:700;">{{ t('mode_summary') }}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">{{ t('mode_summary_desc') }}</div>
             </div>
           </div>
         </div>
 
         <!-- AI Search Results List -->
-        <div v-if="aiSearchResults.length > 0" style="max-width:900px; margin:30px auto;">
-          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:16px;">🔍 Qidiruv natijalari ({{ aiSearchResults.length }} ta kitob topildi):</h3>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <div class="card" v-for="(res, idx) in aiSearchResults" :key="idx" style="padding:16px 20px; display:flex; flex-direction:row; justify-content:space-between; align-items:center;">
-              <div style="display:flex; gap:16px; align-items:center;">
-                <div class="book-cover-thumb" style="width:44px; height:60px; font-size:20px;">📖</div>
-                <div>
-                  <div style="font-weight:700; font-size:1rem; color:var(--text-primary);">{{ res.title }}</div>
-                  <div style="font-size:0.8rem; color:var(--text-secondary);">✍️ {{ res.author || 'Muallif' }} | Nashr: {{ res.published_year || '2023' }}</div>
-                  <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">{{ res.snippet || 'AI tahlili: Mavzu bo\'yicha yuqori ilmiy aniqlikka ega.' }}</div>
+        <div v-if="aiSearchResults.length > 0" style="max-width:960px; margin:32px auto;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+            <h3 style="font-size:1.15rem; font-weight:800; font-family:'Outfit',sans-serif; margin:0;">
+              🔍 {{ t('ai_search_title') }}: <span style="color:var(--primary);">{{ aiSearchResults.length }} {{ t('results_found') }}</span>
+            </h3>
+            <span class="badge badge-purple" style="font-size:0.75rem;">Rejim: {{ aiSearchMode.toUpperCase() }}</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div class="card" v-for="(res, idx) in aiSearchResults" :key="idx" style="padding:18px 22px; display:flex; flex-direction:row; justify-content:space-between; align-items:center; gap:20px; transition:var(--transition);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+              <div style="display:flex; gap:18px; align-items:center; flex:1;">
+                <div class="book-cover-thumb" style="width:48px; height:66px; font-size:24px; border-radius:var(--radius-xs); background:linear-gradient(135deg, var(--primary), var(--secondary)); display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
+                  📖
+                </div>
+                <div style="flex:1;">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <div style="font-weight:800; font-size:1.05rem; color:var(--text-primary);">{{ res.title }}</div>
+                    <span class="badge badge-blue" style="font-size:0.7rem;">{{ res.category || 'Kitob' }}</span>
+                  </div>
+                  <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:6px;">
+                    ✍️ <b>{{ res.author }}</b> &nbsp;|&nbsp; 📅 {{ res.published_year }}
+                    &nbsp;|&nbsp;
+                    <span v-if="res.available_count > 0" style="color:var(--success); font-weight:700;">
+                      🟢 {{ res.available_count }} {{ t('available_copies') }}
+                    </span>
+                    <span v-else style="color:var(--danger); font-weight:700;">
+                      🔴 {{ t('currently_borrowed') }}
+                    </span>
+                  </div>
+                  <div style="font-size:0.8rem; color:var(--text-muted); background:var(--bg-surface); padding:6px 12px; border-radius:var(--radius-xs); border-left:3px solid var(--info);">
+                    💡 {{ res.snippet }}
+                  </div>
                 </div>
               </div>
-              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-                <span class="badge badge-green">🎯 {{ res.match_rate || '96%' }} moslik</span>
-                <button class="btn btn-secondary btn-xs" @click="viewBookDetail(res)">Batafsil ko'rish →</button>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;">
+                <span class="badge badge-green" style="font-size:0.78rem; font-weight:700;">🎯 {{ res.match_rate }} {{ t('match_rate') }}</span>
+                <div style="display:flex; gap:8px;">
+                  <button class="btn btn-primary btn-xs" @click="issueBookFromSearch(res)">{{ t('give_book') }}</button>
+                  <button class="btn btn-secondary btn-xs" @click="viewBookDetail(res)">{{ t('view_detail') }}</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1748,6 +1774,78 @@
         </div>
       </section>
 
+      <!-- Settings Page -->
+      <section v-if="currentPage==='settings'">
+        <div class="card" style="max-width:880px; margin:0 auto 30px auto; padding:28px 32px;">
+          <div class="card-title-row" style="border-bottom:1px solid var(--border-light); padding-bottom:18px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h2 style="font-size:1.35rem; font-weight:800; font-family:'Outfit',sans-serif; margin:0; color:var(--text-primary);">
+                {{ t('system_settings_title') }}
+              </h2>
+              <p style="color:var(--text-secondary); font-size:0.85rem; margin:6px 0 0 0;">
+                {{ t('system_settings_subtitle') }}
+              </p>
+            </div>
+            <button class="btn btn-primary" @click="saveSystemSettings" style="box-shadow:0 4px 12px rgba(23,59,87,0.2);">
+              {{ t('save_settings') }}
+            </button>
+          </div>
+
+          <div class="form-grid" style="gap:20px;">
+            <!-- Language Selection -->
+            <div class="form-group form-full" style="background:var(--bg-surface); padding:16px 20px; border-radius:var(--radius-sm); border:1px solid var(--border);">
+              <label class="form-label" style="font-size:0.92rem; font-weight:800; color:var(--text-primary); margin-bottom:8px;">
+                🌐 {{ t('system_language') }} *
+              </label>
+              <select class="form-control" v-model="systemSettings.language" @change="saveSystemSettings" style="font-size:0.95rem; font-weight:700; padding:12px 16px; border-radius:var(--radius-sm); background:var(--bg-card); cursor:pointer;">
+                <option value="uz">🇺🇿 O'zbekcha (Lotin alifbosi)</option>
+                <option value="ru">🇷🇺 Русский (Russian)</option>
+                <option value="en">🇬🇧 English (International)</option>
+              </select>
+              <small style="color:var(--text-muted); margin-top:8px; display:block; font-size:0.8rem;">
+                {{ currentLang === 'uz' ? "Tanlangan til saqlangach butun tizim interfeysi (menyu, jadvallar, qidiruv) ushbu tilga o'tadi." : (currentLang === 'ru' ? "После сохранения язык всего интерфейса платформы (меню, таблицы, поиск) переключится на выбранный." : "System UI (navigation, tables, search) will instantly switch to the chosen language upon saving.") }}
+              </small>
+            </div>
+
+            <!-- Library Name -->
+            <div class="form-group form-full">
+              <label class="form-label">🏛️ {{ t('library_name') }}</label>
+              <input class="form-control" v-model="systemSettings.libraryName" placeholder="Kutubxona to'liq nomi..." style="padding:12px 14px;">
+            </div>
+
+            <!-- Max Loan Days -->
+            <div class="form-group">
+              <label class="form-label">⏳ {{ t('max_loan_days') }}</label>
+              <input type="number" class="form-control" v-model.number="systemSettings.maxDays" min="1" max="180" style="padding:12px 14px;">
+            </div>
+
+            <!-- Daily Overdue Fine -->
+            <div class="form-group">
+              <label class="form-label">💰 {{ t('daily_overdue_fine') }}</label>
+              <input type="number" class="form-control" v-model.number="systemSettings.dailyFine" min="0" step="100" style="padding:12px 14px;">
+            </div>
+
+            <!-- Interface Theme -->
+            <div class="form-group form-full">
+              <label class="form-label" style="font-weight:700;">🎨 {{ t('interface_theme') }}</label>
+              <div style="display:flex; gap:14px; margin-top:6px;">
+                <button type="button" class="btn" :class="theme === 'light' ? 'btn-primary' : 'btn-secondary'" @click="setTheme('light')" style="flex:1; padding:12px; font-weight:700;">
+                  ☀️ {{ t('theme_light') }}
+                </button>
+                <button type="button" class="btn" :class="theme === 'dark' ? 'btn-primary' : 'btn-secondary'" @click="setTheme('dark')" style="flex:1; padding:12px; font-weight:700;">
+                  🌙 {{ t('theme_dark') }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--border-light); display:flex; justify-content:flex-end; gap:12px;">
+            <button class="btn btn-secondary" @click="navigate('dashboard')">{{ t('cancel') }}</button>
+            <button class="btn btn-success" @click="saveSystemSettings" style="font-weight:700; padding:10px 24px;">{{ t('save_settings') }}</button>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div><!-- /main-content -->
 
@@ -2105,7 +2203,7 @@
       <button class="ai-chip" onclick="askQuickPrompt('Kutubxona haqida ma\'lumot')">ℹ️ Kutubxona haqida</button>
       <button class="ai-chip" onclick="askQuickPrompt('Bog\'lanish uchun telefon raqami')">📞 Bog'lanish</button>
       <button class="ai-chip" onclick="askQuickPrompt('Eng mashhur kitoblar qaysi?')">🔥 Mashhur kitoblar</button>
-      <button class="ai-chip" onclick="askQuickPrompt('Qanday qilib a\'zo bo\'lish mumkin?')">🪪 A'zolik</button>
+      <button class="ai-chip" onclick="askQuickPrompt('Kutubxonaga qanday a\'zo bo\'lish mumkin?')">🪪 A'zolik talablari</button>
     </div>
     <div id="ai-chat-messages">
       <div class="chat-message bot">
