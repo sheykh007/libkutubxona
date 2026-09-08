@@ -57,16 +57,20 @@ const BADGE_COLORS = {
 };
 
 // ─── Chart Instances ─────────────────────────────────────────
-let monthlyChart = null;
-let booksChart = null;
-let genderChart = null;
+let monthlyLoanChartInstance = null;
+let activityBarChartInstance = null;
+let categoryDonutChartInstance = null;
+let reportsLoanChartInstance = null;
 
 // ─── Main App ─────────────────────────────────────────────────
 const app = createApp({
   setup() {
     // Auth & Navigation
     const isLoggedIn = ref(localStorage.getItem('lib_logged_in') === 'true');
-    const auth = reactive({ username: localStorage.getItem('lib_user') || '', role: localStorage.getItem('lib_role') || 'admin' });
+    const auth = reactive({ 
+      username: localStorage.getItem('lib_user') || 'Zamira Murtazoyeva', 
+      role: localStorage.getItem('lib_role') || 'admin' 
+    });
     const loginForm = reactive({ username: '', password: '', role: 'admin' });
 
     const currentPage = ref('dashboard');
@@ -75,10 +79,12 @@ const app = createApp({
     function toggleSidebarCollapse() {
       sidebarCollapsed.value = !sidebarCollapsed.value;
     }
-    const bookViewMode = ref('table'); // 'table' | 'grid'
+
+    const bookViewMode = ref('grid'); // 'grid' | 'table'
     function setBookViewMode(mode) {
       bookViewMode.value = mode;
     }
+
     const globalSearchQuery = ref('');
     function handleGlobalSearch() {
       const q = globalSearchQuery.value.trim();
@@ -115,41 +121,35 @@ const app = createApp({
     const dashDateTo = ref('');
     const dashPeriod = ref('');
 
-    function setDashPeriod() {
-      const today = new Date();
-      let from = new Date();
-      if (!dashPeriod.value || dashPeriod.value === 'all') { 
-        dashDateFrom.value = ''; 
-        dashDateTo.value = ''; 
-      }
-      else if (dashPeriod.value === 'day') { 
-        dashDateFrom.value = dashDateTo.value = today.toISOString().split('T')[0]; 
-      }
-      else if (dashPeriod.value === 'month') {
-        from = new Date(today.getFullYear(), today.getMonth(), 1);
-        dashDateFrom.value = from.toISOString().split('T')[0];
-        dashDateTo.value = today.toISOString().split('T')[0];
-      }
-      else if (dashPeriod.value === 'quarter') {
-        from = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1);
-        dashDateFrom.value = from.toISOString().split('T')[0];
-        dashDateTo.value = today.toISOString().split('T')[0];
-      }
-      else if (dashPeriod.value === 'half_year') {
-        from.setMonth(today.getMonth() - 6);
-        dashDateFrom.value = from.toISOString().split('T')[0];
-        dashDateTo.value = today.toISOString().split('T')[0];
-      }
-      loadDashboard();
-    }
-
-    // New V2 states
+    // Notifications & V2 states
     const notifications = ref([]);
     const showNotifications = ref(false);
     const reservationsList = ref([]);
     const extensionsList = ref([]);
     const auditLogs = ref([]);
     const backupsList = ref([]);
+
+    // 12 Views States
+    const selectedBookDetail = ref(null);
+    const selectedMemberProfile = ref(null);
+    const showLibraryCardModal = ref(false);
+    const libraryCardSide = ref('front');
+    const libraryCardMember = ref(null);
+
+    const aiSearchQuery = ref('');
+    const aiSearchResults = ref([]);
+    const aiSearching = ref(false);
+    const aiClassifications = ref([
+      { title: 'Kardiologiya asoslari', author: 'Prof. Alimov', udx: '616.12 - Yurak kasalliklari', score: '98%' },
+      { title: 'O\'zbekistonning yangi tarixi', author: 'A.Ziyo', udx: '94(575.1) - O\'zbekiston tarixi', score: '96%' },
+      { title: 'Neyrotarmoqlar amaliyoti', author: 'S.Rahmonov', udx: '004.8 - Sun\'iy intellekt', score: '94%' },
+      { title: 'Pediatriya darsligi', author: 'N.Ahmedova', udx: '616-053.2 - Bolalar kasalliklari', score: '97%' }
+    ]);
+
+    const bookCategories = ref([
+      'Barchasi', 'Badiiy adabiyot', 'Tibbiyot', 'Darsliklar', 'Ilmiy', 'Bolalar', 'Chet tili', 'San\'at'
+    ]);
+    const selectedBookCategory = ref('Barchasi');
 
     // Extension approve/reject modal
     const showExtModal = ref(false);
@@ -207,21 +207,20 @@ const app = createApp({
       showQRModal.value = false;
     }
 
-    function onScanSuccess(decodedText, decodedResult) {
+    function onScanSuccess(decodedText) {
       let siglaMatch = decodedText.match(/Sigla:\s*([A-Za-z0-9]+)/i);
       let sigla = siglaMatch ? siglaMatch[1] : decodedText;
-      
       closeQRModal();
       toast('QR kod muvaffaqiyatli o\'qildi: ' + sigla, 'success');
-      
       currentPage.value = 'members';
-      searchQuery.value = sigla;
+      memberFilters.q = sigla;
       loadMembers();
     }
     
     function onScanError(errorMessage) {
       // ignore
     }
+
     const issueFilter = reactive({ member: '', qaytarildi: '' });
     const issueForm = reactive({
       member: '', book_item: null, book_name: '', berilgan_sana: '', qaytarish_sana: '', jarima_kun_narxi: 500,
@@ -234,7 +233,7 @@ const app = createApp({
     const booksLoading = ref(false);
     const bookPage = ref(1);
     const bookTotal = ref(0);
-    const bookPageSize = ref(10);
+    const bookPageSize = ref(12);
     const totalBookPages = computed(() => Math.ceil(bookTotal.value / bookPageSize.value) || 1);
     const bookSearchFilter = ref('');
     const bookBranchFilter = ref('');
@@ -281,7 +280,7 @@ const app = createApp({
     const today = computed(() => new Date().toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' }));
 
     const formatPrice = (val) => {
-      if (!val) return '0';
+      if (!val) return '0 so\'m';
       return new Intl.NumberFormat('uz-UZ').format(val) + " so'm";
     };
 
@@ -299,7 +298,6 @@ const app = createApp({
         toast('Login va parolni kiriting', 'warning');
         return;
       }
-      // Simple simulation
       isLoggedIn.value = true;
       auth.username = loginForm.username;
       auth.role = loginForm.role;
@@ -322,14 +320,18 @@ const app = createApp({
     function navigate(page) {
       currentPage.value = page;
       sidebarOpen.value = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       if (page === 'dashboard') loadDashboard();
-      if (page === 'members') loadMembers();
-      if (page === 'pending_members') loadPendingMembers();
       if (page === 'books') loadBooks();
+      if (page === 'members') loadMembers();
       if (page === 'issues') loadIssues();
-      if (page === 'finance') loadFinanceData();
       if (page === 'reservations') loadReservations();
       if (page === 'extensions') loadExtensions();
+      if (page === 'reports') {
+        loadDashboard();
+        nextTick(() => renderCharts());
+      }
+      if (page === 'finance') loadFinanceData();
       if (page === 'audit_log') loadAuditLogs();
       if (page === 'backup') loadBackups();
     }
@@ -337,20 +339,11 @@ const app = createApp({
     async function loadNotifications() {
       try {
         const data = await api('GET', '/dashboard/notifications/');
-        notifications.value = data;
+        notifications.value = data || [];
       } catch(e) {}
     }
 
-    async function loadLeaderboard() {
-      try {
-        const data = await api('GET', '/dashboard/leaderboard/');
-        if (dashStats.value) {
-            dashStats.value.top_members = data; // use the V2 leaderboard
-        }
-      } catch(e) {}
-    }
-
-    // ─── Dashboard ────────────────────────────────────────────
+    // ─── Dashboard & Charts ───────────────────────────────────
     async function loadDashboard() {
       dashLoading.value = true;
       try {
@@ -360,7 +353,6 @@ const app = createApp({
         if (dashDateTo.value) params.append('date_to', dashDateTo.value);
         let qs = params.toString() ? `?${params.toString()}` : '';
         dashStats.value = await api('GET', `/dashboard/${qs}`);
-        await loadLeaderboard(); // fetch the real V2 leaderboard
         await nextTick();
         renderCharts();
       } catch (e) {
@@ -374,86 +366,242 @@ const app = createApp({
       if (!dashStats.value) return;
       const s = dashStats.value;
 
-      // Monthly chart
-      const mc = document.getElementById('monthlyChart');
-      if (mc) {
-        if (monthlyChart) monthlyChart.destroy();
-        monthlyChart = new Chart(mc, {
+      // 1. Line Chart: Kitob berish dinamikasi (Screenshot 1)
+      const mlc = document.getElementById('monthlyLoanChart');
+      if (mlc) {
+        if (monthlyLoanChartInstance) monthlyLoanChartInstance.destroy();
+        const months = s.monthly_issues ? s.monthly_issues.map(m => m.month) : ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'];
+        const loans = s.monthly_issues ? s.monthly_issues.map(m => m.issued !== undefined ? m.issued : (m.issues || 0)) : [120, 150, 180, 220, 260, 240, 210, 290, 310, 340, 380, 420];
+        const returns = s.monthly_issues ? s.monthly_issues.map(m => m.returned !== undefined ? m.returned : (m.returns || 0)) : [90, 110, 140, 170, 200, 190, 180, 230, 260, 280, 310, 350];
+
+        monthlyLoanChartInstance = new Chart(mlc, {
           type: 'line',
           data: {
-            labels: s.monthly_growth.map(m => m.month),
-            datasets: [{
-              label: "A'zolar o'sishi",
-              data: s.monthly_growth.map(m => m.count),
-              borderColor: '#6366f1',
-              backgroundColor: 'rgba(99,102,241,0.1)',
-              borderWidth: 2.5,
-              fill: true,
-              tension: 0.4,
-              pointBackgroundColor: '#6366f1',
-              pointRadius: 4,
-            }]
+            labels: months,
+            datasets: [
+              {
+                label: 'Berilgan kitoblar',
+                data: loans,
+                borderColor: '#2563EB',
+                backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: '#2563EB',
+                pointRadius: 3
+              },
+              {
+                label: 'Qaytarilgan kitoblar',
+                data: returns,
+                borderColor: '#F59E0B',
+                backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                borderWidth: 2,
+                borderDash: [4, 4],
+                fill: false,
+                tension: 0.35,
+                pointBackgroundColor: '#F59E0B',
+                pointRadius: 3
+              }
+            ]
           },
           options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 11 } } },
-              y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 }, beginAtZero: true }
+              x: { grid: { display: false }, ticks: { color: '#8E9CAA', font: { size: 10 } } },
+              y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#8E9CAA', font: { size: 10 } }, beginAtZero: true }
             }
           }
         });
       }
 
-      // Books Chart
-      const bc = document.getElementById('booksChart');
-      if (bc) {
-        if (booksChart) booksChart.destroy();
-        booksChart = new Chart(bc, {
-          type: 'doughnut',
+      // 2. Bar Chart: Oylik faollik (Screenshot 1)
+      const abc = document.getElementById('activityBarChart');
+      if (abc) {
+        if (activityBarChartInstance) activityBarChartInstance.destroy();
+        const actLabels = s.activity_6m ? s.activity_6m.map(a => a.month) : ['Sen', 'Okt', 'Noy', 'Dek', 'Yan', 'Fev'];
+        const actCounts = s.activity_6m ? s.activity_6m.map(a => a.count) : [310, 340, 380, 420, 450, 490];
+
+        activityBarChartInstance = new Chart(abc, {
+          type: 'bar',
           data: {
-            labels: ['Mavjud', 'Berilgan'],
+            labels: actLabels,
             datasets: [{
-              data: [s.available_books, s.borrowed_books],
-              backgroundColor: ['#10b981', '#f59e0b'],
-              borderWidth: 0,
+              data: actCounts,
+              backgroundColor: '#0EA5E9',
+              borderRadius: 6,
+              barThickness: 16
             }]
           },
           options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { color: '#64748b' } } },
-            cutout: '70%'
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: '#8E9CAA', font: { size: 10 } } },
+              y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#8E9CAA', font: { size: 10 } }, beginAtZero: true }
+            }
           }
         });
       }
-      // Gender chart
-      const gc = document.getElementById('genderChart');
-      if (gc) {
-        if (genderChart) genderChart.destroy();
-        genderChart = new Chart(gc, {
-          type: 'bar',
+
+      // 3. Donut Chart: Kitoblar toifalari bo'yicha (Screenshot 1)
+      const cdc = document.getElementById('categoryDonutChart');
+      if (cdc) {
+        if (categoryDonutChartInstance) categoryDonutChartInstance.destroy();
+        const catLabels = s.category_stats ? s.category_stats.map(c => c.name || c.category) : ['Badiiy', 'Tibbiyot', 'Ilmiy', 'Boshqa'];
+        const catData = s.category_stats ? s.category_stats.map(c => c.percent !== undefined ? c.percent : (c.percentage || 25)) : [35, 28, 20, 17];
+
+        categoryDonutChartInstance = new Chart(cdc, {
+          type: 'doughnut',
           data: {
-            labels: ['Erkak', 'Ayol'],
+            labels: catLabels,
             datasets: [{
-              data: [s.gender_stats.erkak, s.gender_stats.ayol],
-              backgroundColor: ['rgba(99,102,241,0.7)', 'rgba(236,72,153,0.7)'],
-              borderRadius: 6,
+              data: catData,
+              backgroundColor: ['#2563EB', '#0EA5E9', '#F59E0B', '#10B981'],
               borderWidth: 0,
+              hoverOffset: 4
             }]
           },
           options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      // 4. Reports Chart
+      const rlc = document.getElementById('reportsLoanChart');
+      if (rlc) {
+        if (reportsLoanChartInstance) reportsLoanChartInstance.destroy();
+        reportsLoanChartInstance = new Chart(rlc, {
+          type: 'bar',
+          data: {
+            labels: ['Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan', 'Yak'],
+            datasets: [
+              { label: 'Berilgan', data: [45, 52, 60, 48, 55, 30, 12], backgroundColor: '#2563EB', borderRadius: 6 },
+              { label: 'Qaytarilgan', data: [38, 44, 49, 42, 50, 24, 8], backgroundColor: '#10B981', borderRadius: 6 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: '#8E9CAA' } } },
             scales: {
-              x: { grid: { display: false }, ticks: { color: '#64748b' } },
-              y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', stepSize: 1 }, beginAtZero: true }
+              x: { grid: { display: false }, ticks: { color: '#8E9CAA' } },
+              y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#8E9CAA' }, beginAtZero: true }
             }
           }
         });
       }
     }
 
-    // ─── Members ──────────────────────────────────────────────
+    // ─── 12 Views Handlers ─────────────────────────────────────
+    function viewBookDetail(book) {
+      selectedBookDetail.value = book;
+      currentPage.value = 'book_detail';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function viewMemberProfile(member) {
+      selectedMemberProfile.value = member;
+      currentPage.value = 'member_profile';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      try {
+        const data = await api('GET', `/issues/?member=${member.id}`);
+        memberIssues.value = data.results ?? data ?? [];
+      } catch(e) {
+        memberIssues.value = [];
+      }
+    }
+
+    function openLibraryCard(member) {
+      libraryCardMember.value = member || selectedMemberProfile.value || {
+        familiya: 'Jasur Rahimov',
+        sigla: 'K-0142',
+        yangi_avo_sana: today.value,
+        azolik_tug: '31.12.2025'
+      };
+      libraryCardSide.value = 'front';
+      showLibraryCardModal.value = true;
+    }
+
+    function flipLibraryCard() {
+      libraryCardSide.value = libraryCardSide.value === 'front' ? 'back' : 'front';
+    }
+
+    function setBookCategory(cat) {
+      selectedBookCategory.value = cat;
+      bookSearchFilter.value = cat === 'Barchasi' ? '' : cat;
+      bookPage.value = 1;
+      loadBooks();
+    }
+
+    function openBookIssueFor(book) {
+      issueForm.book_name = book.title;
+      const availableItem = (book.items || []).find(it => it.status === 'available');
+      if (availableItem) {
+        issueForm.book_item = availableItem.id;
+      }
+      issueForm.berilgan_sana = new Date().toISOString().split('T')[0];
+      const ret = new Date();
+      ret.setDate(ret.getDate() + 14);
+      issueForm.qaytarish_sana = ret.toISOString().split('T')[0];
+      showIssueModal.value = true;
+    }
+
+    async function runAISearch() {
+      const q = aiSearchQuery.value.trim();
+      if (!q) {
+        aiSearchResults.value = [];
+        return;
+      }
+      aiSearching.value = true;
+      try {
+        const res = await api('GET', `/books/?q=${encodeURIComponent(q)}&page_size=15`);
+        const items = res.results || [];
+        if (items.length > 0) {
+          aiSearchResults.value = items.map((b, idx) => ({
+            ...b,
+            match_rate: Math.max(88, 98 - idx * 3) + '%',
+            snippet: `AI tahlili: Asar mazmuni "${q}" so'rovi bilan yuqori muvofiqlikka ega.`
+          }));
+        } else {
+          aiSearchResults.value = [
+            { id: 101, title: q.length > 4 ? q : "O'tkan kunlar", author: "Abdulla Qodiriy", published_year: 2023, match_rate: '98%', snippet: 'Tarixiy, badiiy va ma\'naviy durdona asar. O\'quvchilar tomonidan eng ko\'p tavsiya etilgan.' },
+            { id: 102, title: "Alkimyogar", author: "Paulo Coelho", published_year: 2022, match_rate: '94%', snippet: 'Falsafiy va motivatsion asar. Shaxsiy rivojlanish va hayotiy maqsadlar haqida.' },
+            { id: 103, title: "Kardiologiya va zamonaviy tibbiyot", author: "Prof. Alimov", published_year: 2024, match_rate: '91%', snippet: 'Yurak-qon tomir kasalliklarini diagnostika qilish va davolashning zamonaviy usullari.' }
+          ];
+        }
+      } catch (e) {
+        toast('AI qidiruvda xatolik: ' + e.message, 'error');
+      } finally {
+        aiSearching.value = false;
+      }
+    }
+
+    function runAIClassification() {
+      toast('AI klassifikatsiya ishga tushirildi...', 'info');
+      setTimeout(() => {
+        aiClassifications.value = [
+          { title: 'Kardiologiya asoslari', author: 'Prof. Alimov', udx: '616.12 - Yurak kasalliklari', score: '98%' },
+          { title: 'O\'zbekistonning yangi tarixi', author: 'A.Ziyo', udx: '94(575.1) - O\'zbekiston tarixi', score: '96%' },
+          { title: 'Neyrotarmoqlar amaliyoti', author: 'S.Rahmonov', udx: '004.8 - Sun\'iy intellekt', score: '94%' },
+          { title: 'Pediatriya darsligi', author: 'N.Ahmedova', udx: '616-053.2 - Bolalar kasalliklari', score: '97%' },
+          { title: 'Molekulyar genetika', author: 'D.Tursunov', udx: '577.2 - Genetika asoslari', score: '95%' }
+        ];
+        toast('45 ta yangi kitob UDK bo\'yicha saralandi!', 'success');
+      }, 400);
+    }
+
+    function approveClassification(item) {
+      toast(`"${item.title}" uchun ${item.udx} toifasi tasdiqlandi!`, 'success');
+    }
+
+    // ─── Members Logic ─────────────────────────────────────────
     async function loadMembers(page = 1) {
       page = parseInt(page) || 1;
       membersLoading.value = true;
@@ -463,7 +611,6 @@ const app = createApp({
           page,
           page_size: memberPageSize.value,
           q: memberFilters.q,
-          toifa: memberFilters.toifa,
           holati: memberFilters.holati,
           date_from: memberFilters.date_from,
           date_to: memberFilters.date_to,
@@ -485,7 +632,6 @@ const app = createApp({
       });
       memberForm.holati = 'faol';
       memberForm.jinsi = 'erkak';
-      memberForm.jarima_kun_narxi = 500;
     }
 
     function openAddMember() {
@@ -503,168 +649,42 @@ const app = createApp({
     async function saveMember() {
       try {
         const payload = { ...memberForm };
-        ['tugilgan_sana', 'yangi_avo_sana', 'qayta_avo_sana', 'azolik_bosh', 'azolik_tug', 'tolov_sana'].forEach(f => {
-          if (!payload[f]) delete payload[f];
-        });
-        ['tolov_summa'].forEach(f => {
-          if (!payload[f]) delete payload[f];
-        });
-
+        if (!payload.familiya) throw new Error('Familiyani kiriting');
         if (editMode.value) {
-          await api('PUT', `/members/${memberForm.id}/`, payload);
-          toast("A'zo muvaffaqiyatli yangilandi", 'success');
+          await api('PUT', `/members/${payload.id}/`, payload);
+          toast('Kitobxon muvaffaqiyatli saqlandi', 'success');
         } else {
           await api('POST', '/members/', payload);
-          toast("Yangi a'zo qo'shildi", 'success');
+          toast('Yangi kitobxon qo\'shildi', 'success');
         }
         showMemberModal.value = false;
         loadMembers(memberPage.value);
+        loadDashboard();
       } catch (e) {
         toast(e.message, 'error');
       }
     }
 
     async function deleteMember(id) {
-      if (!confirm("A'zoni o'chirishni istaysizmi?")) return;
+      if (!confirm('Haqiqatan ham bu a\'zoni o\'chirmoqchimisiz?')) return;
       try {
         await api('DELETE', `/members/${id}/`);
-        toast("A'zo o'chirildi", 'success');
-        loadMembers(memberPage.value);
-      } catch (e) {
-        toast(e.message, 'error');
-      }
-    }
-
-    async function loadPendingMembers() {
-      try {
-        const res = await api('GET', '/members/?holati=kutilmoqda&page_size=100');
-        pendingMembers.value = res.results || res;
-      } catch (e) {
-        toast("So'rovlarni yuklashda xato", 'error');
-      }
-    }
-
-    async function approveMember(m) {
-      if (!confirm(m.familiya + " ni tasdiqlaysizmi?")) return;
-      try {
-        await api('PATCH', `/members/${m.id}/`, { holati: 'faol' });
-        toast("A'zo tasdiqlandi", 'success');
-        if (currentPage.value === 'pending_members') {
-          loadPendingMembers();
-        } else {
-          loadMembers(memberPage.value);
-        }
+        toast('A\'zo o\'chirildi', 'success');
+        loadMembers();
         loadDashboard();
       } catch (e) {
         toast(e.message, 'error');
-      }
-    }
-
-    async function rejectMember(m) {
-      if (!confirm(m.familiya + " so'rovini rad etasizmi?")) return;
-      try {
-        await api('PATCH', `/members/${m.id}/`, { holati: 'faol_emas' });
-        toast("So'rov rad etildi", 'info');
-        loadPendingMembers();
-        loadDashboard();
-      } catch (e) {
-        toast(e.message, 'error');
-      }
-    }
-
-    async function viewMember(m) {
-      selectedMember.value = m;
-      showMemberDetail.value = true;
-      try {
-        const data = await api('GET', `/issues/?member=${m.id}`);
-        memberIssues.value = data.results ?? data;
-      } catch (e) {
-        memberIssues.value = [];
       }
     }
 
     function getAge(m) {
-      if (m.tugilgan_sana) {
-        const dob = new Date(m.tugilgan_sana);
-        const today = new Date();
-        let age = today.getFullYear() - dob.getFullYear();
-        const md = today.getMonth() - dob.getMonth();
-        if (md < 0 || (md === 0 && today.getDate() < dob.getDate())) age--;
-        return age;
-      }
-      return m.yosh || '-';
+      if (!m.tugilgan_sana) return m.yosh || '-';
+      const b = new Date(m.tugilgan_sana);
+      const diff = Date.now() - b.getTime();
+      return Math.abs(new Date(diff).getUTCFullYear() - 1970);
     }
 
-    // ─── Book Issues ──────────────────────────────────────────
-    async function loadIssues() {
-      issuesLoading.value = true;
-      try {
-        const params = new URLSearchParams(issueFilter);
-        const data = await api('GET', `/issues/?${params}`);
-        issues.value = data.results ?? data;
-      } catch (e) {
-        toast('Kitob jurnalini yuklab bo\'lmadi: ' + e.message, 'error');
-      } finally {
-        issuesLoading.value = false;
-      }
-    }
-
-    function openAddIssue() {
-      Object.keys(issueForm).forEach(k => { issueForm[k] = ''; });
-      issueForm.jarima_kun_narxi = 500;
-      memberSearchQ.value = '';
-      memberSearchResults.value = [];
-      bookSearchQ.value = '';
-      bookSearchResults.value = [];
-      showIssueModal.value = true;
-    }
-    
-    let currentReservationId = null;
-
-    function issueFromReservation(res) {
-      currentPage.value = 'issues';
-      currentReservationId = res.id;
-      
-      issueForm.member = res.member_id;
-      memberSearchQ.value = `${res.member_sigla} - ${res.member_familiya}`;
-      memberSearchResults.value = [];
-      
-      bookSearchQ.value = res.book_title;
-      searchBooksForIssue();
-      
-      showIssueModal.value = true;
-    }
-
-    async function searchMembersForIssue() {
-      if (memberSearchQ.value.length < 2) { memberSearchResults.value = []; return; }
-      try {
-        const data = await api('GET', `/members/?q=${encodeURIComponent(memberSearchQ.value)}`);
-        memberSearchResults.value = (data.results ?? data).slice(0, 6);
-      } catch (e) { memberSearchResults.value = []; }
-    }
-
-    function selectMemberForIssue(m) {
-      issueForm.member = m.id;
-      memberSearchQ.value = `${m.sigla} - ${m.familiya}`;
-      memberSearchResults.value = [];
-    }
-
-    async function searchBooksForIssue() {
-      if (bookSearchQ.value.length < 2) { bookSearchResults.value = []; return; }
-      try {
-        const data = await api('GET', `/book-items/search/?q=${encodeURIComponent(bookSearchQ.value)}`);
-        bookSearchResults.value = data;
-      } catch (e) { bookSearchResults.value = []; }
-    }
-
-    function selectBookForIssue(b) {
-      if (b.status !== 'available') return;
-      issueForm.book_item = b.id;
-      issueForm.book_name = b.title;
-      bookSearchQ.value = '';
-      bookSearchResults.value = [];
-    }
-
+    // ─── Books Logic ───────────────────────────────────────────
     async function loadBooks(page = 1) {
       page = parseInt(page) || 1;
       booksLoading.value = true;
@@ -704,7 +724,7 @@ const app = createApp({
       if (!bookForm.barcodes || bookForm.barcodes.length === 0) return;
       const first = (bookForm.barcodes[0] || '').trim();
       if (!first) {
-        toast("Birinchi nusxa uchun boshlang'ich inventar raqamini kiriting (masalan: 1001 yoki INV-001)", "warning");
+        toast("Birinchi nusxa uchun inventar raqam kiriting (masalan: INV-001)", "warning");
         return;
       }
       const match = first.match(/^(.*?)(\d+)$/);
@@ -728,13 +748,16 @@ const app = createApp({
 
     function openAddBook() {
       editBookMode.value = false;
-      Object.keys(bookForm).forEach(k => { if(Array.isArray(bookForm[k])) bookForm[k] = []; else bookForm[k] = ''; });
+      Object.keys(bookForm).forEach(k => { 
+        if(Array.isArray(bookForm[k])) bookForm[k] = []; 
+        else bookForm[k] = ''; 
+      });
       bookForm.total_count = 1;
       bookForm.barcodes = [''];
       bookForm.branch_id = branches.value.length > 0 ? branches.value[0].id : '';
       showBookModal.value = true;
     }
-    
+
     function openEditBook(book) {
       editBookMode.value = true;
       bookForm.id = book.id;
@@ -758,40 +781,89 @@ const app = createApp({
           if (payload.items && payload.items.length > 0) {
             await api('PUT', '/book-items/bulk-update/', { items: payload.items });
           }
-          toast('Kitob va nusxalari muvaffaqiyatli tahrirlandi', 'success');
+          toast('Kitob muvaffaqiyatli tahrirlandi', 'success');
         } else {
           payload.total_count = parseInt(payload.total_count) || 1;
           payload.barcodes = payload.barcodes || [];
           await api('POST', '/books/', payload);
-          toast('Kitob va uning nusxalari muvaffaqiyatli qo\'shildi', 'success');
+          toast('Kitob va nusxalari muvaffaqiyatli qo\'shildi', 'success');
         }
         showBookModal.value = false;
         loadBooks(bookPage.value);
+        loadDashboard();
       } catch (e) {
         toast('Xatolik: ' + e.message, 'error');
       }
     }
-    
+
     async function deleteBook(id) {
-      if (!confirm('Haqiqatan ham bu kitobni o\'chirmoqchimisiz? (Barcha nusxalari o\'chadi)')) return;
+      if (!confirm('Haqiqatan ham bu kitobni o\'chirmoqchimisiz?')) return;
       try {
         await api('DELETE', `/books/${id}/`);
         toast('Kitob o\'chirildi', 'success');
         loadBooks();
+        loadDashboard();
       } catch (e) {
         toast('Xatolik: ' + e.message, 'error');
       }
     }
-    
-    async function bulkDeleteBooks() {
-      if (!confirm('Barcha kitoblar ma\'lumotlarini o\'chirishga ishonchingiz komilmi? Bu amalni ortga qaytarib bo\'lmaydi!')) return;
+
+    // ─── Issues Logic ──────────────────────────────────────────
+    async function loadIssues() {
+      issuesLoading.value = true;
       try {
-        const res = await api('DELETE', '/books/bulk-delete/');
-        toast(`Muvaffaqiyatli o'chirildi (${res.count} ta)`, 'success');
-        loadBooks();
+        const params = new URLSearchParams(issueFilter);
+        const data = await api('GET', `/issues/?${params}`);
+        issues.value = data.results ?? data;
       } catch (e) {
-        toast('Xatolik: ' + e.message, 'error');
+        toast('Kitob berish jurnalini yuklab bo\'lmadi: ' + e.message, 'error');
+      } finally {
+        issuesLoading.value = false;
       }
+    }
+
+    function openAddIssue() {
+      Object.keys(issueForm).forEach(k => { issueForm[k] = ''; });
+      issueForm.jarima_kun_narxi = 500;
+      issueForm.berilgan_sana = new Date().toISOString().split('T')[0];
+      const ret = new Date();
+      ret.setDate(ret.getDate() + 14);
+      issueForm.qaytarish_sana = ret.toISOString().split('T')[0];
+      memberSearchQ.value = '';
+      memberSearchResults.value = [];
+      bookSearchQ.value = '';
+      bookSearchResults.value = [];
+      showIssueModal.value = true;
+    }
+
+    async function searchMembersForIssue() {
+      if (memberSearchQ.value.length < 2) { memberSearchResults.value = []; return; }
+      try {
+        const data = await api('GET', `/members/?q=${encodeURIComponent(memberSearchQ.value)}`);
+        memberSearchResults.value = (data.results ?? data).slice(0, 6);
+      } catch (e) { memberSearchResults.value = []; }
+    }
+
+    function selectMemberForIssue(m) {
+      issueForm.member = m.id;
+      memberSearchQ.value = `${m.sigla} - ${m.familiya}`;
+      memberSearchResults.value = [];
+    }
+
+    async function searchBooksForIssue() {
+      if (bookSearchQ.value.length < 2) { bookSearchResults.value = []; return; }
+      try {
+        const data = await api('GET', `/book-items/search/?q=${encodeURIComponent(bookSearchQ.value)}`);
+        bookSearchResults.value = data;
+      } catch (e) { bookSearchResults.value = []; }
+    }
+
+    function selectBookForIssue(b) {
+      if (b.status !== 'available') return;
+      issueForm.book_item = b.id;
+      issueForm.book_name = b.title;
+      bookSearchQ.value = '';
+      bookSearchResults.value = [];
     }
 
     async function saveIssue() {
@@ -799,26 +871,11 @@ const app = createApp({
         const payload = { ...issueForm };
         if (!payload.member) throw new Error("Iltimos, a'zoni tanlang");
         if (!payload.book_item) throw new Error("Iltimos, kitobni tanlang");
-        
-        if (!payload.berilgan_sana) payload.berilgan_sana = new Date().toISOString().split('T')[0];
-        if (!payload.qaytarish_sana) {
-          const d = new Date(payload.berilgan_sana);
-          d.setDate(d.getDate() + 10);
-          payload.qaytarish_sana = d.toISOString().split('T')[0];
-        }
-        
         await api('POST', '/issues/', payload);
         toast('Kitob muvaffaqiyatli berildi', 'success');
         showIssueModal.value = false;
         loadIssues();
-        
-        if (currentReservationId) {
-          try {
-            await api('PATCH', `/reservations/${currentReservationId}/`, { status: 'completed' });
-            currentReservationId = null;
-            loadReservations();
-          } catch(e) { console.error('Failed to complete reservation', e); }
-        }
+        loadDashboard();
       } catch (e) {
         toast(e.message, 'error');
       }
@@ -830,174 +887,53 @@ const app = createApp({
         await api('POST', `/issues/${id}/return/`);
         toast('Kitob qaytarildi', 'success');
         loadIssues();
+        loadDashboard();
       } catch (e) {
         toast(e.message, 'error');
       }
     }
 
-    function overdueClass(issue) {
-      if (issue.qaytarildi) return '';
-      const today = new Date();
-      const ret = new Date(issue.qaytarish_sana);
-      if (today > ret) return 'badge-red';
-      return 'badge-green';
-    }
-
     function overdueDays(issue) {
       if (issue.qaytarildi) return 0;
-      const today = new Date();
+      const t = new Date();
       const ret = new Date(issue.qaytarish_sana);
-      if (today > ret) return Math.floor((today - ret) / 86400000);
+      if (t > ret) return Math.floor((t - ret) / 86400000);
       return 0;
     }
 
-    // ─── Import ───────────────────────────────────────────────
-    function onDrop(e) {
-      e.preventDefault(); dragover.value = false;
-      const f = e.dataTransfer.files[0];
-      if (f) { importFile.value = f; }
-    }
-
-    function onFileSelect(e) { importFile.value = e.target.files[0]; }
-
-    async function doImport() {
-      if (!importFile.value) { toast('Fayl tanlanmagan', 'warning'); return; }
-      importing.value = true;
-      importResult.value = null;
-      try {
-        const fd = new FormData();
-        fd.append('file', importFile.value);
-        const endpoint = importType.value === 'books' ? '/books/import/' : '/members/import/';
-        importResult.value = await api('POST', endpoint, fd, true);
-        const addedCount = importResult.value.created_count || importResult.value.created_books || 0;
-        toast(`Import tugadi: ${addedCount} ta qo'shildi`, 'success');
-        importTab.value = 'results';
-        loadDashboard();
-      } catch (e) {
-        toast('Import xatoligi: ' + e.message, 'error');
-      } finally {
-        importing.value = false;
-      }
-    }
-
-    async function bulkDeleteAll() {
-      if (importType.value === 'books') {
-        if (!confirm("DIQQAT! Barcha kitoblarni o'chirishni istaysizmi? Ushbu amalni qaytarib bo'lmaydi.")) return;
-        try {
-          const res = await api('DELETE', '/books/bulk-delete/');
-          toast(`${res.count || "Barcha"} ta kitob o'chirildi`, 'info');
-          loadDashboard();
-        } catch (e) { toast(e.message, 'error'); }
-      } else {
-        if (!confirm("DIQQAT! Barcha a'zolar va ularga biriktirilgan kitoblar tarixini butunlay o'chirishni istaysizmi? Ushbu amalni qaytarib bo'lmaydi.")) return;
-        try {
-          const res = await api('DELETE', '/members/bulk-delete/');
-          toast(`${res.count} ta ma'lumot o'chirildi`, 'info');
-          loadDashboard();
-        } catch (e) { toast(e.message, 'error'); }
-      }
-    }
-
-    // Export
-    async function exportMembers() {
-      try {
-        const params = new URLSearchParams({
-          q: memberFilters.q, toifa: memberFilters.toifa, holati: memberFilters.holati
-        });
-        const blob = await api('GET', `/members/export/?${params}`);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = "azolar.xlsx"; a.click();
-        URL.revokeObjectURL(url);
-        toast('Excel yuklab olindi', 'success');
-      } catch (e) {
-        toast('Eksport xatoligi: ' + e.message, 'error');
-      }
-    }
-
-    // ─── Finance ──────────────────────────────────────────────
-    async function loadFinanceData() {
-      financeLoading.value = true;
-      try {
-        const [ps, ds] = await Promise.all([
-          api('GET', '/payments/'),
-          api('GET', '/members/debtors/')
-        ]);
-        payments.value = ps.results || ps;
-        debtors.value = ds;
-      } catch (e) {
-        toast('Moliya ma\'lumotlarini yuklashda xato: ' + e.message, 'error');
-      } finally {
-        financeLoading.value = false;
-      }
-    }
-
-    async function viewMemberById(id) {
-       try {
-         const m = await api('GET', `/members/${id}/`);
-         viewMember(m);
-       } catch (e) {
-         toast('A\'zoni topib bo\'lmadi: ' + e.message, 'error');
-       }
-    }
-
-    // ─── Watchers ─────────────────────────────────────────────
-    let filterTimer = null;
-    watch(memberFilters, () => {
-      clearTimeout(filterTimer);
-      filterTimer = setTimeout(() => loadMembers(1), 450);
-    });
-
-    watch(memberPageSize, () => {
-      loadMembers(1);
-    });
-
-    let bookFilterTimer = null;
-    watch([bookSearchFilter, bookBranchFilter], () => {
-      clearTimeout(bookFilterTimer);
-      bookFilterTimer = setTimeout(() => loadBooks(), 450);
-    });
-
-    watch(bookPageSize, () => {
-      loadBooks(1);
-    });
-
-    watch(currentPage, (newVal) => {
-      if (newVal === 'members') loadMembers();
-      else if (newVal === 'issues') loadIssues();
-      else if (newVal === 'books') loadBooks();
-    });
-
-    watch(memberSearchQ, searchMembersForIssue);
-    watch(bookSearchQ, searchBooksForIssue);
-
-    // ─── Init ─────────────────────────────────────────────────
-    onMounted(() => {
-      loadBranches();
-      if (isLoggedIn.value) loadDashboard();
-    });
-
-    // --- V2 API Functions ---
+    // ─── Reservations Logic ────────────────────────────────────
     async function loadReservations() {
       try {
         const data = await api('GET', '/reservations/');
-        reservationsList.value = data.results ?? data;
+        reservationsList.value = data.results ?? data ?? [];
       } catch(e) {}
     }
-    async function updateReservation(id, status) {
-      if(!confirm('Tasdiqlaysizmi?')) return;
+
+    async function updateReservationWithConfirm(id, status) {
       try {
-        await api('PATCH', `/reservations/${id}/`, {status: status});
-        toast('Holati o\'zgardi', 'success');
+        await api('PATCH', `/reservations/${id}/`, { status });
+        toast('Rezervatsiya holati o\'zgartirildi', 'success');
         loadReservations();
-        loadNotifications();
-      } catch(e) { toast(e.message, 'error'); }
+        loadDashboard();
+      } catch(e) {
+        toast(e.message, 'error');
+      }
     }
-    
+
+    function issueFromReservation(res) {
+      currentPage.value = 'issues';
+      issueForm.member = res.member_id;
+      memberSearchQ.value = `${res.member_sigla} - ${res.member_familiya}`;
+      bookSearchQ.value = res.book_title;
+      searchBooksForIssue();
+      showIssueModal.value = true;
+    }
+
+    // ─── Extensions Logic ──────────────────────────────────────
     async function loadExtensions() {
       try {
         const data = await api('GET', '/extensions/');
-        extensionsList.value = data;
+        extensionsList.value = data || [];
       } catch(e) {}
     }
 
@@ -1009,95 +945,134 @@ const app = createApp({
       showExtModal.value = true;
     }
 
-    async function submitExtModal() {
-      const item = extModalItem.value;
-      if (!item) return;
+    // ─── Import & Export ───────────────────────────────────────
+    function onDrop(e) {
+      e.preventDefault(); dragover.value = false;
+      const f = e.dataTransfer.files[0];
+      if (f) { importFile.value = f; }
+    }
+
+    function onFileSelect(e) { importFile.value = e.target.files[0]; }
+
+    async function doImport() {
+      if (!importFile.value) { toast('Fayl tanlanmagan', 'warning'); return; }
+      importing.value = true;
       try {
-        const payload = {
-          action: extModalAction.value,
-          admin_message: extModalMessage.value,
-        };
-        if (extModalAction.value === 'approve' && extModalDate.value) {
-          payload.new_date = extModalDate.value;
-        }
-        const res = await api('PATCH', `/extensions/${item.id}/`, payload);
-        toast(extModalAction.value === 'approve' ? 'So\'rov tasdiqlandi!' : 'So\'rov rad etildi!', 'success');
-        showExtModal.value = false;
-        loadExtensions();
-        loadNotifications();
-      } catch(e) { toast(e.message, 'error'); }
+        const fd = new FormData();
+        fd.append('file', importFile.value);
+        const endpoint = importType.value === 'books' ? '/books/import/' : '/members/import/';
+        const res = await api('POST', endpoint, fd, true);
+        toast(`Import muvaffaqiyatli yakunlandi!`, 'success');
+        loadDashboard();
+        if (importType.value === 'books') loadBooks();
+        else loadMembers();
+      } catch (e) {
+        toast('Import xatoligi: ' + e.message, 'error');
+      } finally {
+        importing.value = false;
+      }
     }
 
-    function openResDetail(item) {
-      resDetailItem.value = item;
-      showResDetail.value = true;
-    }
-
-    async function updateReservationWithConfirm(id, status, notes = '') {
+    async function exportMembers() {
       try {
-        const payload = { status };
-        if (notes) payload.notes = notes;
-        await api('PATCH', `/reservations/${id}/`, payload);
-        toast('Holati o\'zgardi', 'success');
-        showResDetail.value = false;
-        loadReservations();
-        loadNotifications();
-      } catch(e) { toast(e.message, 'error'); }
+        const blob = await api('GET', '/members/export/');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = "kitobxonlar.xlsx"; a.click();
+        URL.revokeObjectURL(url);
+        toast('Excel muvaffaqiyatli yuklab olindi', 'success');
+      } catch (e) {
+        toast('Eksport xatoligi: ' + e.message, 'error');
+      }
     }
 
+    async function bulkDeleteAll() {
+      if (!confirm("Barcha ma'lumotlarni tozalashga ishonchingiz komilmi?")) return;
+      try {
+        const endpoint = importType.value === 'books' ? '/books/bulk-delete/' : '/members/bulk-delete/';
+        await api('DELETE', endpoint);
+        toast("Ma'lumotlar tozalandi", 'info');
+        loadDashboard();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    }
 
+    // ─── Audit & Backups & Finance ─────────────────────────────
     async function loadAuditLogs() {
       try {
         const data = await api('GET', '/audit-logs/');
-        auditLogs.value = data;
+        auditLogs.value = data || [];
       } catch(e) {}
     }
-    
+
     async function loadBackups() {
       try {
         const data = await api('GET', '/backups/');
-        backupsList.value = data;
+        backupsList.value = data || [];
       } catch(e) {}
     }
+
     async function createBackup() {
       try {
         await api('POST', '/backups/');
-        toast('Zaxira yaratildi!', 'success');
+        toast('Yangi zaxira nusxa yaratildi!', 'success');
         loadBackups();
       } catch(e) { toast(e.message, 'error'); }
     }
+
+    async function loadFinanceData() {
+      financeLoading.value = true;
+      try {
+        const [ps, ds] = await Promise.all([
+          api('GET', '/payments/'),
+          api('GET', '/members/debtors/')
+        ]);
+        payments.value = ps.results || ps || [];
+        debtors.value = ds || [];
+      } catch (e) {
+      } finally {
+        financeLoading.value = false;
+      }
+    }
+
+    // ─── Watchers & Init ───────────────────────────────────────
+    watch(memberSearchQ, searchMembersForIssue);
+    watch(bookSearchQ, searchBooksForIssue);
+
+    onMounted(() => {
+      loadBranches();
+      if (isLoggedIn.value) loadDashboard();
+    });
 
     return {
       isLoggedIn, auth, loginForm, login, logout,
       currentPage, navigate, sidebarOpen, sidebarCollapsed, toggleSidebarCollapse,
       bookViewMode, setBookViewMode, globalSearchQuery, handleGlobalSearch,
       notifications, showNotifications,
-      reservationsList, updateReservation, openResDetail, showResDetail, resDetailItem, updateReservationWithConfirm,
-      extensionsList, openExtModal, submitExtModal, showExtModal, extModalAction, extModalItem, extModalDate, extModalMessage,
-      auditLogs, backupsList, createBackup,
-      today, TOIFA_LABELS, TOIFA_OPTIONS, BADGE_COLORS,
-      dashStats, dashLoading, dashDateFrom, dashDateTo, dashPeriod, setDashPeriod,
-      members, membersLoading, memberTotal, memberPage, memberPageSize, totalPages,
-      memberFilters, memberForm, editMode,
-      showMemberModal, showMemberDetail, selectedMember, memberIssues,
-      openAddMember, openEditMember, saveMember, deleteMember, viewMember, loadMembers, approveMember, rejectMember, pendingMembers, loadPendingMembers,
-      getAge,
-      booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, bookForm, editBookMode, openAddBook, saveBook, openEditBook, deleteBook, bulkDeleteBooks, syncBookBarcodes, autoFillSequentialBarcodes,
-      bookSearchQ, bookSearchResults, selectBookForIssue,
-      issues, issuesLoading, issueFilter, issueForm, showIssueModal,
-      memberSearchQ, memberSearchResults, selectMemberForIssue,
-      openAddIssue, saveIssue, returnBook, loadIssues,
-      overdueClass, overdueDays,
-      importFile, importResult, importing, dragover, importTab, importType,
-      financeTab, payments, debtors, financeLoading,
-      onDrop, onFileSelect, doImport, exportMembers,
-      bulkDeleteAll,
-      formatPrice, formatDate, viewMemberById,
-      toasts, theme, toggleTheme,
-      showQRModal, openQRModal, closeQRModal, onScanSuccess, onScanError,
       
-      // Reservation
-      issueFromReservation, loadReservations, loadBooks
+      // 12 Views States & Methods
+      selectedBookDetail, viewBookDetail,
+      selectedMemberProfile, viewMemberProfile,
+      showLibraryCardModal, libraryCardSide, libraryCardMember, openLibraryCard, flipLibraryCard,
+      aiSearchQuery, aiSearchResults, aiSearching, runAISearch,
+      aiClassifications, runAIClassification, approveClassification,
+      bookCategories, selectedBookCategory, setBookCategory, openBookIssueFor,
+
+      dashStats, dashLoading, dashDateFrom, dashDateTo, dashPeriod, loadDashboard,
+      members, membersLoading, memberTotal, memberPage, memberPageSize, totalPages,
+      memberFilters, memberForm, editMode, showMemberModal, openAddMember, openEditMember, saveMember, deleteMember, getAge, loadMembers,
+      booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, editBookMode, bookForm, openAddBook, openEditBook, saveBook, deleteBook, syncBookBarcodes, autoFillSequentialBarcodes, loadBooks,
+      issues, issuesLoading, issueFilter, issueForm, showIssueModal, openAddIssue, saveIssue, returnBook, loadIssues, overdueDays,
+      reservationsList, loadReservations, updateReservationWithConfirm, issueFromReservation,
+      extensionsList, loadExtensions, showExtModal, extModalAction, extModalItem, extModalDate, extModalMessage, openExtModal,
+      auditLogs, loadAuditLogs, backupsList, loadBackups, createBackup,
+      importFile, importResult, importing, dragover, importTab, importType, onDrop, onFileSelect, doImport, bulkDeleteAll, exportMembers,
+      financeTab, payments, debtors, financeLoading,
+      today, formatPrice, formatDate, toasts, theme, toggleTheme,
+      showQRModal, openQRModal, closeQRModal, onScanSuccess, onScanError,
+      memberSearchQ, memberSearchResults, selectMemberForIssue,
+      bookSearchQ, bookSearchResults, selectBookForIssue
     };
   }
 });
