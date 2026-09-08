@@ -75,28 +75,48 @@ from django.contrib.auth.hashers import check_password
 
 class MemberLoginView(APIView):
     def post(self, request):
-        sigla = request.data.get('sigla')
-        password = request.data.get('password')
+        sigla = request.data.get('sigla', '').strip()
+        password = request.data.get('password', '')
         if not sigla:
-            return Response({'error': 'Sigla kiritilishi shart'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Sigla yoki elektron pochta kiritilishi shart'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            member = Member.objects.get(sigla=sigla)
+            member = Member.objects.filter(
+                Q(sigla__iexact=sigla) | Q(email__iexact=sigla) | Q(telegram_id=sigla)
+            ).first()
+            if not member:
+                return Response({'error': "Kiritilgan login bo'yicha kitobxon topilmadi."}, status=status.HTTP_404_NOT_FOUND)
             if member.password:
                 if not password:
-                    return Response({'error': 'Parol kiritilishi shart'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        'error': 'Parol kiritilishi shart',
+                        'can_reset': True,
+                        'sigla': member.sigla,
+                        'email': member.email or ''
+                    }, status=status.HTTP_400_BAD_REQUEST)
                 if not check_password(password, member.password):
-                    return Response({'error': "Noto'g'ri parol kiritildi."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        'error': "Noto'g'ri parol kiritildi.",
+                        'can_reset': True,
+                        'sigla': member.sigla,
+                        'email': member.email or ''
+                    }, status=status.HTTP_400_BAD_REQUEST)
                     
             return Response({
                 'id': member.id,
                 'sigla': member.sigla,
                 'familiya': member.familiya,
+                'email': member.email or '',
                 'holati': member.holati,
                 'tugilgan_sana': str(member.tugilgan_sana) if member.tugilgan_sana else '',
-                'telegram_id': member.telegram_id or ''
+                'telegram_id': member.telegram_id or '',
+                'jinsi': member.jinsi or 'erkak',
+                'yunalish': member.yunalish or '',
+                'branch_name': member.branch.name if member.branch else 'Asosiy fond',
+                'azolik_bosh': str(member.azolik_bosh) if member.azolik_bosh else str(member.yangi_avo_sana),
+                'azolik_tug': str(member.azolik_tug) if member.azolik_tug else ''
             })
-        except Member.DoesNotExist:
-            return Response({'error': "Kiritilgan Sigla bo'yicha a'zo topilmadi."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 class ExtensionRequestDetailView(APIView):
     def patch(self, request, pk):
@@ -304,6 +324,7 @@ import string
 class CabinetRegisterView(APIView):
     def post(self, request):
         familiya = request.data.get('familiya')
+        email = request.data.get('email', '').strip().lower()
         telefon = request.data.get('telefon')
         jinsi = request.data.get('jinsi', 'erkak')
         tugilgan_sana = request.data.get('tugilgan_sana')
@@ -318,7 +339,8 @@ class CabinetRegisterView(APIView):
         try:
             member = Member.objects.create(
                 familiya=familiya,
-                telegram_id=telefon, # storing phone here to avoid db migrations
+                email=email if email else None,
+                telegram_id=telefon,
                 sigla='',
                 holati='kutilmoqda',
                 jinsi=jinsi,
@@ -337,6 +359,7 @@ class CabinetRegisterView(APIView):
                 'sigla': member.sigla,
                 'id': member.id,
                 'familiya': member.familiya,
+                'email': member.email or '',
                 'holati': member.holati,
                 'tugilgan_sana': str(member.tugilgan_sana) if member.tugilgan_sana else '',
                 'telegram_id': member.telegram_id or ''
@@ -353,9 +376,13 @@ class MemberProfileUpdateView(APIView):
                 'id': member.id,
                 'sigla': member.sigla,
                 'familiya': member.familiya,
+                'email': member.email or '',
                 'holati': member.holati,
                 'tugilgan_sana': str(member.tugilgan_sana) if member.tugilgan_sana else '',
-                'telegram_id': member.telegram_id or ''
+                'telegram_id': member.telegram_id or '',
+                'jinsi': member.jinsi or 'erkak',
+                'yunalish': member.yunalish or '',
+                'branch_name': member.branch.name if member.branch else 'Asosiy fond'
             })
         except Member.DoesNotExist:
             return Response({'error': 'Topilmadi'}, status=404)
@@ -364,6 +391,8 @@ class MemberProfileUpdateView(APIView):
         try:
             member = Member.objects.get(pk=pk)
             member.familiya = request.data.get('familiya', member.familiya)
+            if 'email' in request.data:
+                member.email = request.data.get('email', '').strip().lower() or None
             member.jinsi = request.data.get('jinsi', member.jinsi)
             tug_sana = request.data.get('tugilgan_sana')
             if tug_sana:
@@ -381,53 +410,124 @@ class MemberProfileUpdateView(APIView):
         except Member.DoesNotExist:
             return Response({'error': 'Topilmadi'}, status=404)
 
-import asyncio
 class PasswordResetRequestView(APIView):
     def post(self, request):
-        sigla = request.data.get('sigla')
-        if not sigla:
-            return Response({'error': 'Sigla kiritilishi shart'}, status=400)
+        login_input = request.data.get('sigla') or request.data.get('login') or request.data.get('email')
+        custom_email = request.data.get('email')
+        
+        if not login_input:
+            return Response({'error': 'Sigla raqami yoki elektron pochtangizni kiriting'}, status=400)
             
+        login_input = str(login_input).strip()
         try:
-            member = Member.objects.get(sigla=sigla)
-            if not member.chat_id:
-                return Response({'error': "Foydalanuvchi Telegram botiga ulanmagan. Iltimos botga kirib /link buyrug'ini ishlating."}, status=400)
+            member = Member.objects.filter(
+                Q(sigla__iexact=login_input) | Q(email__iexact=login_input) | Q(telegram_id=login_input)
+            ).first()
             
-            # Generate 4-digit code
-            code = ''.join(random.choices(string.digits, k=4))
+            if not member:
+                return Response({'error': "Bunday login yoki sigla bo'yicha kitobxon topilmadi."}, status=404)
+            
+            target_email = custom_email.strip().lower() if custom_email else (member.email or '')
+            
+            if not target_email:
+                return Response({
+                    'error': "Kitobxon profilida elektron pochta belgilanmagan. Iltimos, pochtangizni kiriting.",
+                    'need_email': True,
+                    'sigla': member.sigla
+                }, status=400)
+            
+            if not member.email and target_email:
+                member.email = target_email
+            
+            # Generate 6-digit code
+            code = ''.join(random.choices(string.digits, k=6))
             member.reset_code = code
             member.save()
             
-            # Send message via bot using a background task or simple request
-            # Since bot runs in long polling, we can use requests to send via Telegram Bot API directly
-            import requests
-            TOKEN = "8545699860:AAHJoD9ckF6mkannYjh3DqRX7YgPzSVbXrk"
-            msg = f"Kutubxona Kabineti parolni tiklash kodi: {code}"
-            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-            requests.post(url, json={'chat_id': member.chat_id, 'text': msg})
+            # Send message via Email
+            from django.core.mail import send_mail
+            subject = "Urgut AKM - Parolni tiklash tasdiqlash kodi"
+            message = (
+                f"Assalomu alaykum, {member.familiya}!\n\n"
+                f"Sizning Urgut AKM Kutubxona Kabinetingiz parolini tiklash uchun tasdiqlash kodingiz:\n\n"
+                f"👉  {code}  👈\n\n"
+                f"Agar bu so'rovni siz yubormagan bo'lsangiz, ushbu xatga e'tibor bermang.\n\n"
+                f"Hurmat bilan,\n"
+                f"Urgut Tuman Axborot-Kutubxona Markazi\n"
+                f"Aloqa: +998 97 924 27 27"
+            )
             
-            return Response({'success': True})
-        except Member.DoesNotExist:
-            return Response({'error': 'Foydalanuvchi topilmadi'}, status=404)
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@urgut-akm.uz'),
+                    [target_email],
+                    fail_silently=False
+                )
+            except Exception as mail_err:
+                print(f"[EMAIL NOTIFICATION ERROR / CONSOLE LOG]: {mail_err} | Reset code: {code} for {target_email}")
+            
+            # Also send to Telegram if user is connected to bot
+            if member.chat_id:
+                try:
+                    import requests as tg_req
+                    TOKEN = "8545699860:AAHJoD9ckF6mkannYjh3DqRX7YgPzSVbXrk"
+                    tg_msg = f"🔐 Kutubxona Kabineti parolini tiklash kodi: {code}"
+                    tg_req.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={'chat_id': member.chat_id, 'text': tg_msg}, timeout=4)
+                except Exception:
+                    pass
+
+            # Mask email for UI
+            parts = target_email.split('@')
+            if len(parts) == 2 and len(parts[0]) > 2:
+                masked = parts[0][0] + '***' + parts[0][-1] + '@' + parts[1]
+            else:
+                masked = target_email
+
+            return Response({
+                'success': True,
+                'sigla': member.sigla,
+                'email': masked,
+                'message': f"{masked} elektron pochtasiga tasdiqlash kodi yuborildi."
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 class PasswordResetConfirmView(APIView):
     def post(self, request):
-        sigla = request.data.get('sigla')
-        code = request.data.get('code')
-        new_password = request.data.get('new_password')
+        login_input = request.data.get('sigla') or request.data.get('email')
+        code = str(request.data.get('code', '')).strip()
+        new_password = str(request.data.get('new_password', '')).strip()
         
+        if not login_input:
+            return Response({'error': 'Login yoki Sigla kiritilishi shart'}, status=400)
+        if not code:
+            return Response({'error': 'Tasdiqlash kodi kiritilishi shart'}, status=400)
+        if not new_password or len(new_password) < 4:
+            return Response({'error': "Yangi parol kamida 4 ta belgidan iborat bo'lishi kerak"}, status=400)
+            
         try:
-            member = Member.objects.get(sigla=sigla)
+            member = Member.objects.filter(
+                Q(sigla__iexact=str(login_input).strip()) | Q(email__iexact=str(login_input).strip())
+            ).first()
+            
+            if not member:
+                return Response({'error': 'Kitobxon topilmadi'}, status=404)
+                
             if not member.reset_code or member.reset_code != code:
-                return Response({'error': "Tasdiqlash kodi noto'g'ri"}, status=400)
+                return Response({'error': "Tasdiqlash kodi noto'g'ri yoki muddati o'tgan!"}, status=400)
                 
             from django.contrib.auth.hashers import make_password
             member.password = make_password(new_password)
             member.reset_code = None
             member.save()
-            return Response({'success': True})
-        except Member.DoesNotExist:
-            return Response({'error': 'Foydalanuvchi topilmadi'}, status=404)
+            return Response({
+                'success': True,
+                'message': "Parol muvaffaqiyatli o'zgartirildi! Yangi parol bilan kirishingiz mumkin."
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 class BulkUpdateBookItemsView(APIView):
     def put(self, request):

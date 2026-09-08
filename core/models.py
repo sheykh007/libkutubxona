@@ -22,6 +22,7 @@ class Member(models.Model):
 
     sigla = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Sigla Raqam")
     familiya = models.CharField(max_length=200, verbose_name="Familiya")
+    email = models.EmailField(max_length=254, null=True, blank=True, verbose_name="Elektron Pochta")
     telegram_id = models.CharField(max_length=50, null=True, blank=True, verbose_name="Telegram ID")
     chat_id = models.CharField(max_length=50, null=True, blank=True, verbose_name="Bot Chat ID")
     jinsi = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name="Jinsi")

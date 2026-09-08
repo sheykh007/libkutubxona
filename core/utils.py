@@ -149,14 +149,36 @@ def chat_bot_response(message):
         res += "<p style='margin-top:8px;font-size:12px;color:#64748b;'>Aniq bir muallif yoki janr (masalan: <i>\"Tarix\"</i>, <i>\"Badiiy\"</i>) bo'yicha qidirish uchun nomini yozishingiz mumkin.</p>"
         return res
 
-    # 2. LIBRARY RULES, WORKING HOURS, BRANCHES & FAQ
-    if any(k in lat_msg for k in ['ish vaqti', 'qachon ochiq', 'qachon ishlaydi', 'soat nechada', 'grafik', 'ish tartibi']):
+    # 2. LIBRARY RULES, WORKING HOURS, ABOUT & CONTACT
+    if any(k in lat_msg for k in ['ish vaqti', 'qachon ochiq', 'qachon ishlaydi', 'soat nechada', 'grafik', 'ish tartibi', 'ish vaqtlari', 'vaqti']):
         return (
-            "🕒 <b>Kutubxona Ish Tartibi:</b><br><br>"
-            "• <b>Dushanba - Shanba:</b> 09:00 dan 18:00 gacha<br>"
-            "• <b>Tushlik tanaffusi:</b> 13:00 - 14:00<br>"
+            "🕒 <b>Urgut AKM Ish Tartibi va Vaqtlari:</b><br><br>"
+            "• <b>Dushanba - Juma:</b> 09:00 dan 18:00 gacha<br>"
+            "• <b>Shanba:</b> 09:00 dan 16:00 gacha<br>"
+            "• <b>Tushlik tanaffusi:</b> 13:00 dan 14:00 gacha<br>"
             "• <b>Yakshanba:</b> Dam olish kuni<br><br>"
-            "Kitob buyurtma qilish va qaytarish bo'yicha xizmatlar ish vaqtida amalga oshiriladi."
+            "Abonement, kitobxonlar zali va elektron xizmatlar ushbu vaqt oralig'ida to'liq xizmat ko'rsatadi."
+        )
+
+    if any(k in lat_msg for k in ['kutubxona haqida', 'akm haqida', 'urgut akm', 'markaz haqida', 'kutubxona nima', 'malumot', 'haqida']):
+        return (
+            "🏛️ <b>Urgut Tuman Axborot-Kutubxona Markazi (AKM) haqida ma'lumot:</b><br><br>"
+            "Urgut tuman AKM – tuman aholisi, yoshlar, talaba va ilmiy tadqiqotchilar uchun mo'ljallangan zamonaviy axborot va ma'naviyat maskanidir.<br><br>"
+            "• 📚 <b>Fond:</b> 1,100 dan ortiq ilmiy, badiiy, mumtoz, tibbiyot va o'quv qo'llanmalari fondi;<br>"
+            "• 🪪 <b>Raqamli xizmatlar:</b> QR-kodli elektron kitobxonlik bileti, onlayn kitob band qilish va shaxsiy kabinet;<br>"
+            "• 🤖 <b>AI texnologiyalari:</b> Sun'iy intellekt asosida tezkor kitob tavsiya qilish va aqlli qidiruv;<br>"
+            "• 🌐 <b>Sharoitlar:</b> Bepul Wi-Fi, shinam mutolaa zali, tadbirlar maydoni va kompyuterlashtirilgan xonalar.<br><br>"
+            "📍 <b>Manzil:</b> Samarqand viloyati, Urgut tumani markazi."
+        )
+
+    if any(k in lat_msg for k in ['bog\'lanish', 'boglanish', 'aloqa', 'telefon', 'raqam', 'nomer', 'kontakt', 'qongiroq', 'operator', 'call', 'admin']):
+        return (
+            "📞 <b>Bog'lanish va Aloqa:</b><br><br>"
+            "Kutubxona ma'muriyati va operatorlar bilan bevosita bog'lanish uchun:<br><br>"
+            "• 📱 <b>Telefon raqam:</b> <a href='tel:+998979242727' style='color:#2563EB; font-weight:800; font-size:16px; text-decoration:none;'>+998 97 924 27 27</a><br>"
+            "• 💬 <b>Telegram:</b> @urgut_akm_admin<br>"
+            "• 📍 <b>Manzil:</b> Samarqand viloyati, Urgut tumani<br><br>"
+            "Savol va takliflaringiz bo'lsa, istalgan vaqtda qo'ng'iroq qilishingiz mumkin!"
         )
 
     if any(k in lat_msg for k in ['qanday azo', 'azolik', 'royxatdan', 'a\'zo bolish', 'qanaqa azo']):
@@ -170,7 +192,7 @@ def chat_bot_response(message):
     if any(k in lat_msg for k in ['jarima', 'kechikish', 'tolov', 'muddat uzaytirish', 'necha kun']):
         return (
             "📖 <b>Kitob olish va muddat qoidalari:</b><br><br>"
-            "• Kitoblar odatda <b>10 kundan 30 kungacha</b> muddatga beriladi.<br>"
+            "• Kitoblar odatda <b>15 kundan 30 kungacha</b> muddatga beriladi.<br>"
             "• Muddatni shaxsiy kabinet orqali uzaytirish uchun so'rov yuborish mumkin.<br>"
             "• Belgilangan muddatdan kechiktirilgan har bir kun uchun <b>500 so'm</b> jarima hisoblanadi."
         )
@@ -180,7 +202,7 @@ def chat_bot_response(message):
         branch_list = "".join([f"• 🏛️ <b>{b.name}</b>" + (f" - <i>{b.address}</i>" if b.address else "") + "<br>" for b in branches])
         return (
             f"🏢 <b>Kutubxonamizdagi xizmat bo'limlari:</b><br><br>"
-            f"{branch_list if branch_list else '• 🏛️ Bibliografiya<br>• 🏛️ Abonement xizmat xonasi<br>'}<br>"
+            f"{branch_list if branch_list else '• 🏛️ Asosiy ilmiy fond<br>• 🏛️ Abonement xizmat xonasi<br>'}<br>"
             "Kitoblar ushbu bo'limlarda saqlanadi va inventar raqami orqali beriladi."
         )
 

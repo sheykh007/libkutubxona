@@ -15,7 +15,9 @@ async function api(method, path, body = null) {
   const response = await fetch(API_BASE + path, opts);
   if (!response.ok) {
     const e = await response.json().catch(() => ({}));
-    throw new Error(e.error || e.detail || `HTTP ${response.status}`);
+    const err = new Error(e.error || e.detail || `HTTP ${response.status}`);
+    err.data = e;
+    throw err;
   }
   return response.json();
 }
@@ -29,13 +31,43 @@ const app = createApp({
     const authTab = ref('login');
     const loginSigla = ref('');
     const loginPassword = ref('');
-    const regForm = reactive({ familiya: '', telefon: '', jinsi: 'erkak', tugilgan_sana: '', yunalish: 'Talaba', yunalish_boshqa: '', telegram_username: '', password: '' });
+    const regForm = reactive({ 
+      familiya: '', 
+      email: '',
+      telefon: '', 
+      jinsi: 'erkak', 
+      tugilgan_sana: '', 
+      yunalish: 'Talaba', 
+      yunalish_boshqa: '', 
+      telegram_username: '', 
+      password: '' 
+    });
     const loading = ref(false);
     const loginError = ref('');
+    const canResetPassword = ref(false);
     
     // Profile update
-    const profileForm = reactive({ familiya: '', yunalish: '', telegram_username: '', password: '', passwordConfirm: '' });
+    const profileForm = reactive({ 
+      familiya: '', 
+      email: '',
+      yunalish: '', 
+      telegram_username: '', 
+      password: '', 
+      passwordConfirm: '' 
+    });
     
+    // Library ID Card state
+    const libraryCardSide = ref('front');
+    function flipLibraryCard() {
+      libraryCardSide.value = libraryCardSide.value === 'front' ? 'back' : 'front';
+    }
+    function printCard() {
+      libraryCardSide.value = 'front';
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    }
+
     // Modals & State
     const reservations = ref([]);
     const showReserveModal = ref(false);
@@ -46,10 +78,20 @@ const app = createApp({
     const selectedIssueForExt = ref(null);
     const extForm = reactive({ requested_date: '', reason: '' });
     
-    // Password reset state
+    // Email-based Password Reset State
     const showResetModal = ref(false);
     const resetStep = ref(1);
-    const resetForm = reactive({ sigla: '', code: '', new_password: '' });
+    const resetLoading = ref(false);
+    const resetError = ref('');
+    const resetSuccessMsg = ref('');
+    const needEmailInput = ref(false);
+    const resetForm = reactive({
+      sigla: '',
+      email: '',
+      code: '',
+      new_password: '',
+      new_password_confirm: ''
+    });
     
     // Toasts
     const toasts = ref([]);
@@ -74,6 +116,7 @@ const app = createApp({
       if (!loginSigla.value) return;
       loading.value = true;
       loginError.value = '';
+      canResetPassword.value = false;
       try {
         const res = await api('POST', '/cabinet/login/', { sigla: loginSigla.value, password: loginPassword.value });
         const found = res;
@@ -98,10 +141,15 @@ const app = createApp({
           initCabinet();
           loginPassword.value = '';
         } else {
-          loginError.value = 'Bunday Sigla raqamli a\'zo topilmadi.';
+          loginError.value = 'Bunday Sigla raqamli yoki pochtali a\'zo topilmadi.';
         }
       } catch (e) {
-        loginError.value = 'Tizim xatosi: ' + e.message;
+        loginError.value = e.message;
+        if (e.data && e.data.can_reset) {
+          canResetPassword.value = true;
+          resetForm.sigla = e.data.sigla || loginSigla.value;
+          if (e.data.email) resetForm.email = e.data.email;
+        }
       } finally {
         loading.value = false;
       }
@@ -121,7 +169,6 @@ const app = createApp({
         }
         
         const res = await api('POST', '/cabinet/register/', dataToSend);
-        // Show pending approval screen — do NOT auto-login
         registeredSigla.value = res.sigla || '';
         registerSuccess.value = true;
         toast('So\'rovingiz yuborildi! Admin tasdiqlashini kuting.', 'success');
@@ -199,7 +246,7 @@ const app = createApp({
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => {
         loadCatalog();
-      }, 500);
+      }, 400);
     }
     
     function isLate(dateStr) {
@@ -268,6 +315,8 @@ const app = createApp({
         await api('PUT', `/cabinet/profile/${member.value.id}/`, profileForm);
         toast('Sozlamalar va Profil muvaffaqiyatli saqlandi!', 'success');
         member.value.familiya = profileForm.familiya;
+        member.value.email = profileForm.email;
+        member.value.yunalish = profileForm.yunalish;
         localStorage.setItem('cabinet_member', JSON.stringify(member.value));
         profileForm.password = '';
         profileForm.passwordConfirm = '';
@@ -278,36 +327,77 @@ const app = createApp({
     
     function openPasswordReset() {
       resetStep.value = 1;
-      resetForm.sigla = loginSigla.value;
+      resetForm.sigla = loginSigla.value || '';
+      resetForm.email = '';
       resetForm.code = '';
       resetForm.new_password = '';
+      resetForm.new_password_confirm = '';
+      resetError.value = '';
+      resetSuccessMsg.value = '';
+      needEmailInput.value = false;
       showResetModal.value = true;
     }
     
     async function requestResetCode() {
-      if (!resetForm.sigla) return;
+      if (!resetForm.sigla && !resetForm.email) {
+        resetError.value = 'Sigla raqami yoki elektron pochtangizni kiriting';
+        return;
+      }
+      resetLoading.value = true;
+      resetError.value = '';
+      resetSuccessMsg.value = '';
       try {
-        await api('POST', '/cabinet/password-reset-request/', { sigla: resetForm.sigla });
+        const res = await api('POST', '/cabinet/password-reset-request/', { 
+          sigla: resetForm.sigla, 
+          email: resetForm.email 
+        });
         resetStep.value = 2;
+        resetSuccessMsg.value = res.message || 'Elektron pochtangizga tasdiqlash kodi yuborildi.';
+        toast(resetSuccessMsg.value, 'success');
       } catch (e) {
-        toast(e.message, 'error');
+        if (e.data && e.data.need_email) {
+          needEmailInput.value = true;
+          resetError.value = e.message;
+        } else {
+          resetError.value = e.message;
+        }
+      } finally {
+        resetLoading.value = false;
       }
     }
     
     async function confirmResetCode() {
-      if (!resetForm.code || !resetForm.new_password) return;
+      if (!resetForm.code) {
+        resetError.value = 'Tasdiqlash kodini kiriting';
+        return;
+      }
+      if (!resetForm.new_password || resetForm.new_password.length < 4) {
+        resetError.value = 'Yangi parol kamida 4 ta belgidan iborat bo\'lishi kerak';
+        return;
+      }
+      if (resetForm.new_password_confirm && resetForm.new_password !== resetForm.new_password_confirm) {
+        resetError.value = 'Kiritilgan parollar bir-biriga mos kelmadi';
+        return;
+      }
+      resetLoading.value = true;
+      resetError.value = '';
       try {
-        await api('POST', '/cabinet/password-reset-confirm/', {
+        const res = await api('POST', '/cabinet/password-reset-confirm/', {
           sigla: resetForm.sigla,
+          email: resetForm.email,
           code: resetForm.code,
           new_password: resetForm.new_password
         });
-        toast('Parol muvaffaqiyatli tiklandi! Endi yangi parol bilan kiring.', 'success');
+        toast('Parol muvaffaqiyatli yangilandi! Endi yangi parol bilan kiring.', 'success');
         showResetModal.value = false;
         loginSigla.value = resetForm.sigla;
         loginPassword.value = '';
+        canResetPassword.value = false;
+        loginError.value = '';
       } catch (e) {
-        toast(e.message, 'error');
+        resetError.value = e.message;
+      } finally {
+        resetLoading.value = false;
       }
     }
 
@@ -327,6 +417,8 @@ const app = createApp({
     
     function downloadPDF() {
       const element = document.getElementById('library-card-element');
+      if (!element) return;
+      libraryCardSide.value = 'front';
       const opt = {
         margin:       [0.2, 0.2, 0.2, 0.2],
         filename:     `Kitobxon_bileti_${member.value.sigla}.pdf`,
@@ -335,14 +427,12 @@ const app = createApp({
         jsPDF:        { unit: 'in', format: 'a5', orientation: 'landscape' }
       };
       
-      // Temporarily adjust styles for better PDF output
       const originalBorder = element.style.border;
       const originalShadow = element.style.boxShadow;
       element.style.border = 'none';
       element.style.boxShadow = 'none';
       
       html2pdf().set(opt).from(element).save().then(() => {
-        // Restore styles
         element.style.border = originalBorder;
         element.style.boxShadow = originalShadow;
       });
@@ -353,6 +443,7 @@ const app = createApp({
       loadCatalog();
       if (member.value) {
         profileForm.familiya = member.value.familiya || '';
+        profileForm.email = member.value.email || '';
         profileForm.yunalish = member.value.yunalish || '';
         profileForm.telegram_username = member.value.telegram_username || '';
       }
@@ -369,8 +460,9 @@ const app = createApp({
     
     return {
       isLoggedIn, member, authTab, regForm, loginSigla, loginPassword, loading, loginError,
-      registerSuccess, registeredSigla,
+      canResetPassword, registerSuccess, registeredSigla,
       profileForm,
+      libraryCardSide, flipLibraryCard, printCard,
       login, registerUser, logout,
       toasts,
       issueHistory, currentIssues, reservations,
@@ -379,7 +471,8 @@ const app = createApp({
       showExtensionModal, selectedIssueForExt, extForm, openExtensionModal, confirmExtension,
       showReserveModal, selectedBookForReserve, reserveForm, openReserveModal, confirmReservation,
       saveSettings, downloadPDF,
-      showResetModal, resetStep, resetForm, openPasswordReset, requestResetCode, confirmResetCode
+      showResetModal, resetStep, resetLoading, resetError, resetSuccessMsg, needEmailInput, resetForm, 
+      openPasswordReset, requestResetCode, confirmResetCode
     };
   }
 });
