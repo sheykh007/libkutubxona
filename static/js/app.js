@@ -110,9 +110,9 @@ const TRANSLATIONS = {
     save_settings: "💾 Saqlash",
     settings_saved: "Sozlamalar muvaffaqiyatli saqlandi! Tizim tili yangilandi.",
     
-    ai_search_title: "AI Aqlli Qidiruv & Semantik Tavsiyalar",
-    ai_search_desc: "Kitob mazmuni, muallif, qahramonlar yoki mavzuni erkin tilda tasvirlang. AI mos asarlarni topib beradi.",
-    ai_search_input_placeholder: "Masalan: Tibbiyotda kardiologiya yangiliklari yoki Navoiy g'azallari...",
+    ai_search_title: "AI Aqlli Qidiruv",
+    ai_search_desc: "Kitob mazmuni, muallif, qahramonlar yoki mavzuni erkin tilda tasvirlang. AI fonddan mos asarlarni topib beradi.",
+    ai_search_input_placeholder: "Masalan: Alisher Navoiy g'azallari, O'zbekiston tarixi, Dasturlash asoslari...",
     popular_topics: "Mashhur mavzular:",
     mode_semantic: "Semantik qidiruv",
     mode_semantic_desc: "Ma'no va g'oya bo'yicha",
@@ -189,9 +189,9 @@ const TRANSLATIONS = {
     save_settings: "💾 Сохранить",
     settings_saved: "Настройки успешно сохранены! Язык системы обновлен.",
     
-    ai_search_title: "AI Умный поиск и семантические рекомендации",
-    ai_search_desc: "Опишите содержание, автора, персонажей или тему своими словами. AI найдет подходящие произведения.",
-    ai_search_input_placeholder: "Например: Новости кардиологии в медицине или газели Навои...",
+    ai_search_title: "AI Умный поиск",
+    ai_search_desc: "Опишите содержание, автора, персонажей или тему своими словами. AI найдет подходящие произведения из фонда.",
+    ai_search_input_placeholder: "Например: Газели Алишера Навои, История Узбекистана, Основы программирования...",
     popular_topics: "Популярные темы:",
     mode_semantic: "Семантический поиск",
     mode_semantic_desc: "По смыслу и идее",
@@ -268,9 +268,9 @@ const TRANSLATIONS = {
     save_settings: "💾 Save Settings",
     settings_saved: "Settings successfully saved! Language updated.",
     
-    ai_search_title: "AI Smart Search & Semantic Recommendations",
-    ai_search_desc: "Describe the content, author, characters, or topic freely. AI will find matching literature.",
-    ai_search_input_placeholder: "e.g., Cardiology advances in medicine or Navoi ghazals...",
+    ai_search_title: "AI Smart Search",
+    ai_search_desc: "Describe the content, author, characters, or topic freely. AI will find matching literature from the collection.",
+    ai_search_input_placeholder: "e.g., Ghazals of Alisher Navoi, History of Uzbekistan, Programming basics...",
     popular_topics: "Popular topics:",
     mode_semantic: "Semantic Search",
     mode_semantic_desc: "By meaning and concept",
@@ -406,6 +406,27 @@ const app = createApp({
     const aiSearchQuery = ref('');
     const aiSearchResults = ref([]);
     const aiSearching = ref(false);
+    const aiFacets = ref({ categories: [], branches: [] });
+    const aiClarification = ref(null);
+    const aiEmptyMessage = ref('');
+    const aiSelectedCategory = ref('');
+    const aiStats = ref(null);
+    const aiReindexing = ref(false);
+
+    // Similar Books on Detail Page
+    const similarBooks = ref([]);
+    const similarBooksLoading = ref(false);
+
+    // Reports V2 State (5 tabs)
+    const reportActiveTab = ref('members'); // 'members', 'books', 'debtors', 'reservations', 'issues'
+    const reportData = ref({ summary: {}, headers: [], rows: [] });
+    const reportLoading = ref(false);
+    const reportDateFrom = ref('');
+    const reportDateTo = ref('');
+    const reportStatusFilter = ref('');
+
+    // Notifications Filter
+    const notifFilter = ref('all'); // 'all', 'warning', 'requests', 'system'
 
     const bookCategories = ref([
       'Barchasi', 'Badiiy adabiyot', 'Tibbiyot', 'Darsliklar', 'Ilmiy', 'Bolalar', 'Chet tili', 'San\'at'
@@ -591,8 +612,10 @@ const app = createApp({
       if (page === 'reservations') loadReservations();
       if (page === 'extensions') loadExtensions();
       if (page === 'reports') {
-        loadDashboard();
-        nextTick(() => renderCharts());
+        loadReportsData();
+      }
+      if (page === 'ai_search') {
+        loadAIStats();
       }
       if (page === 'finance') loadFinanceData();
       if (page === 'audit_log') loadAuditLogs();
@@ -616,16 +639,17 @@ const app = createApp({
         if (dashDateTo.value) params.append('date_to', dashDateTo.value);
         let qs = params.toString() ? `?${params.toString()}` : '';
         dashStats.value = await api('GET', `/dashboard/${qs}`);
-        await nextTick();
-        renderCharts();
       } catch (e) {
         toast('Dashboard ma\'lumotlarini yuklab bo\'lmadi: ' + e.message, 'error');
       } finally {
         dashLoading.value = false;
+        await nextTick();
+        renderCharts();
       }
     }
 
     function renderCharts() {
+      if (typeof Chart === 'undefined') return;
       if (!dashStats.value) return;
       const s = dashStats.value;
 
@@ -767,6 +791,9 @@ const app = createApp({
       selectedBookDetail.value = book;
       currentPage.value = 'book_detail';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (book && book.id) {
+        loadSimilarBooks(book.id);
+      }
     }
 
     async function viewMemberProfile(member) {
@@ -915,12 +942,15 @@ const app = createApp({
 
     const aiSearchMode = ref('semantic');
 
-    async function runAISearch(mode = null, customQ = null) {
+    async function runAISearch(mode = null, customQ = null, catFilter = null) {
       if (mode && typeof mode === 'string') {
         aiSearchMode.value = mode;
       }
       if (customQ && typeof customQ === 'string') {
         aiSearchQuery.value = customQ;
+      }
+      if (catFilter !== null) {
+        aiSelectedCategory.value = catFilter;
       }
       
       let q = aiSearchQuery.value.trim();
@@ -939,17 +969,147 @@ const app = createApp({
       }
 
       aiSearching.value = true;
+      aiClarification.value = null;
+      aiEmptyMessage.value = '';
       try {
-        const res = await api('GET', `/ai/search/?q=${encodeURIComponent(q)}&mode=${encodeURIComponent(aiSearchMode.value)}`);
-        aiSearchResults.value = Array.isArray(res) ? res : (res.results || []);
-        if (!aiSearchResults.value.length) {
-          toast(t('results_found') + ': 0', 'warning');
+        let url = `/ai/search/?q=${encodeURIComponent(q)}&mode=${encodeURIComponent(aiSearchMode.value)}`;
+        if (aiSelectedCategory.value) {
+          url += `&category=${encodeURIComponent(aiSelectedCategory.value)}`;
+        }
+        const res = await api('GET', url);
+        if (res.is_ambiguous) {
+          aiClarification.value = res.clarification_question || "So'rovingiz juda umumiy. Iltimos, aniqroq mavzu yoki muallifni ko'rsating.";
+          aiSearchResults.value = [];
+        } else {
+          aiSearchResults.value = Array.isArray(res) ? res : (res.results || []);
+          aiFacets.value = res.facets || { categories: [], branches: [] };
+          if (!aiSearchResults.value.length) {
+            aiEmptyMessage.value = res.message || "Ushbu so'rov bo'yicha kutubxona fondidan mos kitob topilmadi.";
+            toast("Mos kitob topilmadi", 'warning');
+          }
         }
       } catch (e) {
         toast('AI qidiruvda xatolik: ' + e.message, 'error');
       } finally {
         aiSearching.value = false;
       }
+    }
+
+    function filterAICategory(cat) {
+      aiSelectedCategory.value = (aiSelectedCategory.value === cat) ? '' : cat;
+      runAISearch();
+    }
+
+    async function submitFeedback(bookId, feedbackType, rating = null) {
+      try {
+        await api('POST', '/ai/feedback/', {
+          member_id: 1,
+          book_id: bookId,
+          feedback_type: feedbackType,
+          rating: rating
+        });
+        toast("Fikringiz uchun rahmat! Tavsiyalar yangilandi.", "success");
+      } catch (e) {
+        toast("Fikr yuborishda xatolik: " + e.message, "error");
+      }
+    }
+
+    async function loadSimilarBooks(bookId) {
+      if (!bookId) return;
+      similarBooks.value = [];
+      similarBooksLoading.value = true;
+      try {
+        const data = await api('GET', `/ai/recommendations/book/${bookId}/`);
+        similarBooks.value = Array.isArray(data) ? data : [];
+      } catch(e) {
+        console.error('Similar books load error:', e);
+      } finally {
+        similarBooksLoading.value = false;
+      }
+    }
+
+    async function loadAIStats() {
+      try {
+        aiStats.value = await api('GET', '/ai/stats/');
+      } catch (e) {
+        console.error('AI stats error:', e);
+      }
+    }
+
+    async function triggerAIReindex() {
+      aiReindexing.value = true;
+      try {
+        const res = await api('POST', '/ai/reindex/', {});
+        toast(res.message || 'AI Fond indekslandi!', 'success');
+        loadAIStats();
+      } catch (e) {
+        toast('Indekslashda xatolik: ' + e.message, 'error');
+      } finally {
+        aiReindexing.value = false;
+      }
+    }
+
+    // Reports Logic
+    async function loadReportsData(tab = null) {
+      if (tab) {
+        reportActiveTab.value = tab;
+        reportStatusFilter.value = '';
+      }
+      reportLoading.value = true;
+      try {
+        const params = new URLSearchParams({
+          type: reportActiveTab.value,
+          date_from: reportDateFrom.value,
+          date_to: reportDateTo.value,
+          status: reportStatusFilter.value
+        });
+        const res = await api('GET', `/reports/data/?${params.toString()}`);
+        reportData.value = res || { summary: {}, headers: [], rows: [] };
+      } catch (e) {
+        toast('Hisobot ma\'lumotlarini yuklashda xatolik: ' + e.message, 'error');
+      } finally {
+        reportLoading.value = false;
+      }
+    }
+
+    function exportReportCSV() {
+      const params = new URLSearchParams({
+        type: reportActiveTab.value,
+        date_from: reportDateFrom.value,
+        date_to: reportDateTo.value,
+        status: reportStatusFilter.value,
+        export: 'csv'
+      });
+      window.open(`/api/reports/data/?${params.toString()}`, '_blank');
+    }
+
+    function printReport() {
+      document.body.classList.add('printing-report');
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-report');
+      }, 1000);
+    }
+
+    // Notifications Filter & Actions
+    const filteredNotifications = computed(() => {
+      if (!notifications.value) return [];
+      if (notifFilter.value === 'all') return notifications.value;
+      if (notifFilter.value === 'warning') {
+        return notifications.value.filter(n => (n.type === 'warning' || (n.message && n.message.includes('muddati'))));
+      }
+      if (notifFilter.value === 'requests') {
+        return notifications.value.filter(n => (n.message && (n.message.includes('ariza') || n.message.includes('so\'rov') || n.message.includes('rezervatsiya') || n.message.includes('a\'zolik'))));
+      }
+      if (notifFilter.value === 'system') {
+        return notifications.value.filter(n => n.type === 'info' || n.type === 'system');
+      }
+      return notifications.value;
+    });
+
+    function markAllNotifsRead() {
+      notifications.value = [];
+      toast("Barcha bildirishnomalar o'qilgan deb belgilandi", "success");
     }
 
     function issueBookFromSearch(book) {
@@ -1169,11 +1329,27 @@ const app = createApp({
       showBookModal.value = true;
     }
 
+    function addCopyInEdit() {
+      if (!bookForm.items) bookForm.items = [];
+      const nextNum = bookForm.items.length + 1;
+      const prefix = bookForm.items.length > 0 && bookForm.items[0].barcode ? bookForm.items[0].barcode.split('-')[0] : `B${bookForm.id || '0000'}`;
+      bookForm.items.push({
+        id: null,
+        barcode: `${prefix}-${nextNum.toString().padStart(2, '0')}`,
+        status: 'available',
+        branch_id: bookForm.branch_id
+      });
+      bookForm.total_count = bookForm.items.length;
+      bookForm.barcodes = bookForm.items.map(it => it.barcode);
+    }
+
     async function saveBook() {
       try {
         let payload = { ...bookForm };
         if (!payload.published_year) payload.published_year = null;
         if (editBookMode.value) {
+          payload.barcodes = (payload.items || []).map(it => it.barcode);
+          payload.total_count = (payload.items || []).length;
           await api('PUT', `/books/${payload.id}/`, payload);
           if (payload.items && payload.items.length > 0) {
             await api('PUT', '/book-items/bulk-update/', { items: payload.items });
@@ -1465,6 +1641,11 @@ const app = createApp({
       showLibraryCardModal, libraryCardSide, libraryCardMember, openLibraryCard, flipLibraryCard, printCard,
       toggleChat, askQuickPrompt,
       aiSearchQuery, aiSearchResults, aiSearching, aiSearchMode, runAISearch, issueBookFromSearch,
+      aiFacets, aiClarification, aiEmptyMessage, aiSelectedCategory, filterAICategory, submitFeedback,
+      aiStats, aiReindexing, triggerAIReindex, loadAIStats,
+      similarBooks, similarBooksLoading, loadSimilarBooks,
+      reportActiveTab, reportData, reportLoading, reportDateFrom, reportDateTo, reportStatusFilter, reportSearchFilter, loadReportsData, exportReportCSV, printReport,
+      notifFilter, filteredNotifications, markAllNotifsRead,
       bookCategories, selectedBookCategory, setBookCategory, openBookIssueFor,
 
       dashStats, dashLoading, dashDateFrom, dashDateTo, dashPeriod, loadDashboard,
@@ -1472,7 +1653,7 @@ const app = createApp({
       memberFilters, memberForm, editMode, showMemberModal, openAddMember, openEditMember, saveMember, deleteMember, getAge, loadMembers,
       onMembershipStartDateChange, onMembershipTypeChange, onIssueDateChange,
       memberIssues,
-      booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, editBookMode, bookForm, openAddBook, openEditBook, saveBook, deleteBook, syncBookBarcodes, autoFillSequentialBarcodes, loadBooks,
+      booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, editBookMode, bookForm, openAddBook, openEditBook, addCopyInEdit, saveBook, deleteBook, syncBookBarcodes, autoFillSequentialBarcodes, loadBooks,
       issues, issuesLoading, issueFilter, issueForm, showIssueModal, openAddIssue, saveIssue, returnBook, loadIssues, overdueDays,
       reservationsList, loadReservations, updateReservationWithConfirm, issueFromReservation,
       extensionsList, loadExtensions, showExtModal, extModalAction, extModalItem, extModalDate, extModalMessage, openExtModal,

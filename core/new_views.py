@@ -1,18 +1,26 @@
 import os
 import shutil
+import csv
+import io
+from django.http import HttpResponse
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from .models import (
-    Member, BookIssue, Book, Reservation, 
-    ExtensionRequest, AuditLog, BackupLog
+    Member, BookIssue, Book, BookItem, Reservation, 
+    ExtensionRequest, AuditLog, BackupLog,
+    BookEmbedding, SearchQueryLog, RecommendationFeedback, Branch, Subscription
 )
 from .serializers import ReservationSerializer
 from .utils import ai_smart_search, ai_recommendations, chat_bot_response
+from .ai_engine import (
+    HybridSearchEngine, get_similar_books, get_personal_recommendations,
+    get_ai_search_stats, index_all_books
+)
 
 # --- Extension Requests ---
 class ExtensionRequestListCreateView(APIView):
@@ -272,21 +280,347 @@ class LeaderboardView(APIView):
 class AISearchView(APIView):
     def get(self, request):
         q = request.GET.get('q', '').strip()
-        mode = request.GET.get('mode', 'semantic').strip()
-        if not q and mode != 'recommend':
-            return Response([])
-        results = ai_smart_search(q, mode=mode)
-        return Response(results)
+        category = request.GET.get('category', '').strip()
+        branch = request.GET.get('branch', '').strip()
+        available_only = request.GET.get('available_only', '').lower() in ('true', '1')
+        try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 12))
+        except (ValueError, TypeError):
+            page = 1
+            page_size = 12
+
+        member_id = request.GET.get('member_id')
+        member = None
+        if member_id:
+            try:
+                member = Member.objects.get(id=member_id)
+            except Member.DoesNotExist:
+                pass
+
+        if not q and not category:
+            return Response({
+                'query': '',
+                'total': 0,
+                'results': [],
+                'facets': {'categories': [], 'branches': []},
+                'message': "Qidiruv maydoniga kalit so'z yoki muallif nomini kiriting.",
+                'clarification_prompt': None
+            })
+
+        branch_id = int(branch) if branch and branch.isdigit() else None
+        data = HybridSearchEngine.search(
+            query_str=q,
+            category_filter=category if category else None,
+            branch_filter=branch_id,
+            available_only=available_only,
+            page=page,
+            page_size=page_size
+        )
+
+        if q:
+            try:
+                SearchQueryLog.objects.create(
+                    query=q,
+                    normalized_query=data.get('intent', {}).get('normalized_query', q),
+                    member=member,
+                    results_count=data.get('total', 0),
+                    search_mode='hybrid'
+                )
+            except Exception:
+                pass
+
+        return Response(data)
 
 class AIRecommendationView(APIView):
     def get(self, request, pk):
-        recs = ai_recommendations(pk)
-        data = [{
-            'id': b.id,
-            'title': b.title,
-            'author': b.author
-        } for b in recs]
-        return Response(data)
+        try:
+            limit = int(request.GET.get('limit', 6))
+        except (ValueError, TypeError):
+            limit = 6
+        recs = get_similar_books(pk, limit=limit)
+        return Response(recs)
+
+class AISimilarBooksView(APIView):
+    def get(self, request, pk):
+        try:
+            limit = int(request.GET.get('limit', 6))
+        except (ValueError, TypeError):
+            limit = 6
+        similar = get_similar_books(pk, limit=limit)
+        return Response(similar)
+
+class AIMemberRecommendationsView(APIView):
+    def get(self, request, pk):
+        try:
+            limit = int(request.GET.get('limit', 8))
+        except (ValueError, TypeError):
+            limit = 8
+        recs = get_personal_recommendations(pk, limit=limit)
+        return Response(recs)
+
+class AIFeedbackView(APIView):
+    def post(self, request):
+        member_id = request.data.get('member_id')
+        book_id = request.data.get('book_id')
+        feedback_type = request.data.get('feedback_type')  # 'like', 'dislike', 'rating'
+        rating = request.data.get('rating')
+        comment = request.data.get('comment', '')
+
+        if not member_id or not book_id or not feedback_type:
+            return Response({'error': "member_id, book_id va feedback_type kiritilishi shart"}, status=400)
+
+        try:
+            member = Member.objects.get(id=member_id)
+            book = Book.objects.get(id=book_id)
+
+            fb, created = RecommendationFeedback.objects.update_or_create(
+                member=member,
+                book=book,
+                defaults={
+                    'feedback_type': feedback_type,
+                    'rating': int(rating) if rating else None,
+                    'comment': comment
+                }
+            )
+            return Response({
+                'success': True,
+                'created': created,
+                'feedback_type': fb.feedback_type,
+                'message': "Fikringiz saqlandi. Sun'iy intellekt tavsiyalari shunga moslashtiriladi!"
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+class AIStatsView(APIView):
+    def get(self, request):
+        stats = get_ai_search_stats()
+        return Response(stats)
+
+class AIReindexView(APIView):
+    def post(self, request):
+        try:
+            indexed = index_all_books()
+            return Response({
+                'success': True,
+                'indexed_count': indexed,
+                'message': f"{indexed} ta kitob muvaffaqiyatli indekslandi!"
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+class ReportsDataView(APIView):
+    def get(self, request):
+        report_type = request.GET.get('type', 'members') # 'members', 'books', 'debtors', 'reservations', 'issues'
+        date_from = request.GET.get('date_from', '').strip()
+        date_to = request.GET.get('date_to', '').strip()
+        status_filter = request.GET.get('status', '').strip()
+        category_filter = request.GET.get('category', '').strip()
+        export_format = request.GET.get('export', 'json').strip() # 'csv' or 'json'
+
+        today = timezone.now().date()
+
+        if report_type == 'members':
+            qs = Member.objects.all().order_by('-id')
+            if date_from:
+                qs = qs.filter(yangi_avo_sana__gte=date_from)
+            if date_to:
+                qs = qs.filter(yangi_avo_sana__lte=date_to)
+            if status_filter:
+                qs = qs.filter(holati=status_filter)
+
+            total_count = qs.count()
+            active_count = qs.filter(holati='faol').count()
+            waiting_count = qs.filter(holati='kutilmoqda').count()
+            blocked_count = qs.filter(holati='bloklangan').count()
+
+            headers = ["ID", "Sigla", "F.I.SH", "Holati", "Telefon", "Elektron pochta", "Yo'nalish", "A'zolik sanasi", "Muddati"]
+            rows = []
+            for m in qs[:250]:
+                rows.append({
+                    'id': m.id,
+                    'sigla': m.sigla,
+                    'name': m.familiya,
+                    'status': m.holati,
+                    'phone': m.telegram_id or '',
+                    'email': m.email or '',
+                    'faculty': m.yunalish or '',
+                    'start_date': str(m.azolik_bosh or m.yangi_avo_sana or ''),
+                    'end_date': str(m.azolik_tug or '')
+                })
+
+            summary = {
+                'total': total_count,
+                'active': active_count,
+                'waiting': waiting_count,
+                'blocked': blocked_count
+            }
+
+        elif report_type == 'books':
+            qs = Book.objects.all().order_by('-id')
+            if category_filter:
+                qs = qs.filter(category__iexact=category_filter)
+            if date_from:
+                qs = qs.filter(created_at__date__gte=date_from)
+            if date_to:
+                qs = qs.filter(created_at__date__lte=date_to)
+
+            total_titles = qs.count()
+            total_copies = qs.aggregate(Sum('total_count'))['total_count__sum'] or 0
+            borrowed_copies = BookItem.objects.filter(book__in=qs, status='borrowed').count()
+            available_copies = max(0, total_copies - borrowed_copies)
+
+            headers = ["ID", "Kitob nomi", "Muallif", "Kategoriya", "Janr", "Jami nusxa", "Mavjud", "Javon joyi", "ISBN"]
+            rows = []
+            for b in qs[:250]:
+                avail = b.items.filter(status='available').count()
+                rows.append({
+                    'id': b.id,
+                    'title': b.title,
+                    'author': b.author,
+                    'category': b.category or 'Umumiy',
+                    'genre': b.genre or '',
+                    'total_count': b.total_count,
+                    'available_count': avail,
+                    'shelf_location': b.shelf_location or 'Javon A-1',
+                    'isbn': b.isbn or ''
+                })
+
+            summary = {
+                'total_titles': total_titles,
+                'total_copies': total_copies,
+                'available_copies': available_copies,
+                'borrowed_copies': borrowed_copies
+            }
+
+        elif report_type == 'debtors':
+            qs = BookIssue.objects.filter(qaytarildi=False, qaytarish_sana__lt=today).select_related('member')
+            if date_from:
+                qs = qs.filter(qaytarish_sana__gte=date_from)
+            if date_to:
+                qs = qs.filter(qaytarish_sana__lte=date_to)
+
+            total_overdue = qs.count()
+            total_fine = qs.aggregate(Sum('jarima_summa'))['jarima_summa__sum'] or 0
+            unique_debtors = qs.values('member').distinct().count()
+
+            headers = ["ID", "Sigla", "Kitobxon", "Kitob nomi", "Berilgan sana", "Qaytarish muddati", "Kechikkan kun", "Jarima (so'm)", "Telefon"]
+            rows = []
+            for bi in qs[:250]:
+                days_late = (today - bi.qaytarish_sana).days if bi.qaytarish_sana else 0
+                rows.append({
+                    'id': bi.id,
+                    'sigla': bi.member.sigla if bi.member else '',
+                    'name': bi.member.familiya if bi.member else '',
+                    'book_name': bi.book_name,
+                    'issue_date': str(bi.berilgan_sana),
+                    'due_date': str(bi.qaytarish_sana),
+                    'days_late': max(0, days_late),
+                    'fine': bi.jarima_summa,
+                    'phone': bi.member.telegram_id if bi.member else ''
+                })
+
+            summary = {
+                'unique_debtors': unique_debtors,
+                'total_overdue_books': total_overdue,
+                'total_fine': total_fine
+            }
+
+        elif report_type == 'reservations':
+            qs = Reservation.objects.select_related('book', 'member').order_by('-created_at')
+            if status_filter:
+                qs = qs.filter(status=status_filter)
+            if date_from:
+                qs = qs.filter(created_at__date__gte=date_from)
+            if date_to:
+                qs = qs.filter(created_at__date__lte=date_to)
+
+            total_res = qs.count()
+            waiting_res = qs.filter(status='waiting').count()
+            ready_res = qs.filter(status='ready').count()
+            completed_res = qs.filter(status='completed').count()
+
+            headers = ["ID", "Kitob nomi", "Kitobxon Sigla", "Kitobxon", "Navbat", "Holati", "Buyurtma sanasi"]
+            rows = []
+            for r in qs[:250]:
+                rows.append({
+                    'id': r.id,
+                    'book_name': r.book.title if r.book else '',
+                    'sigla': r.member.sigla if r.member else '',
+                    'member_name': r.member.familiya if r.member else '',
+                    'queue_order': r.queue_order,
+                    'status': r.status,
+                    'created_at': r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at else ''
+                })
+
+            summary = {
+                'total': total_res,
+                'waiting': waiting_res,
+                'ready': ready_res,
+                'completed': completed_res
+            }
+
+        else: # 'issues' (ijara jurnali)
+            qs = BookIssue.objects.select_related('member').order_by('-id')
+            if status_filter == 'active':
+                qs = qs.filter(qaytarildi=False)
+            elif status_filter == 'returned':
+                qs = qs.filter(qaytarildi=True)
+            elif status_filter == 'overdue':
+                qs = qs.filter(qaytarildi=False, qaytarish_sana__lt=today)
+
+            if date_from:
+                qs = qs.filter(berilgan_sana__gte=date_from)
+            if date_to:
+                qs = qs.filter(berilgan_sana__lte=date_to)
+
+            total_issues = qs.count()
+            active_issues = qs.filter(qaytarildi=False).count()
+            returned_issues = qs.filter(qaytarildi=True).count()
+            overdue_issues = qs.filter(qaytarildi=False, qaytarish_sana__lt=today).count()
+
+            headers = ["ID", "Kitob nomi", "Barkod", "Sigla", "Kitobxon", "Berilgan sana", "Qaytarish muddati", "Holati", "Qaytarilgan sana", "Jarima"]
+            rows = []
+            for bi in qs[:250]:
+                st = "Qaytarilgan" if bi.qaytarildi else ("Muddati o'tgan" if bi.qaytarish_sana and bi.qaytarish_sana < today else "Faol ijarada")
+                rows.append({
+                    'id': bi.id,
+                    'book_name': bi.book_name,
+                    'barcode': bi.barcode or '',
+                    'sigla': bi.member.sigla if bi.member else '',
+                    'member_name': bi.member.familiya if bi.member else '',
+                    'issue_date': str(bi.berilgan_sana),
+                    'due_date': str(bi.qaytarish_sana),
+                    'status_label': st,
+                    'return_date': str(bi.qaytarilgan_sana) if bi.qaytarildi and bi.qaytarilgan_sana else '',
+                    'fine': bi.jarima_summa
+                })
+
+            summary = {
+                'total': total_issues,
+                'active': active_issues,
+                'returned': returned_issues,
+                'overdue': overdue_issues
+            }
+
+        # CSV Export format
+        if export_format == 'csv':
+            response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+            filename = f"hisobot_{report_type}_{today.strftime('%Y%m%d')}.csv"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+            writer = csv.writer(response)
+            writer.writerow(headers)
+            for row in rows:
+                writer.writerow(list(row.values()))
+            return response
+
+        return Response({
+            'type': report_type,
+            'summary': summary,
+            'headers': headers,
+            'rows': rows
+        })
 
 from rest_framework.permissions import AllowAny
 

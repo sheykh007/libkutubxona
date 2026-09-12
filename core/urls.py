@@ -47,6 +47,7 @@ urlpatterns = [
 
     # Reports
     path('reports/monthly/', views.MonthlyReportView.as_view(), name='monthly-report'),
+    path('reports/data/', new_views.ReportsDataView.as_view(), name='reports-data'),
     
     # --- New V2 APIs ---
     # Extensions
@@ -67,6 +68,11 @@ urlpatterns = [
     path('ai/search/', new_views.AISearchView.as_view(), name='ai-search'),
     path('ai/chat/', new_views.AIChatbotView.as_view(), name='ai-chat'),
     path('ai/recommendations/<int:pk>/', new_views.AIRecommendationView.as_view(), name='ai-recommendations'),
+    path('ai/recommendations/book/<int:pk>/', new_views.AISimilarBooksView.as_view(), name='ai-similar-books'),
+    path('ai/recommendations/member/<int:pk>/', new_views.AIMemberRecommendationsView.as_view(), name='ai-member-recommendations'),
+    path('ai/feedback/', new_views.AIFeedbackView.as_view(), name='ai-feedback'),
+    path('ai/stats/', new_views.AIStatsView.as_view(), name='ai-stats'),
+    path('ai/reindex/', new_views.AIReindexView.as_view(), name='ai-reindex'),
     
     # Cabinet
     path('cabinet/login/', new_views.MemberLoginView.as_view(), name='cabinet-login'),

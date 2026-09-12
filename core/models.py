@@ -184,6 +184,17 @@ class Book(models.Model):
     title = models.CharField(max_length=300, verbose_name="Kitob Nomi")
     author = models.CharField(max_length=300, verbose_name="Muallif")
     published_year = models.IntegerField(null=True, blank=True, verbose_name="Nashr yili")
+    category = models.CharField(max_length=150, default="Badiiy adabiyot", verbose_name="Kategoriya")
+    genre = models.CharField(max_length=150, blank=True, null=True, verbose_name="Janr")
+    description = models.TextField(blank=True, null=True, verbose_name="Tavsif / Annotatsiya")
+    shelf_location = models.CharField(max_length=100, default="Javon A-1", verbose_name="Javon joylashuvi")
+    keywords = models.TextField(blank=True, null=True, verbose_name="Kalit so'zlar")
+    isbn = models.CharField(max_length=50, blank=True, null=True, verbose_name="ISBN")
+    language = models.CharField(max_length=50, default="O'zbek", verbose_name="Til")
+    udk = models.CharField(max_length=50, blank=True, null=True, verbose_name="UDK")
+    bbk = models.CharField(max_length=50, blank=True, null=True, verbose_name="BBK")
+    target_audience = models.CharField(max_length=100, blank=True, null=True, verbose_name="Maqsadli auditoriya")
+    age_group = models.CharField(max_length=50, blank=True, null=True, verbose_name="Yosh toifasi")
     total_count = models.PositiveIntegerField(default=0, verbose_name="Umumiy Soni")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -325,3 +336,57 @@ class BackupLog(models.Model):
 
     def __str__(self):
         return self.filename
+
+
+class BookEmbedding(models.Model):
+    book = models.OneToOneField(Book, on_delete=models.CASCADE, related_name='embedding')
+    vector_json = models.TextField(blank=True, null=True, verbose_name="Embedding vektori (JSON)")
+    indexed_text = models.TextField(blank=True, null=True, verbose_name="Indekslangan matn")
+    last_indexed = models.DateTimeField(auto_now=True, verbose_name="Oxirgi indekslash")
+    status = models.CharField(max_length=20, default='ready', verbose_name="Holati")
+
+    class Meta:
+        verbose_name = "Kitob Embeddingi"
+        verbose_name_plural = "Kitob Embeddinglari"
+
+    def __str__(self):
+        return f"Embedding: {self.book.title}"
+
+
+class SearchQueryLog(models.Model):
+    query = models.CharField(max_length=500, verbose_name="Qidiruv so'rovi")
+    normalized_query = models.CharField(max_length=500, blank=True, verbose_name="Normalizatsiya qilingan")
+    member = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, blank=True, related_name='search_queries', verbose_name="Kitobxon")
+    results_count = models.IntegerField(default=0, verbose_name="Natijalar soni")
+    search_mode = models.CharField(max_length=50, default='hybrid', verbose_name="Qidiruv rejimi")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Vaqt")
+
+    class Meta:
+        verbose_name = "Qidiruv jurnali"
+        verbose_name_plural = "Qidiruv jurnallari"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.query} ({self.results_count} ta) - {self.created_at}"
+
+
+class RecommendationFeedback(models.Model):
+    FEEDBACK_CHOICES = [
+        ('like', 'Yoqdi'),
+        ('dislike', 'Qiziq emas'),
+        ('rating', 'Reyting'),
+    ]
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='recommendation_feedbacks', verbose_name="Kitobxon")
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='feedbacks', verbose_name="Kitob")
+    feedback_type = models.CharField(max_length=20, choices=FEEDBACK_CHOICES, verbose_name="Turi")
+    rating = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Reyting (1-5)")
+    comment = models.TextField(blank=True, null=True, verbose_name="Fikr")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Vaqt")
+
+    class Meta:
+        verbose_name = "Tavsiya munosabati"
+        verbose_name_plural = "Tavsiya munosabatlari"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.member.familiya} -> {self.book.title} ({self.feedback_type})"

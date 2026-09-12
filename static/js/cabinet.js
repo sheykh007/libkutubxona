@@ -106,6 +106,39 @@ const app = createApp({
     const issueHistory = ref([]);
     const currentIssues = ref([]);
     
+    // Recommendations Data
+    const recommendations = ref([]);
+    const recsLoading = ref(false);
+
+    async function loadRecommendations() {
+      if (!member.value || !member.value.id) return;
+      recsLoading.value = true;
+      try {
+        const data = await api('GET', `/ai/recommendations/member/${member.value.id}/`);
+        recommendations.value = Array.isArray(data) ? data : [];
+      } catch (e) {
+        console.error('Recommendations error:', e);
+      } finally {
+        recsLoading.value = false;
+      }
+    }
+
+    async function sendFeedback(bookId, feedbackType, rating = null) {
+      if (!member.value || !member.value.id) return;
+      try {
+        await api('POST', '/ai/feedback/', {
+          member_id: member.value.id,
+          book_id: bookId,
+          feedback_type: feedbackType,
+          rating: rating
+        });
+        toast("Fikringiz saqlandi! Tavsiyalar yangilandi.", "success");
+        loadRecommendations();
+      } catch (e) {
+        toast("Fikr yuborishda xatolik: " + e.message, "error");
+      }
+    }
+    
     const catalogBooks = ref([]);
     const catalogLoading = ref(false);
     const catalogQuery = ref('');
@@ -441,6 +474,7 @@ const app = createApp({
     function initCabinet() {
       loadMemberData();
       loadCatalog();
+      loadRecommendations();
       if (member.value) {
         profileForm.familiya = member.value.familiya || '';
         profileForm.email = member.value.email || '';
@@ -466,6 +500,7 @@ const app = createApp({
       login, registerUser, logout,
       toasts,
       issueHistory, currentIssues, reservations,
+      recommendations, recsLoading, loadRecommendations, sendFeedback,
       catalogBooks, catalogLoading, catalogQuery, catalogNextPage, loadMoreCatalog, debouncedCatalogSearch,
       isLate,
       showExtensionModal, selectedIssueForExt, extForm, openExtensionModal, confirmExtension,

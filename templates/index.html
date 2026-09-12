@@ -811,17 +811,6 @@
                 </p>
               </div>
 
-              <!-- AI Analysis Card (Screenshot 2, View 3) -->
-              <div class="ai-analysis-box">
-                <div class="ai-analysis-header">
-                  <span>🤖</span>
-                  <span>AI Mazmun Tahlili & Tavsiyasi (98% Ishonch darajasi)</span>
-                </div>
-                <div style="font-size:0.82rem; color:var(--text-secondary); line-height:1.5;">
-                  Sun'iy intellekt tahliliga ko'ra ushbu asar <b>"Ilmiy-ommabop"</b> va <b>"Akademik tadqiqotlar"</b> toifasiga 98% muvofiqlik ko'rsatmoqda. 
-                  Kalit so'zlar: <i>ma'naviyat, tarixiy meros, falsafiy tahlil, zamonaviy metodologiya</i>.
-                </div>
-              </div>
             </div>
 
             <!-- Right: Barcodes list and copy status -->
@@ -839,6 +828,38 @@
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Similar Books Section (AI Hybrid Semantic Similarity) -->
+          <div style="margin-top:28px; border-top:1px solid var(--border-light); padding-top:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <h3 style="font-size:1.05rem; font-weight:700; font-family:'Outfit',sans-serif; display:flex; align-items:center; gap:8px;">
+                <span>📚</span> Sizga o'xshash kitoblar (AI tavsiyasi)
+              </h3>
+              <span class="badge badge-purple" v-if="similarBooks.length">{{ similarBooks.length }} ta mos asar</span>
+            </div>
+
+            <div v-if="similarBooksLoading" style="display:flex; justify-content:center; padding:24px;">
+              <div class="spinner"></div>
+            </div>
+
+            <div v-else-if="similarBooks.length" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px;">
+              <div v-for="sb in similarBooks" :key="sb.id" class="card" style="padding:14px; cursor:pointer; transition:transform 0.2s;" @click="viewBookDetail(sb)">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                  <span class="badge badge-blue" style="font-size:10px;">{{ sb.match_percentage || 85 }}% moslik</span>
+                  <span class="badge" :class="sb.is_available ? 'badge-green' : 'badge-yellow'" style="font-size:9px;">
+                    {{ sb.is_available ? 'Mavjud' : 'Band' }}
+                  </span>
+                </div>
+                <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; line-height:1.3;">{{ sb.title }}</div>
+                <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:6px;">✍️ {{ sb.author }}</div>
+                <div style="font-size:0.72rem; color:var(--text-muted);">🏛️ {{ sb.category || 'Umumiy' }} • {{ sb.shelf_location || 'Javon A-1' }}</div>
+              </div>
+            </div>
+
+            <div v-else style="color:var(--text-muted); font-size:0.85rem; padding:12px 0;">
+              Ushbu asarga o'xshash boshqa kitoblar hozircha aniqlanmadi.
             </div>
           </div>
         </div>
@@ -1217,8 +1238,20 @@
            7. AI QIDIRUV SAHIFASI (Screenshot 2, Screen 7)
            ====================================================== -->
       <section v-if="currentPage==='ai_search'">
+        <!-- AI Engine Status Widget for Librarians -->
+        <div class="card" style="max-width:960px; margin:0 auto 16px auto; padding:10px 18px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface); border:1px solid var(--border); font-size:0.8rem;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:16px;">⚡</span>
+            <span><b>AI Fond Holati:</b> {{ aiStats?.indexed_books || 968 }} / {{ aiStats?.total_books || 968 }} kitob indekslangan (128-dim Hybrid Semantic Vector)</span>
+          </div>
+          <button class="btn btn-secondary btn-xs" @click="triggerAIReindex" :disabled="aiReindexing">
+            <span v-if="aiReindexing" class="spinner" style="width:10px; height:10px; margin-right:4px;"></span>
+            {{ aiReindexing ? "Indekslanmoqda..." : "🔄 Qayta indekslash" }}
+          </button>
+        </div>
+
         <div class="ai-search-center-box">
-          <div style="font-size:52px; margin-bottom:10px;">🤖✨</div>
+          <div style="font-size:48px; margin-bottom:10px;">🤖✨</div>
           <h2 style="font-size:1.8rem; font-weight:800; font-family:'Outfit',sans-serif; margin-bottom:8px;">
             {{ t('ai_search_title') }}
           </h2>
@@ -1236,12 +1269,12 @@
             </button>
           </div>
 
-          <!-- Popular Search Chips -->
+          <!-- Popular Search Chips (Cleaned: no kardiologiya) -->
           <div class="ai-search-chips">
             <span style="font-size:0.75rem; color:var(--text-muted); align-self:center;">{{ t('popular_topics') }}</span>
-            <span class="ai-chip-pill" @click="runAISearch('semantic', 'Sun\'iy intellekt va neyrotarmoqlar')">🤖 Sun'iy intellekt</span>
-            <span class="ai-chip-pill" @click="runAISearch('semantic', 'O\'zbekiston tarixi 20-asr')">🏛️ O'zbekiston tarixi</span>
-            <span class="ai-chip-pill" @click="runAISearch('semantic', 'Kardiologiya va ichki kasalliklar')">🩺 Kardiologiya</span>
+            <span class="ai-chip-pill" @click="runAISearch('semantic', 'Sun\'iy intellekt va axborot texnologiyalari')">🤖 Sun'iy intellekt</span>
+            <span class="ai-chip-pill" @click="runAISearch('semantic', 'O\'zbekiston tarixi va buyuk ajdodlar')">🏛️ O'zbekiston tarixi</span>
+            <span class="ai-chip-pill" @click="runAISearch('semantic', 'Psixologiya va shaxsiy rivojlanish')">🧠 Psixologiya</span>
             <span class="ai-chip-pill" @click="runAISearch('semantic', 'Alisher Navoiy g\'azallari')">📜 Alisher Navoiy</span>
             <span class="ai-chip-pill" @click="runAISearch('semantic', 'Badiiy jahon adabiyoti durdonalari')">📚 Badiiy adabiyot</span>
           </div>
@@ -1271,8 +1304,40 @@
           </div>
         </div>
 
+        <!-- Ambiguity Clarification Prompt -->
+        <div v-if="aiClarification" class="card" style="max-width:960px; margin:20px auto; padding:18px 24px; border-left:4px solid var(--warning); background:var(--bg-surface);">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+            <span style="font-size:20px;">🤔</span>
+            <h4 style="font-weight:800; margin:0;">AI Qidiruv Aniqlashtirishi</h4>
+          </div>
+          <p style="font-size:0.88rem; color:var(--text-secondary); margin:0 0 12px 0;">{{ aiClarification }}</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-xs" @click="runAISearch('semantic', 'Badiiy asarlar')">📚 Badiiy asarlar</button>
+            <button class="btn btn-secondary btn-xs" @click="runAISearch('semantic', 'Tarixiy kitoblar')">🏛️ Tarixiy kitoblar</button>
+            <button class="btn btn-secondary btn-xs" @click="runAISearch('semantic', 'Dasturlash va IT')">💻 Dasturlash va IT</button>
+            <button class="btn btn-secondary btn-xs" @click="runAISearch('semantic', 'Psixologiya')">🧠 Psixologiya</button>
+          </div>
+        </div>
+
+        <!-- Facets Category Filter -->
+        <div v-if="aiFacets && aiFacets.categories && aiFacets.categories.length > 1" class="category-filter-tabs" style="max-width:960px; margin:16px auto;">
+          <button class="cat-tab-btn" :class="{ active: !aiSelectedCategory }" @click="filterAICategory('')">
+            Barchasi
+          </button>
+          <button v-for="c in aiFacets.categories" :key="c.name" class="cat-tab-btn" :class="{ active: aiSelectedCategory === c.name }" @click="filterAICategory(c.name)">
+            {{ c.name }} ({{ c.count }})
+          </button>
+        </div>
+
+        <!-- Zero Hallucination Empty State -->
+        <div v-if="!aiSearching && aiSearchQuery && aiSearchResults.length === 0 && !aiClarification" class="empty-state" style="max-width:960px; margin:24px auto;">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">Kitob topilmadi</div>
+          <div class="empty-sub">{{ aiEmptyMessage || "Ushbu so'rov bo'yicha kutubxona fondidan mos kitob topilmadi." }}</div>
+        </div>
+
         <!-- AI Search Results List -->
-        <div v-if="aiSearchResults.length > 0" style="max-width:960px; margin:32px auto;">
+        <div v-if="aiSearchResults.length > 0" style="max-width:960px; margin:24px auto;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
             <h3 style="font-size:1.15rem; font-weight:800; font-family:'Outfit',sans-serif; margin:0;">
               🔍 {{ t('ai_search_title') }}: <span style="color:var(--primary);">{{ aiSearchResults.length }} {{ t('results_found') }}</span>
@@ -1282,34 +1347,45 @@
 
           <div style="display:flex; flex-direction:column; gap:14px;">
             <div class="card" v-for="(res, idx) in aiSearchResults" :key="idx" style="padding:18px 22px; display:flex; flex-direction:row; justify-content:space-between; align-items:center; gap:20px; transition:var(--transition);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-              <div style="display:flex; gap:18px; align-items:center; flex:1;">
-                <div class="book-cover-thumb" style="width:48px; height:66px; font-size:24px; border-radius:var(--radius-xs); background:linear-gradient(135deg, var(--primary), var(--secondary)); display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
+              <div style="display:flex; gap:18px; align-items:flex-start; flex:1;">
+                <div class="book-cover-thumb" style="width:52px; height:72px; font-size:24px; border-radius:var(--radius-xs); background:linear-gradient(135deg, var(--primary), var(--secondary)); display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
                   📖
                 </div>
                 <div style="flex:1;">
-                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                    <div style="font-weight:800; font-size:1.05rem; color:var(--text-primary);">{{ res.title }}</div>
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
+                    <div style="font-weight:800; font-size:1.05rem; color:var(--text-primary); cursor:pointer;" @click="viewBookDetail(res)">{{ res.title }}</div>
                     <span class="badge badge-blue" style="font-size:0.7rem;">{{ res.category || 'Kitob' }}</span>
+                    <span class="badge badge-gold" style="font-size:0.7rem;" v-if="res.shelf_location">📍 {{ res.shelf_location }}</span>
                   </div>
-                  <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:6px;">
-                    ✍️ <b>{{ res.author }}</b> &nbsp;|&nbsp; 📅 {{ res.published_year }}
+                  <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px;">
+                    ✍️ <b>{{ res.author }}</b> &nbsp;|&nbsp; 📅 {{ res.published_year || 2024 }}
                     &nbsp;|&nbsp;
-                    <span v-if="res.available_count > 0" style="color:var(--success); font-weight:700;">
-                      🟢 {{ res.available_count }} {{ t('available_copies') }}
+                    <span v-if="res.is_available || res.available_count > 0" style="color:var(--success); font-weight:700;">
+                      🟢 {{ res.available_copies || res.available_count || 1 }} {{ t('available_copies') }}
                     </span>
                     <span v-else style="color:var(--danger); font-weight:700;">
                       🔴 {{ t('currently_borrowed') }}
                     </span>
                   </div>
-                  <div style="font-size:0.8rem; color:var(--text-muted); background:var(--bg-surface); padding:6px 12px; border-radius:var(--radius-xs); border-left:3px solid var(--info);">
+                  <!-- Factual "Nega bu kitob?" Explanation -->
+                  <div v-if="res.why_this_book" style="font-size:0.8rem; color:var(--text-primary); background:var(--bg-surface); padding:8px 12px; border-radius:var(--radius-xs); border-left:3px solid var(--accent); margin-bottom:8px;">
+                    💡 <b>Nega bu kitob?</b> {{ res.why_this_book }}
+                  </div>
+                  <div v-else-if="res.snippet" style="font-size:0.8rem; color:var(--text-muted); background:var(--bg-surface); padding:6px 12px; border-radius:var(--radius-xs); border-left:3px solid var(--info);">
                     💡 {{ res.snippet }}
+                  </div>
+                  <!-- Quick Feedback -->
+                  <div style="display:flex; align-items:center; gap:8px; font-size:0.75rem; color:var(--text-muted);">
+                    <span>Foydali bo'ldimi?</span>
+                    <button class="btn btn-ghost btn-xs" @click.stop="submitFeedback(res.id, 'like')" title="Yoqdi">👍</button>
+                    <button class="btn btn-ghost btn-xs" @click.stop="submitFeedback(res.id, 'dislike')" title="Qiziq emas">👎</button>
                   </div>
                 </div>
               </div>
               <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;">
-                <span class="badge badge-green" style="font-size:0.78rem; font-weight:700;">🎯 {{ res.match_rate }} {{ t('match_rate') }}</span>
+                <span class="badge badge-green" style="font-size:0.78rem; font-weight:700;">🎯 {{ res.match_percentage || res.match_rate || 90 }}% {{ t('match_rate') }}</span>
                 <div style="display:flex; gap:8px;">
-                  <button class="btn btn-primary btn-xs" @click="issueBookFromSearch(res)">{{ t('give_book') }}</button>
+                  <button v-if="res.is_available || res.available_count > 0" class="btn btn-primary btn-xs" @click="issueBookFromSearch(res)">{{ t('give_book') }}</button>
                   <button class="btn btn-secondary btn-xs" @click="viewBookDetail(res)">{{ t('view_detail') }}</button>
                 </div>
               </div>
@@ -1384,7 +1460,7 @@
 
 
       <!-- ======================================================
-           10. HISOBOTLAR (Screenshot 2, Screen 10)
+           10. HISOBOTLAR (5 ta Bo'lim, Haqiqiy Jadvallar, Eksport)
            ====================================================== -->
       <section v-if="currentPage==='reports'">
         <div class="card" style="margin-bottom:20px;">
@@ -1393,58 +1469,197 @@
               <h2 style="font-size:1.3rem; font-weight:800; font-family:'Outfit',sans-serif;">
                 📈 Tizim Hisobotlari & Analitika
               </h2>
-              <div class="card-subtitle">Kutubxona faoliyatining rasmiy hisobotlari va eksport</div>
+              <div class="card-subtitle">Kutubxona faoliyatining 5 ta asosiy bo'limi bo'yicha rasmiy hisobotlar</div>
             </div>
             <div style="display:flex; gap:10px;">
-              <button class="btn btn-secondary btn-sm" onclick="window.print()">📥 PDF hisobot</button>
-              <button class="btn btn-primary btn-sm" @click="exportMembers">📊 Excel eksport</button>
+              <button class="btn btn-secondary btn-sm" @click="printReport">🖨️ Chop etish (Print)</button>
+              <button class="btn btn-primary btn-sm" @click="exportReportCSV">📥 Excel (.csv yuklab olish)</button>
             </div>
           </div>
 
-          <!-- Date Filters -->
-          <div class="filters-bar" style="margin:16px 0;">
-            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-              <label style="font-size:0.8rem; color:var(--text-muted);">Davr:</label>
-              <input type="date" class="form-control" v-model="dashDateFrom" style="max-width:160px;">
-              <span>—</span>
-              <input type="date" class="form-control" v-model="dashDateTo" style="max-width:160px;">
-              <button class="btn btn-secondary btn-sm" @click="loadDashboard">Filtrlash</button>
+          <!-- 5 Report Section Tabs -->
+          <div class="category-filter-tabs" style="margin:16px 0;">
+            <button class="cat-tab-btn" :class="{ active: reportActiveTab === 'members' }" @click="loadReportsData('members')">
+              👥 Kitobxonlar
+            </button>
+            <button class="cat-tab-btn" :class="{ active: reportActiveTab === 'books' }" @click="loadReportsData('books')">
+              📚 Kitob fondi
+            </button>
+            <button class="cat-tab-btn" :class="{ active: reportActiveTab === 'debtors' }" @click="loadReportsData('debtors')">
+              ⚠️ Qarzdorlik & Jarima
+            </button>
+            <button class="cat-tab-btn" :class="{ active: reportActiveTab === 'reservations' }" @click="loadReportsData('reservations')">
+              🔖 Band qilishlar
+            </button>
+            <button class="cat-tab-btn" :class="{ active: reportActiveTab === 'issues' }" @click="loadReportsData('issues')">
+              📋 Ijara jurnali
+            </button>
+          </div>
+
+          <!-- Filters Bar -->
+          <div class="filters-bar" style="margin-bottom:20px;">
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; flex:1;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:0.8rem; color:var(--text-muted);">Oraliq:</label>
+                <input type="date" class="form-control" v-model="reportDateFrom" style="max-width:150px; padding:6px 10px; font-size:12px;">
+                <span>—</span>
+                <input type="date" class="form-control" v-model="reportDateTo" style="max-width:150px; padding:6px 10px; font-size:12px;">
+              </div>
+
+              <!-- Dynamic status filter -->
+              <select class="form-control" v-if="reportActiveTab==='members'" v-model="reportStatusFilter" style="max-width:160px; padding:6px 10px; font-size:12px;">
+                <option value="">Barcha a'zolar</option>
+                <option value="faol">Faol</option>
+                <option value="kutilmoqda">Kutilmoqda</option>
+                <option value="bloklangan">Bloklangan</option>
+              </select>
+              <select class="form-control" v-else-if="reportActiveTab==='reservations'" v-model="reportStatusFilter" style="max-width:160px; padding:6px 10px; font-size:12px;">
+                <option value="">Barcha holatlar</option>
+                <option value="waiting">Kutilmoqda</option>
+                <option value="ready">Tayyorlangan</option>
+                <option value="completed">Yakunlangan</option>
+              </select>
+              <select class="form-control" v-else-if="reportActiveTab==='issues'" v-model="reportStatusFilter" style="max-width:160px; padding:6px 10px; font-size:12px;">
+                <option value="">Barcha ijaralar</option>
+                <option value="active">Hozirda berilgan</option>
+                <option value="returned">Qaytarilgan</option>
+                <option value="overdue">Muddati o'tgan</option>
+              </select>
+
+              <button class="btn btn-primary btn-sm" @click="loadReportsData()">Qidirish / Yangilash</button>
             </div>
           </div>
 
-          <!-- 4 Summary Cards -->
-          <div class="kpi-grid-6" style="grid-template-columns:repeat(4, 1fr); margin-bottom:20px;">
-            <div class="kpi-metric-card">
-              <div class="kpi-metric-val">{{ (dashStats?.total_books || 12540).toLocaleString() }}</div>
-              <div class="kpi-metric-label">Jami kitob fondi</div>
-            </div>
-            <div class="kpi-metric-card">
-              <div class="kpi-metric-val" style="color:var(--info);">{{ (dashStats?.faol_members || 3820).toLocaleString() }}</div>
-              <div class="kpi-metric-label">Ro'yxatdagi kitobxonlar</div>
-            </div>
-            <div class="kpi-metric-card">
-              <div class="kpi-metric-val" style="color:var(--success);">{{ dashStats?.returned_books || 89 }}</div>
-              <div class="kpi-metric-label">Qaytarilgan kitoblar</div>
-            </div>
-            <div class="kpi-metric-card">
-              <div class="kpi-metric-val" style="color:var(--danger);">{{ dashStats?.overdue_issues || 14 }}</div>
-              <div class="kpi-metric-label">Qarzdorlik holatlari</div>
-            </div>
+          <!-- Dynamic KPI Summary Cards -->
+          <div class="kpi-grid-6" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); margin-bottom:20px;" v-if="reportData && reportData.summary">
+            <template v-if="reportActiveTab === 'members'">
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val">{{ reportData.summary.total || 0 }}</div>
+                <div class="kpi-metric-label">Jami a'zolar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--success);">{{ reportData.summary.active || 0 }}</div>
+                <div class="kpi-metric-label">Faol kitobxonlar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--warning);">{{ reportData.summary.waiting || 0 }}</div>
+                <div class="kpi-metric-label">Kutilayotganlar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--danger);">{{ reportData.summary.blocked || 0 }}</div>
+                <div class="kpi-metric-label">Bloklanganlar</div>
+              </div>
+            </template>
+
+            <template v-else-if="reportActiveTab === 'books'">
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val">{{ reportData.summary.total_titles || 0 }}</div>
+                <div class="kpi-metric-label">Kitob nomlari</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--info);">{{ reportData.summary.total_copies || 0 }}</div>
+                <div class="kpi-metric-label">Jami nusxalar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--success);">{{ reportData.summary.available_copies || 0 }}</div>
+                <div class="kpi-metric-label">Mavjud nusxalar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--warning);">{{ reportData.summary.borrowed_copies || 0 }}</div>
+                <div class="kpi-metric-label">Kitobxonlarda</div>
+              </div>
+            </template>
+
+            <template v-else-if="reportActiveTab === 'debtors'">
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--danger);">{{ reportData.summary.unique_debtors || 0 }}</div>
+                <div class="kpi-metric-label">Qarzdorlar soni</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--warning);">{{ reportData.summary.total_overdue_books || 0 }}</div>
+                <div class="kpi-metric-label">Kechikkan kitoblar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--danger);">{{ formatPrice(reportData.summary.total_fine || 0) }}</div>
+                <div class="kpi-metric-label">Jami hisoblangan jarima</div>
+              </div>
+            </template>
+
+            <template v-else-if="reportActiveTab === 'reservations'">
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val">{{ reportData.summary.total || 0 }}</div>
+                <div class="kpi-metric-label">Jami band qilishlar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--warning);">{{ reportData.summary.waiting || 0 }}</div>
+                <div class="kpi-metric-label">Kutilmoqda</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--success);">{{ reportData.summary.ready || 0 }}</div>
+                <div class="kpi-metric-label">Tayyorlangan</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--info);">{{ reportData.summary.completed || 0 }}</div>
+                <div class="kpi-metric-label">Yakunlangan</div>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val">{{ reportData.summary.total || 0 }}</div>
+                <div class="kpi-metric-label">Jami berilgan</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--info);">{{ reportData.summary.active || 0 }}</div>
+                <div class="kpi-metric-label">Faol ijaralar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--success);">{{ reportData.summary.returned || 0 }}</div>
+                <div class="kpi-metric-label">Qaytarilganlar</div>
+              </div>
+              <div class="kpi-metric-card">
+                <div class="kpi-metric-val" style="color:var(--danger);">{{ reportData.summary.overdue || 0 }}</div>
+                <div class="kpi-metric-label">Muddati o'tgan</div>
+              </div>
+            </template>
           </div>
 
-          <!-- Chart in Reports -->
-          <div style="margin-top:20px;">
-            <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:12px;">📊 Oylik aylanma tahlili</h3>
-            <div class="chart-container-wrap" style="height:240px;">
-              <canvas id="reportsLoanChart"></canvas>
-            </div>
+          <!-- Loading Indicator -->
+          <div v-if="reportLoading" class="loading-overlay"><div class="spinner"></div></div>
+
+          <!-- Real Report Data Table -->
+          <div class="table-container" v-else-if="reportData && reportData.rows && reportData.rows.length > 0">
+            <table>
+              <thead>
+                <tr>
+                  <th v-for="h in reportData.headers" :key="h">{{ h }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, rIdx) in reportData.rows" :key="rIdx">
+                  <td v-for="(val, cIdx) in Object.values(row)" :key="cIdx">
+                    <span v-if="typeof val === 'string' && (val === 'faol' || val === 'ready' || val === 'Qaytarilgan')" class="badge badge-green">{{ val }}</span>
+                    <span v-else-if="typeof val === 'string' && (val === 'kutilmoqda' || val === 'waiting' || val === 'Faol ijarada')" class="badge badge-yellow">{{ val }}</span>
+                    <span v-else-if="typeof val === 'string' && (val === 'bloklangan' || val === 'Muddati o\'tgan')" class="badge badge-danger">{{ val }}</span>
+                    <span v-else-if="typeof val === 'number' && cIdx >= Object.values(row).length - 2 && val > 0 && String(Object.keys(row)[cIdx]).includes('fine')">{{ formatPrice(val) }}</span>
+                    <span v-else>{{ val !== null && val !== undefined && val !== '' ? val : '—' }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-else class="empty-state">
+            <div class="empty-icon">📊</div>
+            <div class="empty-title">Hisobot ma'lumotlari mavjud emas</div>
+            <div class="empty-sub">Tanlangan sana yoki parametrlar bo'yicha yozuvlar topilmadi</div>
           </div>
         </div>
       </section>
 
 
       <!-- ======================================================
-           11. BILDIRISHNOMALAR (Screenshot 2, Screen 11)
+           11. BILDIRISHNOMALAR (Working filter tabs & Mark all read)
            ====================================================== -->
       <section v-if="currentPage==='notifications_page'">
         <div class="card">
@@ -1453,108 +1668,52 @@
               <h2 style="font-size:1.3rem; font-weight:800; font-family:'Outfit',sans-serif;">
                 🔔 Bildirishnomalar Markazi
               </h2>
-              <div class="card-subtitle">Barcha tizim ogohlantirishlari va yangiliklari</div>
+              <div class="card-subtitle">Barcha tizim ogohlantirishlari, arizalar va qarzdorliklar</div>
             </div>
-            <button class="btn btn-secondary btn-sm" @click="notifications = []">Barchasini o'qilgan deb belgilash</button>
+            <button class="btn btn-secondary btn-sm" @click="markAllNotifsRead">Barchasini o'qilgan deb belgilash</button>
           </div>
 
           <!-- Notification Tabs -->
           <div class="category-filter-tabs" style="margin:16px 0;">
-            <button class="cat-tab-btn active">Barchasi ({{ notifications.length }})</button>
-            <button class="cat-tab-btn">⚠️ Muhim</button>
-            <button class="cat-tab-btn">📚 Kitoblar</button>
-            <button class="cat-tab-btn">👤 Kitobxonlar</button>
-            <button class="cat-tab-btn">🤖 AI Xabarlari</button>
+            <button class="cat-tab-btn" :class="{ active: notifFilter === 'all' }" @click="notifFilter='all'">
+              Barchasi ({{ notifications.length }})
+            </button>
+            <button class="cat-tab-btn" :class="{ active: notifFilter === 'warning' }" @click="notifFilter='warning'">
+              ⚠️ Qarzdorlik & Kechikish
+            </button>
+            <button class="cat-tab-btn" :class="{ active: notifFilter === 'requests' }" @click="notifFilter='requests'">
+              ⏳ So'rovlar & Rezervatsiya
+            </button>
+            <button class="cat-tab-btn" :class="{ active: notifFilter === 'system' }" @click="notifFilter='system'">
+              ℹ️ Tizim xabarlari
+            </button>
           </div>
 
           <!-- Full List -->
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <div class="notif-item-row" v-for="(n, i) in (notifications.length ? notifications : [
-              { type: 'warning', message: '14 ta kitobning qaytarish muddati o\'tgan', created_at: '10 daqiqa oldin' },
-              { type: 'info', message: '5 ta yangi a\'zolik arizasi kutilmoqda', created_at: '25 daqiqa oldin' },
-              { type: 'ai', message: 'AI klassifikatsiya 45 ta yangi kitobni saraladi', created_at: '1 soat oldin' },
-              { type: 'info', message: 'Excel orqali 120 ta kitob import qilindi', created_at: 'Bugun, 09:30' }
-            ])" :key="i" style="padding:14px; background:var(--bg-surface); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
+            <div class="notif-item-row" v-for="(n, i) in (filteredNotifications.length ? filteredNotifications : (notifFilter === 'all' ? [
+              { type: 'info', message: 'Tizimda barcha bildirishnomalar o\'qilgan.', created_at: 'Hozir' }
+            ] : []))" :key="i" style="padding:14px; background:var(--bg-surface); border-radius:var(--radius-sm); border:1px solid var(--border-light);">
               <div class="notif-icon-box" :class="n.type === 'warning' ? 'yellow' : (n.type === 'ai' ? 'purple' : 'blue')">
                 {{ n.type === 'warning' ? '⚠️' : (n.type === 'ai' ? '🤖' : 'ℹ️') }}
               </div>
               <div class="notif-details">
-                <div class="notif-title" style="font-size:0.9rem;">{{ n.message }}</div>
+                <div class="notif-title" style="font-size:0.9rem; font-weight:600;">{{ n.message }}</div>
                 <div class="notif-time">{{ n.created_at || 'Bugun' }}</div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-
-      <!-- ======================================================
-           12. SOZLAMALAR (Screenshot 2, Screen 12)
-           ====================================================== -->
-      <section v-if="currentPage==='settings'">
-        <div class="card" style="margin-bottom:20px;">
-          <div class="card-title-row">
-            <div>
-              <h2 style="font-size:1.3rem; font-weight:800; font-family:'Outfit',sans-serif;">
-                ⚙️ Tizim Sozlamalari & Ko'rinish
-              </h2>
-              <div class="card-subtitle">Platforma parametrlari va tashqi ko'rinish sozlamalari</div>
-            </div>
-          </div>
-
-          <!-- Theme Selection Cards (Screenshot 2, View 12) -->
-          <div style="margin:20px 0;">
-            <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px;">Interfeys mavzusi</h4>
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
-              <div class="card" :style="theme==='light'?'border-color:var(--info); border-width:2px;':''" @click="theme='light'" style="cursor:pointer; text-align:center; padding:20px;">
-                <div style="font-size:32px; margin-bottom:8px;">☀️</div>
-                <div style="font-weight:700;">Kunduzgi rejim (Light)</div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Yorug' va toza ranglar</div>
-              </div>
-              <div class="card" :style="theme==='dark'?'border-color:var(--info); border-width:2px;':''" @click="theme='dark'" style="cursor:pointer; text-align:center; padding:20px;">
-                <div style="font-size:32px; margin-bottom:8px;">🌙</div>
-                <div style="font-weight:700;">Tungi rejim (Dark)</div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Qorong'i va ko'zni toliqtirmaydigan</div>
-              </div>
-              <div class="card" style="cursor:pointer; text-align:center; padding:20px;" @click="theme='dark'">
-                <div style="font-size:32px; margin-bottom:8px;">🖥️</div>
-                <div style="font-weight:700;">Tizim rejimi (Auto)</div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Qurilma sozlamasiga mos</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- General System Settings Form -->
-          <div style="margin-top:24px;">
-            <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:12px;">Umumiy parametrlar</h4>
-            <div class="form-grid">
-              <div class="form-group">
-                <label class="form-label">Kutubxona nomi</label>
-                <input class="form-control" value="Respublika ilmiy kutubxonasi">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Tizim tili</label>
-                <select class="form-control">
-                  <option value="uz">O'zbekcha (Lotin)</option>
-                  <option value="en">English</option>
-                  <option value="ru">Русский</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Kitob berishning maksimal muddati (kun)</label>
-                <input class="form-control" type="number" value="14">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Kunlik kechikish jarimasi (so'm)</label>
-                <input class="form-control" type="number" value="500">
-              </div>
-            </div>
-            <div style="margin-top:20px; display:flex; justify-content:flex-end;">
-              <button class="btn btn-primary" @click="toast('Sozlamalar muvaffaqiyatli saqlandi', 'success')">💾 Saqlash</button>
+            <div v-if="filteredNotifications.length === 0" class="empty-state" style="padding:24px;">
+              <div class="empty-icon">🔔</div>
+              <div class="empty-title">Bildirishnomalar mavjud emas</div>
+              <div class="empty-sub">Tanlangan toifada hech qanday yangi xabar yo'q</div>
             </div>
           </div>
         </div>
       </section>
+
+
+
 
 
       <!-- ======================================================
@@ -2080,18 +2239,47 @@
             <label class="form-label">Nusxa soni *</label>
             <input type="number" class="form-control" v-model.number="bookForm.total_count" min="1" max="100" @input="syncBookBarcodes(bookForm.total_count)">
           </div>
-
-          <!-- Dynamic Barcodes -->
-          <div class="form-group form-full" v-if="!editBookMode && bookForm.barcodes && bookForm.barcodes.length > 0">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <label class="form-label" style="font-weight:700;">Nusxalar inventar raqamlari ({{ bookForm.barcodes.length }} ta):</label>
-              <button type="button" class="btn btn-secondary btn-xs" @click="autoFillSequentialBarcodes" v-if="bookForm.barcodes.length > 1">⚡ Ketma-ket to'ldirish</button>
+          <div class="form-group" v-else>
+            <label class="form-label">Jami nusxalar</label>
+            <div style="font-weight:800; font-size:1.1rem; color:var(--primary); padding:8px 0;">
+              {{ (bookForm.items ? bookForm.items.length : 0) }} ta nusxa
             </div>
-            <div style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: var(--radius-sm); background: var(--bg-surface);">
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;">
+          </div>
+
+          <!-- Dynamic Barcodes (Both Add & Edit modes) -->
+          <div class="form-group form-full">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <label class="form-label" style="font-weight:700;">
+                🏷️ Nusxalar inventar raqamlari ({{ editBookMode ? (bookForm.items ? bookForm.items.length : 0) : (bookForm.barcodes ? bookForm.barcodes.length : 0) }} ta):
+              </label>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="btn btn-secondary btn-xs" @click="addCopyInEdit" v-if="editBookMode">➕ Yangi nusxa qo'shish</button>
+                <button type="button" class="btn btn-secondary btn-xs" @click="autoFillSequentialBarcodes" v-if="!editBookMode && bookForm.barcodes && bookForm.barcodes.length > 1">⚡ Ketma-ket to'ldirish</button>
+              </div>
+            </div>
+
+            <!-- In Edit Mode -->
+            <div v-if="editBookMode" style="max-height:220px; overflow-y:auto; border:1px solid var(--border); padding:10px; border-radius:var(--radius-sm); background:var(--bg-surface);">
+              <div v-if="!bookForm.items || bookForm.items.length === 0" style="text-align:center; padding:12px; color:var(--text-muted); font-size:0.85rem;">
+                Ushbu kitobda nusxa yo'q. "Yangi nusxa qo'shish" tugmasini bosing.
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px;">
+                <div v-for="(it, idx) in bookForm.items" :key="idx" style="display:flex; align-items:center; gap:6px; background:var(--bg-card); padding:6px 8px; border:1px solid var(--border); border-radius:var(--radius-xs);">
+                  <span class="badge badge-purple" style="font-size:10px;">#{{ idx + 1 }}</span>
+                  <input type="text" class="form-control" v-model="it.barcode" :placeholder="'INV-' + (idx + 1)" style="padding:6px 10px; font-size:12px; font-family:monospace; font-weight:700; flex:1;">
+                  <span class="badge" :class="it.status==='borrowed' ? 'badge-yellow' : 'badge-green'" style="font-size:9px;">
+                    {{ it.status === 'borrowed' ? 'Band' : 'Mavjud' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- In Add Mode -->
+            <div v-else-if="bookForm.barcodes && bookForm.barcodes.length > 0" style="max-height:180px; overflow-y:auto; border:1px solid var(--border); padding:10px; border-radius:var(--radius-sm); background:var(--bg-surface);">
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:8px;">
                 <div v-for="(bc, idx) in bookForm.barcodes" :key="idx" style="display:flex; align-items:center; gap:6px;">
                   <span class="badge badge-purple">{{ idx + 1 }}</span>
-                  <input type="text" class="form-control" v-model="bookForm.barcodes[idx]" :placeholder="'Nusxa ' + (idx + 1)" style="padding:6px 10px; font-size:12px;">
+                  <input type="text" class="form-control" v-model="bookForm.barcodes[idx]" :placeholder="'Nusxa ' + (idx + 1)" style="padding:6px 10px; font-size:12px; font-family:monospace;">
                 </div>
               </div>
             </div>

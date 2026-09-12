@@ -2156,4 +2156,33 @@ tbody tr:hover {
     color: #FFFFFF !important;
     -webkit-print-color-adjust: exact !important;
   }
+
+  /* Report printing support */
+  body.printing-report {
+    padding: 10mm !important;
+  }
+  body.printing-report * {
+    visibility: visible !important;
+  }
+  body.printing-report .sidebar,
+  body.printing-report .topbar,
+  body.printing-report .category-filter-tabs,
+  body.printing-report .filters-bar,
+  body.printing-report .btn,
+  body.printing-report .modal-overlay,
+  body.printing-report .toast-container,
+  body.printing-report #ai-chatbot-container,
+  body.printing-report .urgut-id-card {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  body.printing-report .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  body.printing-report .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
 }

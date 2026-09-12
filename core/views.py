@@ -709,6 +709,67 @@ class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.all().order_by('-id')
     serializer_class = BookSerializer
 
+    def update(self, request, *args, **kwargs):
+        import json
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        # Handle updating item barcodes (inventory numbers)
+        items_data = request.data.get('items', [])
+        barcodes_data = request.data.get('barcodes', [])
+        branch_id = request.data.get('branch_id')
+        branch = None
+        if branch_id:
+            branch = Branch.objects.filter(id=branch_id).first()
+        if not branch:
+            sample_item = instance.items.first()
+            branch = sample_item.branch if sample_item else Branch.objects.first()
+
+        if items_data and isinstance(items_data, list):
+            for it in items_data:
+                item_id = it.get('id')
+                new_barcode = str(it.get('barcode', '')).strip()
+                if item_id and new_barcode:
+                    BookItem.objects.filter(id=item_id, book=instance).update(barcode=new_barcode)
+                elif not item_id and new_barcode:
+                    BookItem.objects.create(book=instance, barcode=new_barcode, branch=branch)
+        elif barcodes_data and isinstance(barcodes_data, list):
+            existing_items = list(instance.items.all())
+            for idx, bc in enumerate(barcodes_data):
+                bc_str = str(bc).strip()
+                if not bc_str:
+                    continue
+                if idx < len(existing_items):
+                    existing_items[idx].barcode = bc_str
+                    existing_items[idx].save(update_fields=['barcode'])
+                else:
+                    BookItem.objects.create(book=instance, barcode=bc_str, branch=branch)
+
+        # Update total count
+        instance.total_count = instance.items.count()
+        instance.save(update_fields=['total_count'])
+
+        # Auto-update embedding
+        try:
+            from .ai_engine import CURRENT_PROVIDER
+            text = f"{instance.title} {instance.author} {instance.category or ''} {instance.genre or ''} {instance.keywords or ''} {instance.description or ''}"
+            vec = CURRENT_PROVIDER.embed_text(text)
+            BookEmbedding.objects.update_or_create(
+                book=instance,
+                defaults={
+                    'vector_json': json.dumps(vec),
+                    'indexed_text': text[:500],
+                    'status': 'ready'
+                }
+            )
+        except Exception:
+            pass
+
+        return Response(self.get_serializer(instance).data)
+
 
 class ImportBooksView(APIView):
     def post(self, request):
