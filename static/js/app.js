@@ -1342,6 +1342,27 @@ const app = createApp({
       bookForm.barcodes = bookForm.items.map(it => it.barcode);
     }
 
+    async function deleteCopyInEdit(idx, it) {
+      if (it.status === 'borrowed') {
+        toast("Band bo'lgan kitob nusxasini o'chirib bo'lmaydi!", "error");
+        return;
+      }
+      if (!confirm("Ushbu nusxani o'chirishni xohlaysizmi?")) return;
+
+      if (it.id) {
+        try {
+          await api('DELETE', '/book-items/' + it.id + '/');
+        } catch (e) {
+          toast("O'chirishda xatolik yuz berdi", "error");
+          return;
+        }
+      }
+      bookForm.items.splice(idx, 1);
+      bookForm.total_count = bookForm.items.length;
+      bookForm.barcodes = bookForm.items.map(i => i.barcode);
+      toast("Nusxa o'chirildi", "success");
+    }
+
     async function saveBook() {
       try {
         let payload = { ...bookForm };
@@ -1668,7 +1689,7 @@ const app = createApp({
       memberFilters, memberForm, editMode, showMemberModal, openAddMember, openEditMember, saveMember, deleteMember, getAge, loadMembers,
       onMembershipStartDateChange, onMembershipTypeChange, onIssueDateChange,
       memberIssues,
-      booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, editBookMode, bookForm, openAddBook, openEditBook, addCopyInEdit, saveBook, deleteBook, syncBookBarcodes, autoFillSequentialBarcodes, loadBooks,
+      booksList, booksLoading, bookPage, bookTotal, bookPageSize, totalBookPages, bookSearchFilter, bookBranchFilter, branches, showBookModal, editBookMode, bookForm, openAddBook, openEditBook, addCopyInEdit, deleteCopyInEdit, saveBook, deleteBook, syncBookBarcodes, autoFillSequentialBarcodes, loadBooks,
       issues, issuesLoading, issueFilter, issueForm, showIssueModal, openAddIssue, saveIssue, returnBook, loadIssues, overdueDays,
       reservationsList, loadReservations, updateReservationWithConfirm, issueFromReservation,
       extensionsList, loadExtensions, showExtModal, extModalAction, extModalItem, extModalDate, extModalMessage, openExtModal,

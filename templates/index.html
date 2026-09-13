@@ -2314,6 +2314,7 @@
                   <span class="badge" :class="it.status==='borrowed' ? 'badge-yellow' : 'badge-green'" style="font-size:9px;">
                     {{ it.status === 'borrowed' ? 'Band' : 'Mavjud' }}
                   </span>
+                  <button type="button" class="btn btn-danger btn-xs" style="padding: 4px 6px;" title="O'chirish" @click="deleteCopyInEdit(idx, it)">X</button>
                 </div>
               </div>
             </div>
