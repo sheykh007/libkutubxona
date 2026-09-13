@@ -424,6 +424,7 @@ const app = createApp({
     const reportDateFrom = ref('');
     const reportDateTo = ref('');
     const reportStatusFilter = ref('');
+    const reportSearchFilter = ref('');
 
     // Notifications Filter
     const notifFilter = ref('all'); // 'all', 'warning', 'requests', 'system'
