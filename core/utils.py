@@ -227,19 +227,19 @@ def chat_bot_response(message):
     ]
     if any(k in lat_msg for k in membership_keywords) and not any(k in lat_msg for k in ['qidir', 'topib ber', 'asari', 'romani']):
         return (
-            "📋 <b>Urgut tuman Axborot-Kutubxona Markaziga a'zo bo'lish tartibi va talablari:</b><br><br>"
-            "Kutubxonamizga a'zo bo'lish mutlaqo <b>BEPUL</b> va barcha fuqarolar uchun ochiq!<br><br>"
+            "📋 <b>Urgut tuman axborot-kutubxona markaziga a'zo bo'lish tartibi va talablari:</b><br><br>"
+            "Kutubxonamizga a'zo bo'lish 1 kishi uchun yillik obuna 5000 so'm va barcha fuqarolar uchun ochiq!<br><br>"
             "<b>Kerakli hujjatlar va talablar:</b><br>"
-            "1. 🪪 <b>Shaxsni tasdiqlovchi hujjat:</b> Fuqarolik pasporti yoki ID-karta (16 yoshga to'lmaganlar uchun tug'ilganlik haqidagi guvohnoma yoki o'quvchi guvohnomasi).<br>"
+            "1. 🪪 <b>Shaxsni tasdiqlovchi hujjat:</b> Fuqarolik pasporti yoki ID-karta (16 yoshga to'lmaganlar uchun tug'ilganlik haqidagi guvohnoma).<br>"
             "2. 📱 <b>Telefon raqam:</b> Xabarnomalar olish va tizim bilan bog'lanish uchun.<br>"
             "3. 📧 <b>Elektron pochta (ixtiyoriy):</b> Shaxsiy kabinet va parolni tiklash xizmatlari uchun.<br>"
             "4. 📝 <b>Kitobxon anketasi:</b> F.I.Sh., yashash manzili va toifangiz (talaba, o'quvchi, o'qituvchi, shifokor va h.k.).<br><br>"
             "<b>Qanday qilib a'zo bo'lish mumkin?</b><br>"
-            "• 🌐 <b>Onlayn:</b> Saytimizdagi <b><a href=\"/cabinet/\" style=\"color:#2563EB; font-weight:700;\">Kitobxon Kabineti</a></b> orqali «Ro'yxatdan O'tish» tugmasini bosib, anketani to'ldiring. Admin tasdiqlagach a'zoligingiz faollashadi.<br>"
+            "• 🌐 <b>Onlayn:</b> Saytimizdagi <b><a href=\"/cabinet/\" style=\"color:#2563EB; font-weight:700;\">Kitobxon kabineti</a></b> orqali «Ro'yxatdan o'tish» tugmasini bosib, anketani to'ldiring. Admin tasdiqlagach a'zoligingiz faollashadi.<br>"
             "• 🏛️ <b>Bevosita kutubxonada:</b> Urgut AKM binosiga tashrif buyurib, ro'yxatga olish bo'limida 2 daqiqada a'zolik rasmiylashtiring.<br><br>"
             "<b>A'zolik beradigan imkoniyatlar:</b><br>"
             "✨ Shaxsiy <b>QR-kodli elektron kitobxonlik bileti</b> (ID karta formatida).<br>"
-            "✨ Kitoblarni 15-30 kunga bepul mutolaaga olish.<br>"
+            "✨ Kitoblarni 15 kunga bepul mutolaaga olish.<br>"
             "✨ Kitobxon kabineti orqali kitoblarni oldindan <b>onlayn band qilish</b> va muddatini uzaytirish.<br>"
             "✨ Bepul Wi-Fi va shinam mutolaa zalidan foydalanish."
         )
@@ -247,7 +247,7 @@ def chat_bot_response(message):
     # 2.1 LIBRARY RULES, WORKING HOURS, ABOUT & CONTACT
     if any(k in lat_msg for k in ['ish vaqti', 'qachon ochiq', 'qachon ishlaydi', 'soat nechada', 'grafik', 'ish tartibi', 'ish vaqtlari', 'vaqti']):
         return (
-            "🕒 <b>Urgut AKM Ish Tartibi va Vaqtlari:</b><br><br>"
+            "🕒 <b>Urgut AKM ish tartibi va vaqtlari:</b><br><br>"
             "• <b>Dushanba - Juma:</b> 09:00 dan 18:00 gacha<br>"
             "• <b>Shanba:</b> 09:00 dan 16:00 gacha<br>"
             "• <b>Tushlik tanaffusi:</b> 13:00 dan 14:00 gacha<br>"
@@ -268,10 +268,10 @@ def chat_bot_response(message):
 
     if any(k in lat_msg for k in ['bog\'lanish', 'boglanish', 'aloqa', 'telefon', 'raqam', 'nomer', 'kontakt', 'qongiroq', 'operator', 'call', 'admin']):
         return (
-            "📞 <b>Bog'lanish va Aloqa:</b><br><br>"
+            "📞 <b>Bog'lanish va aloqa:</b><br><br>"
             "Kutubxona ma'muriyati va operatorlar bilan bevosita bog'lanish uchun:<br><br>"
             "• 📱 <b>Telefon raqam:</b> <a href='tel:+998979242727' style='color:#2563EB; font-weight:800; font-size:16px; text-decoration:none;'>+998 97 924 27 27</a><br>"
-            "• 💬 <b>Telegram:</b> @urgut_akm_admin<br>"
+            "• 💬 <b>Telegram:</b> @liburgutchatbot<br>"
             "• 📍 <b>Manzil:</b> Samarqand viloyati, Urgut tumani<br><br>"
             "Savol va takliflaringiz bo'lsa, istalgan vaqtda qo'ng'iroq qilishingiz mumkin!"
         )
@@ -309,10 +309,11 @@ def chat_bot_response(message):
                 pop_str += f"{idx}. <b>{b.title}</b> ({b.author})<br>"
 
         return (
-            f"📊 <b>Kutubxona Haqida Qisqacha Statistika:</b><br><br>"
-            f"• 📚 <b>Jami kitob turlari:</b> {total_books} ta nomda<br>"
-            f"• 📖 <b>Jami kitob nusxalari:</b> {total_items} ta (Hozirda {avail_items} tasi mavjud)<br><br>"
-            f"🔥 <b>Eng ko'p o'qilayotgan / Tavsiya etilgan kitoblar:</b><br>{pop_str}"
+            f"📊 <b>Kutubxona haqida qisqacha statistika:</b><br><br>"
+            f"• 📚 <b>Kutubxona kitoblari soni:</b> 29324 ta (Fond-29324)<br>"
+            f"• 👥 <b>Kitobxonlar qatnovi soni:</b> 13910 ta<br>"
+            f"• 🌐 <b>Umumiy foydalanuvchilar soni:</b> 18966 ta<br><br>"
+            f"🔥 <b>Eng ko'p o'qilayotgan / tavsiya etilgan kitoblar:</b><br>{pop_str}"
         )
 
     # 3. ADVANCED SEARCH ACROSS BOOKS

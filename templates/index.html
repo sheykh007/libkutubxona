@@ -56,7 +56,7 @@
     </div>
   </div>
 
-  <template v-if="isLoggedIn">
+  
   <!-- ======================================================
        SIDEBAR (Screenshots 1 & 2)
        ====================================================== -->
@@ -306,7 +306,7 @@
             <div class="welcome-banner-card">
               <div>
                 <h2>Xush kelibsiz, {{ auth.username || 'Zamira' }}! 👋</h2>
-                <p>Bugun <b>{{ today }}</b>. Tizimda <b>{{ notifications.length || 0 }} ta</b> bildirishnoma va <b>{{ dashStats.kutilmoqda_members ?? 0 }} ta</b> kutilayotgan so'rov mavjud.</p>
+                <p>Bugun <b>{{ today }}</b>. Tizimda <b>{{ notifications.length || 0 }} ta</b> bildirishnoma va <b>{{ dashStats.kutilmoqda_members || 0 }} ta</b> kutilayotgan so'rov mavjud.</p>
                 <div style="display:flex; gap:10px; margin-top:14px;">
                   <button class="btn btn-primary btn-sm" @click="navigate('reports')">📊 To'liq hisobot</button>
                   <button class="btn btn-secondary btn-sm" @click="openAddBook">➕ Kitob qo'shish</button>
@@ -323,7 +323,7 @@
             <div class="kpi-metric-card" @click="navigate('books')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ (dashStats.total_books ?? 0).toLocaleString() }}</div>
+                  <div class="kpi-metric-val">{{ (dashStats.total_books || 0).toLocaleString() }}</div>
                   <div class="kpi-metric-label">{{ t('total_books') }}</div>
                 </div>
                 <div class="kpi-metric-icon gold">📚</div>
@@ -338,7 +338,7 @@
             <div class="kpi-metric-card" @click="navigate('members')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ (dashStats.faol_members ?? 0).toLocaleString() }}</div>
+                  <div class="kpi-metric-val">{{ (dashStats.faol_members || 0).toLocaleString() }}</div>
                   <div class="kpi-metric-label">{{ t('active_members') }}</div>
                 </div>
                 <div class="kpi-metric-icon blue">👤</div>
@@ -353,13 +353,13 @@
             <div class="kpi-metric-card" @click="navigate('issues')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ dashStats.active_issues !== undefined && dashStats.active_issues !== null ? dashStats.active_issues : (dashStats.today_issues ?? 0) }}</div>
+                  <div class="kpi-metric-val">{{ dashStats.active_issues !== undefined && dashStats.active_issues !== null ? dashStats.active_issues : (dashStats.today_issues || 0) }}</div>
                   <div class="kpi-metric-label">{{ t('issued_books') }}</div>
                 </div>
                 <div class="kpi-metric-icon cyan">📖</div>
               </div>
               <div class="kpi-trend-pill up">
-                <span>Bugun: {{ dashStats.today_issues ?? 0 }} ta</span>
+                <span>Bugun: {{ dashStats.today_issues || 0 }} ta</span>
                 <span class="kpi-trend-sub">hozirda qo'lda</span>
               </div>
             </div>
@@ -368,7 +368,7 @@
             <div class="kpi-metric-card" @click="navigate('issues')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ dashStats.returned_books ?? 0 }}</div>
+                  <div class="kpi-metric-val">{{ dashStats.returned_books || 0 }}</div>
                   <div class="kpi-metric-label">{{ t('returned_books') }}</div>
                 </div>
                 <div class="kpi-metric-icon green">↩️</div>
@@ -383,13 +383,13 @@
             <div class="kpi-metric-card" @click="navigate('members')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ dashStats.kutilmoqda_members ?? 0 }}</div>
+                  <div class="kpi-metric-val">{{ dashStats.kutilmoqda_members || 0 }}</div>
                   <div class="kpi-metric-label">{{ t('pending_members') }}</div>
                 </div>
                 <div class="kpi-metric-icon gold">⏳</div>
               </div>
               <div class="kpi-trend-pill up">
-                <span>{{ dashStats.kutilmoqda_members ?? 0 }} ta</span>
+                <span>{{ dashStats.kutilmoqda_members || 0 }} ta</span>
                 <span class="kpi-trend-sub">tasdiqlash kutilmoqda</span>
               </div>
             </div>
@@ -398,13 +398,13 @@
             <div class="kpi-metric-card" @click="navigate('issues')" style="cursor:pointer;">
               <div class="kpi-card-header">
                 <div>
-                  <div class="kpi-metric-val">{{ dashStats.overdue_issues ?? 0 }}</div>
+                  <div class="kpi-metric-val">{{ dashStats.overdue_issues || 0 }}</div>
                   <div class="kpi-metric-label">{{ t('overdue_books') }}</div>
                 </div>
                 <div class="kpi-metric-icon red">⚠️</div>
               </div>
-              <div class="kpi-trend-pill" :class="(dashStats.overdue_issues ?? 0) > 0 ? 'down' : 'up'">
-                <span>{{ dashStats.overdue_issues ?? 0 }} ta</span>
+              <div class="kpi-trend-pill" :class="(dashStats.overdue_issues || 0) > 0 ? 'down' : 'up'">
+                <span>{{ dashStats.overdue_issues || 0 }} ta</span>
                 <span class="kpi-trend-sub">muddati o'tgan kitob</span>
               </div>
             </div>
@@ -667,8 +667,8 @@
                   <div class="catalog-book-author">✍️ {{ b.author || 'Muallif noma\'lum' }}</div>
                   <div class="catalog-book-footer">
                     <span class="badge badge-purple">{{ b.published_year || 'Yili yo\'q' }}</span>
-                    <span class="badge" :class="(b.items?.filter(i=>i.status==='available').length || 0) > 0 ? 'badge-green' : 'badge-yellow'">
-                      {{ b.items?.filter(i=>i.status==='available').length || 0 }} / {{ b.items?.length || 0 }} mavjud
+                    <span class="badge" :class="(getBookAvailableCount(b) || 0) > 0 ? 'badge-green' : 'badge-yellow'">
+                      {{ getBookAvailableCount(b) || 0 }} / {{ getBookTotalCount(b) || 0 }} mavjud
                     </span>
                   </div>
                 </div>
@@ -705,7 +705,7 @@
                   <td style="color:var(--text-secondary);">{{ b.author || '-' }}</td>
                   <td>{{ b.published_year || '-' }}</td>
                   <td>
-                    <span v-for="brName in Array.from(new Set((b.items || []).map(item => item.branch_name).filter(Boolean)))" class="badge badge-purple" style="margin-right: 4px;">{{ brName }}</span>
+                    <span v-for="brName in getUniqueBranches(b)" class="badge badge-purple" style="margin-right: 4px;">{{ brName }}</span>
                     <span v-if="!b.items || !b.items.length" style="color:var(--text-muted); font-size:12px;">—</span>
                   </td>
                   <td><span class="badge badge-blue">{{ (b.items || []).length }} ta</span></td>
@@ -800,7 +800,7 @@
                   <tr><td class="label">Muallif:</td><td class="value">{{ selectedBookDetail.author || 'Ko\'rsatilmagan' }}</td></tr>
                   <tr><td class="label">Nashr yili:</td><td class="value">{{ selectedBookDetail.published_year || '2023-yil' }}</td></tr>
                   <tr><td class="label">Bo'lim / Filial:</td><td class="value">Asosiy ilmiy fond</td></tr>
-                  <tr><td class="label">Mavjud nusxalar:</td><td class="value"><span class="badge badge-green">{{ selectedBookDetail.items?.length || 1 }} ta nusxa</span></td></tr>
+                  <tr><td class="label">Mavjud nusxalar:</td><td class="value"><span class="badge badge-green">{{ getBookTotalCount(selectedBookDetail) || 1 }} ta nusxa</span></td></tr>
                 </tbody>
               </table>
 
@@ -879,7 +879,7 @@
             ✅ Faol kitobxonlar
           </button>
           <button class="cat-tab-btn" :class="{ active: memberFilters.holati === 'kutilmoqda' }" @click="memberFilters.holati='kutilmoqda'; loadMembers()">
-            ⏳ Kutilmoqda ({{ dashStats?.kutilmoqda_members || 0 }})
+            ⏳ Kutilmoqda ({{ (dashStats || {}).kutilmoqda_members || 0 }})
           </button>
           <button class="cat-tab-btn" :class="{ active: memberFilters.holati === 'faol_emas' }" @click="memberFilters.holati='faol_emas'; loadMembers()">
             ❌ Faol emas / Bloklangan
@@ -994,15 +994,15 @@
           <!-- 4 Stat Cards (Screenshot 2, View 5) -->
           <div class="member-profile-stats-grid">
             <div class="member-stat-box">
-              <div class="member-stat-val">{{ selectedMemberProfile.total_read ?? 0 }}</div>
+              <div class="member-stat-val">{{ selectedMemberProfile.total_read || 0 }}</div>
               <div class="member-stat-lbl">O'qilgan kitoblar</div>
             </div>
             <div class="member-stat-box">
-              <div class="member-stat-val" style="color:var(--info);">{{ selectedMemberProfile.current_borrowed ?? 0 }}</div>
+              <div class="member-stat-val" style="color:var(--info);">{{ selectedMemberProfile.current_borrowed || 0 }}</div>
               <div class="member-stat-lbl">Hozirda qo'lida</div>
             </div>
             <div class="member-stat-box">
-              <div class="member-stat-val" style="color:var(--danger);">{{ selectedMemberProfile.overdue_count ?? 0 }}</div>
+              <div class="member-stat-val" style="color:var(--danger);">{{ selectedMemberProfile.overdue_count || 0 }}</div>
               <div class="member-stat-lbl">Kechiktirilgan</div>
             </div>
             <div class="member-stat-box">
@@ -1150,37 +1150,37 @@
                   <div class="urgut-card-info-col">
                     <div class="urgut-info-row">
                       <span class="urgut-info-label">ID raqami:</span>
-                      <span class="urgut-info-val highlight-id">{{ libraryCardMember?.sigla || 'KB-000123' }}</span>
+                      <span class="urgut-info-val highlight-id">{{ (libraryCardMember || {}).sigla || 'KB-000123' }}</span>
                     </div>
                     <div class="urgut-info-row">
                       <span class="urgut-info-label">F.I.Sh:</span>
-                      <span class="urgut-info-val bold-name">{{ libraryCardMember?.familiya || 'Abdullayev Jasur' }}</span>
+                      <span class="urgut-info-val bold-name">{{ (libraryCardMember || {}).familiya || 'Abdullayev Jasur' }}</span>
                     </div>
                     <div class="urgut-info-row">
                       <span class="urgut-info-label">Toifa:</span>
-                      <span class="urgut-info-val">{{ libraryCardMember?.toifa || 'Kitobxon' }}</span>
+                      <span class="urgut-info-val">{{ (libraryCardMember || {}).toifa || 'Kitobxon' }}</span>
                     </div>
                     <div class="urgut-info-row">
                       <span class="urgut-info-label">Telefon:</span>
-                      <span class="urgut-info-val">{{ libraryCardMember?.telegram_id || '+998 90 123-45-67' }}</span>
+                      <span class="urgut-info-val">{{ (libraryCardMember || {}).telegram_id || '+998 90 123-45-67' }}</span>
                     </div>
                     <div class="urgut-info-row">
                       <span class="urgut-info-label">Berilgan:</span>
-                      <span class="urgut-info-val">{{ libraryCardMember?.yangi_avo_sana || today }}</span>
+                      <span class="urgut-info-val">{{ (libraryCardMember || {}).yangi_avo_sana || today }}</span>
                     </div>
                     <div class="urgut-info-row">
                       <span class="urgut-info-label">Amal qiladi:</span>
-                      <span class="urgut-info-val">{{ libraryCardMember?.azolik_tug || '31.12.2025' }}</span>
+                      <span class="urgut-info-val">{{ (libraryCardMember || {}).azolik_tug || '31.12.2025' }}</span>
                     </div>
                   </div>
 
                   <!-- Right QR Code -->
                   <div class="urgut-card-qr-col">
                     <div class="urgut-qr-frame">
-                      <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=0&data=' + encodeURIComponent(libraryCardMember?.sigla || 'KB-000123')" 
+                      <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=0&data=' + encodeURIComponent((libraryCardMember || {}).sigla || 'KB-000123')" 
                            alt="QR Code" class="urgut-qr-img" />
                     </div>
-                    <div class="urgut-qr-code-label">ID: {{ libraryCardMember?.sigla || 'KB-000123' }}</div>
+                    <div class="urgut-qr-code-label">ID: {{ (libraryCardMember || {}).sigla || 'KB-000123' }}</div>
                   </div>
                 </div>
 
@@ -1242,7 +1242,7 @@
         <div class="card" style="max-width:960px; margin:0 auto 16px auto; padding:10px 18px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface); border:1px solid var(--border); font-size:0.8rem;">
           <div style="display:flex; align-items:center; gap:10px;">
             <span style="font-size:16px;">⚡</span>
-            <span><b>AI Fond Holati:</b> {{ aiStats?.indexed_books || 968 }} / {{ aiStats?.total_books || 968 }} kitob indekslangan (128-dim Hybrid Semantic Vector)</span>
+            <span><b>AI Fond Holati:</b> {{ (aiStats || {}).indexed_books || 968 }} / {{ (aiStats || {}).total_books || 968 }} kitob indekslangan (128-dim Hybrid Semantic Vector)</span>
           </div>
           <button class="btn btn-secondary btn-xs" @click="triggerAIReindex" :disabled="aiReindexing">
             <span v-if="aiReindexing" class="spinner" style="width:10px; height:10px; margin-right:4px;"></span>
@@ -1918,15 +1918,15 @@
           </div>
           <div class="kpi-grid-6" style="grid-template-columns:repeat(3, 1fr); margin:16px 0;">
             <div class="kpi-metric-card">
-              <div class="kpi-metric-val">{{ formatPrice(dashStats?.today_income) }}</div>
+              <div class="kpi-metric-val">{{ formatPrice((dashStats || {}).today_income) }}</div>
               <div class="kpi-metric-label">Bugungi Tushum</div>
             </div>
             <div class="kpi-metric-card">
-              <div class="kpi-metric-val" style="color:var(--info);">{{ formatPrice(dashStats?.monthly_income) }}</div>
+              <div class="kpi-metric-val" style="color:var(--info);">{{ formatPrice((dashStats || {}).monthly_income) }}</div>
               <div class="kpi-metric-label">Oylik Tushum</div>
             </div>
             <div class="kpi-metric-card">
-              <div class="kpi-metric-val" style="color:var(--danger);">{{ dashStats?.debtors_count || 0 }}</div>
+              <div class="kpi-metric-val" style="color:var(--danger);">{{ (dashStats || {}).debtors_count || 0 }}</div>
               <div class="kpi-metric-label">Qarzdorlar soni</div>
             </div>
           </div>
@@ -2110,15 +2110,15 @@
         <!-- Quick Stats Row -->
         <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:18px;">
           <div style="padding:10px; background:var(--bg-surface); border-radius:var(--radius-sm); text-align:center; border:1px solid var(--border-light);">
-            <div style="font-size:1.3rem; font-weight:800; color:var(--primary);">{{ selectedMemberDetail.total_read ?? 0 }}</div>
+            <div style="font-size:1.3rem; font-weight:800; color:var(--primary);">{{ selectedMemberDetail.total_read || 0 }}</div>
             <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">O'qilgan kitoblar</div>
           </div>
           <div style="padding:10px; background:var(--bg-surface); border-radius:var(--radius-sm); text-align:center; border:1px solid var(--border-light);">
-            <div style="font-size:1.3rem; font-weight:800; color:var(--info);">{{ selectedMemberDetail.current_borrowed ?? 0 }}</div>
+            <div style="font-size:1.3rem; font-weight:800; color:var(--info);">{{ selectedMemberDetail.current_borrowed || 0 }}</div>
             <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Hozirda qo'lida</div>
           </div>
           <div style="padding:10px; background:var(--bg-surface); border-radius:var(--radius-sm); text-align:center; border:1px solid var(--border-light);">
-            <div style="font-size:1.3rem; font-weight:800; color:var(--danger);">{{ selectedMemberDetail.overdue_count ?? 0 }}</div>
+            <div style="font-size:1.3rem; font-weight:800; color:var(--danger);">{{ selectedMemberDetail.overdue_count || 0 }}</div>
             <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Muddati o'tgan</div>
           </div>
         </div>

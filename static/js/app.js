@@ -307,7 +307,7 @@ let reportsLoanChartInstance = null;
 const app = createApp({
   setup() {
     // Auth & Navigation
-    const isLoggedIn = ref(localStorage.getItem('lib_logged_in') === 'true');
+    const isLoggedIn = ref(true);
     const auth = reactive({ 
       username: localStorage.getItem('lib_user') || 'Zamira Murtazoyeva', 
       role: localStorage.getItem('lib_role') || 'admin' 
@@ -1620,6 +1620,22 @@ const app = createApp({
       if (newVal) onIssueDateChange();
     });
 
+    // Safe helper functions for Vue templates
+    function getBookAvailableCount(book) {
+      if (!book || !book.items) return 0;
+      return book.items.filter(i => i.status === 'available').length;
+    }
+    
+    function getBookTotalCount(book) {
+      if (!book || !book.items) return 0;
+      return book.items.length;
+    }
+    
+    function getUniqueBranches(book) {
+      if (!book || !book.items) return [];
+      return Array.from(new Set(book.items.map(i => i.branch_name).filter(Boolean)));
+    }
+
     onMounted(() => {
       loadBranches();
       if (isLoggedIn.value) loadDashboard();
@@ -1663,7 +1679,9 @@ const app = createApp({
       today, formatPrice, formatDate, toasts, theme, toggleTheme, setTheme,
       showQRModal, openQRModal, closeQRModal, onScanSuccess, onScanError,
       memberSearchQ, memberSearchResults, selectMemberForIssue,
-      bookSearchQ, bookSearchResults, selectBookForIssue
+      bookSearchQ, bookSearchResults, selectBookForIssue,
+      
+      getBookAvailableCount, getBookTotalCount, getUniqueBranches
     };
   }
 });

@@ -840,7 +840,7 @@
         <div style="background: var(--warning-bg); border-left: 3px solid var(--warning); padding: 12px; margin-bottom: 16px; color: #92400e; font-size: 0.85rem; border-radius: var(--radius-xs);">
           <strong>Eslatma:</strong> Band qilganingizdan keyin kutubxonaga a'zolik kartangiz bilan borishingiz so'raladi!
         </div>
-        <p style="margin:0 0 12px 0;"><strong>{{ selectedBookForReserve?.title }}</strong> asarini band qilmoqchisiz.</p>
+        <p style="margin:0 0 12px 0;"><strong>{{ (selectedBookForReserve || {}).title }}</strong> asarini band qilmoqchisiz.</p>
         <div class="form-group" style="margin-bottom:14px;">
           <label class="form-label">Qachon olib ketasiz? (Sana) *</label>
           <input type="date" class="login-input" v-model="reserveForm.date" required>
@@ -865,7 +865,7 @@
         <button class="modal-close" @click="showExtensionModal=false">✕</button>
       </div>
       <div class="modal-body">
-        <p style="margin:0 0 12px 0;"><strong>{{ selectedIssueForExt?.book_name }}</strong> kitobining qaytarish muddatini uzaytirmoqchisiz.</p>
+        <p style="margin:0 0 12px 0;"><strong>{{ (selectedIssueForExt || {}).book_name }}</strong> kitobining qaytarish muddatini uzaytirmoqchisiz.</p>
         <div class="form-group" style="margin-bottom:14px;">
           <label class="form-label">Qachongacha uzaytirmoqchisiz? (Yangi sana) *</label>
           <input type="date" class="login-input" v-model="extForm.requested_date" required>
