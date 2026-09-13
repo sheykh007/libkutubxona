@@ -239,7 +239,7 @@ def chat_bot_response(message):
             "• 🏛️ <b>Bevosita kutubxonada:</b> Urgut AKM binosiga tashrif buyurib, ro'yxatga olish bo'limida 2 daqiqada a'zolik rasmiylashtiring.<br><br>"
             "<b>A'zolik beradigan imkoniyatlar:</b><br>"
             "✨ Shaxsiy <b>QR-kodli elektron kitobxonlik bileti</b> (ID karta formatida).<br>"
-            "✨ Kitoblarni 15 kunga bepul mutolaaga olish.<br>"
+            "✨ Kitoblarni 15 kunga mutolaaga olish.<br>"
             "✨ Kitobxon kabineti orqali kitoblarni oldindan <b>onlayn band qilish</b> va muddatini uzaytirish.<br>"
             "✨ Bepul Wi-Fi va shinam mutolaa zalidan foydalanish."
         )
@@ -257,12 +257,15 @@ def chat_bot_response(message):
 
     if any(k in lat_msg for k in ['kutubxona haqida', 'akm haqida', 'urgut akm', 'markaz haqida', 'kutubxona nima', 'malumot', 'haqida']):
         return (
-            "🏛️ <b>Urgut Tuman Axborot-Kutubxona Markazi (AKM) haqida ma'lumot:</b><br><br>"
-            "Urgut tuman AKM – tuman aholisi, yoshlar, talaba va ilmiy tadqiqotchilar uchun mo'ljallangan zamonaviy axborot va ma'naviyat maskanidir.<br><br>"
-            "• 📚 <b>Fond:</b> 1,100 dan ortiq ilmiy, badiiy, mumtoz, tibbiyot va o'quv qo'llanmalari fondi;<br>"
-            "• 🪪 <b>Raqamli xizmatlar:</b> QR-kodli elektron kitobxonlik bileti, onlayn kitob band qilish va shaxsiy kabinet;<br>"
+            "🏢 <b>Urgut Tuman Axborot-Kutubxona Markazi (AKM) haqida ma'lumot:</b><br><br>"
+            "Urgut tuman AKM — tuman aholisi, yoshlar, talaba va ilmiy tadqiqotchilar uchun mo'ljallangan zamonaviy axborot va ma'naviyat maskanidir.<br><br>"
+            "📊 <b>Kutubxona haqida qisqacha statistika:</b><br>"
+            "• 📚 <b>Kutubxona kitoblari soni:</b> 29324 ta (Fond-29324)<br>"
+            "• 👥 <b>Kitobxonlar qatnovi soni:</b> 13910 ta<br>"
+            "• 🌐 <b>Umumiy foydalanuvchilar soni:</b> 18966 ta<br><br>"
+            "• 💻 <b>Raqamli xizmatlar:</b> QR-kodli elektron kitobxonlik bileti, onlayn kitob band qilish va shaxsiy kabinet;<br>"
             "• 🤖 <b>AI texnologiyalari:</b> Sun'iy intellekt asosida tezkor kitob tavsiya qilish va aqlli qidiruv;<br>"
-            "• 🌐 <b>Sharoitlar:</b> Bepul Wi-Fi, shinam mutolaa zali, tadbirlar maydoni va kompyuterlashtirilgan xonalar.<br><br>"
+            "• 🛋️ <b>Sharoitlar:</b> Bepul Wi-Fi, shinam mutolaa zali, tadbirlar maydoni va kompyuterlashtirilgan xonalar.<br><br>"
             "📍 <b>Manzil:</b> Samarqand viloyati, Urgut tumani markazi."
         )
 
@@ -309,11 +312,7 @@ def chat_bot_response(message):
                 pop_str += f"{idx}. <b>{b.title}</b> ({b.author})<br>"
 
         return (
-            f"📊 <b>Kutubxona haqida qisqacha statistika:</b><br><br>"
-            f"• 📚 <b>Kutubxona kitoblari soni:</b> 29324 ta (Fond-29324)<br>"
-            f"• 👥 <b>Kitobxonlar qatnovi soni:</b> 13910 ta<br>"
-            f"• 🌐 <b>Umumiy foydalanuvchilar soni:</b> 18966 ta<br><br>"
-            f"🔥 <b>Eng ko'p o'qilayotgan / tavsiya etilgan kitoblar:</b><br>{pop_str}"
+            f"🔥 <b>Kutubxonamizdagi eng mashhur va ko'p o'qilgan kitoblar:</b><br><br>{pop_str}"
         )
 
     # 3. ADVANCED SEARCH ACROSS BOOKS

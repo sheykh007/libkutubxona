@@ -1231,22 +1231,55 @@ console.error = function(...args) {
 
               <!-- BACK OF CARD -->
               <div class="urgut-id-card urgut-card-back" v-else>
-                <div class="urgut-card-header" style="background:#0D1B2A; color:#fff; padding:8px 12px;">
-                  <img src="/static/img/urgut_logo.png" alt="Logo" style="width:28px; height:28px; border-radius:50%; background:#fff; padding:1px;">
-                  <div style="font-weight:800; font-size:11px; letter-spacing:0.5px; margin-left:8px;">
+                <div class="urgut-card-header" style="background:#0D1B2A; color:#fff; padding:10px 14px; border-bottom: 3px solid #D4B96A; height: 50px; display: flex; align-items: center;">
+                  <img src="/static/img/urgut_logo.png" alt="Logo" style="width:32px; height:32px; border-radius:50%; background:#fff; padding:2px;">
+                  <div style="font-weight:800; font-size:12px; letter-spacing:0.5px; margin-left:12px; text-transform:uppercase;">
                     FOYDALANISH SHARTLARI VA QOIDALARI
                   </div>
                 </div>
-                <div class="urgut-card-back-body">
-                  <ol class="urgut-rules-list">
-                    <li>Mazkur karta "Urgut tuman AKM" axborot-kutubxona tizimining rasmiy hujjati hisoblanadi.</li>
-                    <li>Kartani boshqa shaxslarga berish qat'iyan man etiladi.</li>
-                    <li>Olingan har bir kitobni belgilangan muddatda va soz holatda qaytarish shart.</li>
-                    <li>Karta yo'qolganda darhol kutubxona ma'muriyatiga xabar bering.</li>
+                <div class="urgut-card-back-body" style="padding: 16px 20px; display:flex; flex-direction:column; background: #ffffff; height: 210px;">
+                  <ol class="urgut-rules-list" style="font-size:11px; line-height:1.6; color:#475569; padding-left:16px; margin:0; flex:1;">
+                    <li style="margin-bottom:8px;">Mazkur karta "Urgut tuman AKM" axborot-kutubxona tizimining rasmiy hujjati hisoblanadi.</li>
+                    <li style="margin-bottom:8px;">Kartani boshqa shaxslarga berish qat'iyan man etiladi.</li>
+                    <li style="margin-bottom:8px;">Olingan har bir kitobni belgilangan muddatda va soz holatda qaytarish shart.</li>
+                    <li style="margin-bottom:8px;">Karta yo'qolganda darhol kutubxona ma'muriyatiga xabar bering.</li>
                   </ol>
-                  <div class="urgut-back-footer">
-                    <div>📍 Samarqand viloyati, Urgut tumani</div>
-                    <div>📞 Tel: +998 (66) 482-12-34</div>
+                  
+                  <div style="border-top:1px solid #E2E8F0; margin: 8px 0;"></div>
+                  
+                  <div style="text-align: center; margin-bottom: 6px;">
+                    <div style="font-weight:800; font-size:13px; color:#0F172A; margin-bottom: 4px;">OBUNA BO'LING!</div>
+                    <div style="font-size:9.5px; color:#64748B; line-height:1.3;">
+                      Kutubxonamiz yangiliklari, tadbirlar va foydali ma'lumotlar uchun<br>ijtimoiy tarmoqlarda bizni kuzatib boring!
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 4px;">
+                    <!-- Telegram -->
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" style="width:16px; height:16px;">
+                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    </div>
+                    <!-- Instagram -->
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" style="width:16px; height:16px;">
+                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    </div>
+                    <!-- Facebook -->
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" style="width:16px; height:16px;">
+                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    </div>
+                    <!-- YouTube -->
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg" style="width:16px; height:16px;">
+                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    </div>
+                    <!-- X / Twitter -->
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg" style="width:14px; height:14px; background: black; border-radius:2px; padding:1px;">
+                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1864,15 +1897,25 @@ console.error = function(...args) {
 
         <div v-if="importTab==='upload'" class="card">
           <div class="card-title" style="margin-bottom:20px">📥 Excel Fayl Import</div>
-          <div style="margin-bottom: 20px; display: flex; gap: 20px; justify-content: center;">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="radio" v-model="importType" value="members"> A'zolarni Import Qilish
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="radio" v-model="importType" value="books"> Kitoblarni Import Qilish
-            </label>
-          </div>
-          <div class="upload-zone" @dragover.prevent="dragover=true" @dragleave="dragover=false" @drop="onDrop" @click="$refs.fileInput.click()">
+            <div style="margin-bottom: 20px; display: flex; gap: 20px; justify-content: center;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" v-model="importType" value="members"> A'zolarni Import Qilish
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" v-model="importType" value="books"> Kitoblarni Import Qilish
+              </label>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+              <a v-if="importType==='members'" href="/static/samples/azolarni_import_namuna.xlsx" download class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                📄 A'zolarni import qilish uchun namuna yuklab olish
+              </a>
+              <a v-if="importType==='books'" href="/static/samples/kitoblarni_import_namuna.xlsx" download class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                📄 Kitoblarni import qilish uchun namuna yuklab olish
+              </a>
+            </div>
+            
+            <div class="upload-zone" @dragover.prevent="dragover=true" @dragleave="dragover=false" @drop="onDrop" @click="$refs.fileInput.click()">
             <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" @change="onFileSelect">
             <div class="upload-icon">📂</div>
             <div class="upload-text" v-if="!importFile"><strong>Faylni shu yerga tashlang</strong> yoki bosib tanlang</div>
