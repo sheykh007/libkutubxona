@@ -2047,125 +2047,27 @@ tbody tr:hover {
     position: fixed !important;
     top: 10mm !important;
     left: 10mm !important;
-    width: 85.6mm !important;
-    height: 53.98mm !important;
-    min-height: 53.98mm !important;
-    max-width: 85.6mm !important;
-    max-height: 53.98mm !important;
     margin: 0 !important;
-    transform: none !important;
     padding: 0 !important;
-    border-radius: 3.18mm !important;
-    border: 0.8pt solid #1E3A5F !important;
     box-shadow: none !important;
+    
+    /* Scale the 440x278 card to exactly 85.6mm x 54mm physically */
+    transform: scale(0.735) !important;
+    transform-origin: top left !important;
+    
+    /* Retain original pixel dimensions for accurate scaling */
+    width: 440px !important;
+    height: 278px !important;
+    min-height: 278px !important;
+    max-width: 440px !important;
+    max-height: 278px !important;
+
     overflow: hidden !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     background: #FFFFFF !important;
     page-break-inside: avoid !important;
     z-index: 9999999 !important;
-  }
-
-  .urgut-id-card.urgut-card-back {
-    top: 10mm !important;
-  }
-
-  .urgut-id-card .urgut-card-header {
-    padding: 2mm 3mm !important;
-    gap: 2mm !important;
-    border-bottom: 0.8pt solid #C8A951 !important;
-    background: #0D1B2A !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-
-  .urgut-id-card .urgut-card-logo-img {
-    width: 9mm !important;
-    height: 9mm !important;
-    padding: 0 !important;
-    object-fit: cover !important;
-  }
-
-  .urgut-id-card .urgut-card-sup-title {
-    font-size: 5pt !important;
-    letter-spacing: 0.3pt !important;
-    color: #C8A951 !important;
-  }
-
-  .urgut-id-card .urgut-card-main-title {
-    font-size: 7pt !important;
-    letter-spacing: 0.3pt !important;
-    color: #FFFFFF !important;
-  }
-
-  .urgut-id-card .urgut-card-badge-pill {
-    font-size: 5pt !important;
-    padding: 0.5mm 3mm !important;
-    background: #C8A951 !important;
-    color: #0D1B2A !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-
-  .urgut-id-card .urgut-card-content {
-    padding: 1.5mm 3mm 1mm 3mm !important;
-    gap: 2mm !important;
-  }
-
-  .urgut-id-card .urgut-info-row {
-    font-size: 6pt !important;
-    gap: 1.5mm !important;
-  }
-
-  .urgut-id-card .urgut-info-label {
-    width: 15mm !important;
-    font-size: 5.5pt !important;
-    color: #64748B !important;
-  }
-
-  .urgut-id-card .urgut-info-val {
-    font-size: 6pt !important;
-    color: #0F172A !important;
-  }
-
-  .urgut-id-card .highlight-id {
-    font-size: 6.5pt !important;
-    color: #1E4D6E !important;
-  }
-
-  .urgut-id-card .bold-name {
-    font-size: 6.5pt !important;
-    color: #0D1B2A !important;
-  }
-
-  .urgut-id-card .urgut-qr-frame {
-    padding: 0.8mm !important;
-    border: 0.6pt solid #1E3A5F !important;
-    border-radius: 1.5mm !important;
-  }
-
-  .urgut-id-card .urgut-qr-img {
-    width: 15mm !important;
-    height: 15mm !important;
-  }
-
-  .urgut-id-card .urgut-qr-code-label {
-    font-size: 5pt !important;
-  }
-
-  .urgut-id-card .urgut-card-quote-bar {
-    padding: 0.8mm 2mm !important;
-    font-size: 5pt !important;
-    background: #F1F5F9 !important;
-    border-top: 0.4pt dashed #CBD5E1 !important;
-    border-bottom: 0.4pt dashed #CBD5E1 !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-
-  .urgut-id-card .urgut-card-footer-wave {
-    padding: 1.2mm 3mm !important;
-    font-size: 5pt !important;
-    background: #0D1B2A !important;
-    color: #FFFFFF !important;
-    -webkit-print-color-adjust: exact !important;
   }
 
   /* Report printing support */
