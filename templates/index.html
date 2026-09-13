@@ -1,37 +1,6 @@
 <!DOCTYPE html>
 <html lang="uz" data-theme="dark">
-<head>\n
-<script>
-window.onerror = function(msg, url, line, col, error) {
-    const errDiv = document.createElement('div');
-    errDiv.style.position = 'fixed';
-    errDiv.style.top = '0';
-    errDiv.style.left = '0';
-    errDiv.style.width = '100%';
-    errDiv.style.padding = '20px';
-    errDiv.style.background = 'red';
-    errDiv.style.color = 'white';
-    errDiv.style.zIndex = '999999';
-    errDiv.innerHTML = '<h3>JS Error</h3><p>' + msg + '</p><pre>' + (error ? error.stack : '') + '</pre>';
-    document.body.appendChild(errDiv);
-    return false;
-};
-const oldError = console.error;
-console.error = function(...args) {
-    oldError.apply(console, args);
-    const errDiv = document.createElement('div');
-    errDiv.style.position = 'fixed';
-    errDiv.style.top = '100px';
-    errDiv.style.left = '0';
-    errDiv.style.width = '100%';
-    errDiv.style.padding = '20px';
-    errDiv.style.background = 'darkred';
-    errDiv.style.color = 'white';
-    errDiv.style.zIndex = '999999';
-    errDiv.innerHTML = '<h3>Console Error</h3><pre>' + args.map(a => (a && a.stack) ? a.stack : a).join(' ') + '</pre>';
-    document.body.appendChild(errDiv);
-};
-</script>
+<head>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,7 +30,7 @@ console.error = function(...args) {
   <div class="login-overlay" v-if="!isLoggedIn">
     <div class="login-card">
       <div style="display: flex; justify-content: center; margin-bottom: 16px;">
-        <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width: 72px; height: 72px; border-radius: 50%; object-fit: contain; background: #ffffff; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 2px solid #C8A951;">
+        <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width: 72px; height: 72px; border-radius: 50%; object-fit: contain; background: #ffffff; padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 2px solid #C8A951;">
       </div>
       <h2 class="login-title" style="font-family: 'Outfit', sans-serif; font-weight:800; text-align:center;">Urgut tuman AKM</h2>
       <p class="login-subtitle" style="text-align:center; font-size:0.85rem; margin-bottom:24px;">Urgut tuman axborot-kutubxona markazi</p>
@@ -95,7 +64,7 @@ console.error = function(...args) {
   <aside class="sidebar" :class="{ open: sidebarOpen, collapsed: sidebarCollapsed }" id="sidebar">
     <!-- Brand Logo -->
     <div class="sidebar-logo">
-      <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width:40px; height:40px; border-radius:50%; object-fit:contain; background:#ffffff; padding:2px; flex-shrink:0; border:1px solid #C8A951;">
+      <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width:40px; height:40px; border-radius:50%; object-fit:contain; background:#ffffff; padding:6px; flex-shrink:0; border:1px solid #C8A951;">
       <div class="logo-text">
         <h2 style="font-size: 1.02rem; font-weight: 800; letter-spacing: 0.5px; color: #FFFFFF; font-family:'Outfit',sans-serif; margin:0;">Urgut tuman AKM</h2>
         <span style="font-size: 0.65rem; color: #8E9CAA; display:block;">Urgut tuman axborot-kutubxona markazi</span>
@@ -1163,7 +1132,7 @@ console.error = function(...args) {
           <div class="modal-body" style="padding:20px; display:flex; justify-content:center; background:var(--bg-surface);">
             <div class="library-card-container">
               <!-- FRONT OF CARD (Replica of Image 1) -->
-              <div class="urgut-id-card" v-if="libraryCardSide === 'front'">
+              <div class="urgut-id-card" v-show="libraryCardSide === 'front'">
                 <!-- Header with Logo and Emblem -->
                 <div class="urgut-card-header">
                   <div class="urgut-card-logo-wrap">
@@ -1230,9 +1199,9 @@ console.error = function(...args) {
               </div>
 
               <!-- BACK OF CARD -->
-              <div class="urgut-id-card urgut-card-back" v-else>
+              <div class="urgut-id-card urgut-card-back" v-show="libraryCardSide === 'back'">
                 <div class="urgut-card-header" style="background:#0D1B2A; color:#fff; padding:10px 14px; border-bottom: 3px solid #D4B96A; height: 50px; display: flex; align-items: center;">
-                  <img src="/static/img/urgut_logo.png" alt="Logo" style="width:32px; height:32px; border-radius:50%; background:#fff; padding:2px;">
+                  <img src="/static/img/urgut_logo.png" alt="Logo" style="width:32px; height:32px; border-radius:50%; background:#fff; padding:5px;">
                   <div style="font-weight:800; font-size:12px; letter-spacing:0.5px; margin-left:12px; text-transform:uppercase;">
                     FOYDALANISH SHARTLARI VA QOIDALARI
                   </div>
@@ -1257,27 +1226,27 @@ console.error = function(...args) {
                   <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 4px;">
                     <!-- Telegram -->
                     <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" style="width:16px; height:16px;">
+                      ??
                       <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                     <!-- Instagram -->
                     <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" style="width:16px; height:16px;">
+                      ??
                       <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                     <!-- Facebook -->
                     <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" style="width:16px; height:16px;">
+                      ??
                       <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                     <!-- YouTube -->
                     <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg" style="width:16px; height:16px;">
+                      ??
                       <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                     <!-- X / Twitter -->
                     <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg" style="width:14px; height:14px; background: black; border-radius:2px; padding:1px;">
+                      ??
                       <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                   </div>

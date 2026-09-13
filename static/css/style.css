@@ -1450,7 +1450,7 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 50%;
   object-fit: contain;
   background: #FFFFFF;
-  padding: 2px;
+  padding: 6px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   display: block;
 }
@@ -2048,6 +2048,7 @@ tbody tr:hover {
     max-width: 85.6mm !important;
     max-height: 53.98mm !important;
     margin: 0 !important;
+    transform: none !important;
     padding: 0 !important;
     border-radius: 3.18mm !important;
     border: 0.8pt solid #1E3A5F !important;
@@ -2058,6 +2059,10 @@ tbody tr:hover {
     background: #FFFFFF !important;
     page-break-inside: avoid !important;
     z-index: 9999999 !important;
+  }
+
+  .urgut-id-card.urgut-card-back {
+    top: 75mm !important;
   }
 
   .urgut-id-card .urgut-card-header {
@@ -2071,7 +2076,7 @@ tbody tr:hover {
   .urgut-id-card .urgut-card-logo-img {
     width: 9mm !important;
     height: 9mm !important;
-    padding: 0.3mm !important;
+    padding: 1.5mm !important;
   }
 
   .urgut-id-card .urgut-card-sup-title {
