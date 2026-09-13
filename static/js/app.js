@@ -5,7 +5,7 @@ const API_BASE = '/api';
 
 async function api(method, path, body = null, isFile = false) {
   const opts = { method, headers: {} };
-  opts.headers['X-Librarian-Name'] = localStorage.getItem('lib_user') || 'Tizim';
+  opts.headers['X-Librarian-Name'] = sessionStorage.getItem('lib_user') || 'Tizim';
   
   if (body && !isFile) {
     opts.headers['Content-Type'] = 'application/json';
@@ -307,10 +307,10 @@ let reportsLoanChartInstance = null;
 const app = createApp({
   setup() {
     // Auth & Navigation
-    const isLoggedIn = ref(true);
+    const isLoggedIn = ref(sessionStorage.getItem('lib_logged_in') === 'true');
     const auth = reactive({ 
-      username: localStorage.getItem('lib_user') || 'Zamira Murtazoyeva', 
-      role: localStorage.getItem('lib_role') || 'admin' 
+      username: sessionStorage.getItem('lib_user') || 'Zamira Murtazoyeva', 
+      role: sessionStorage.getItem('lib_role') || 'admin' 
     });
     const loginForm = reactive({ username: '', password: '', role: 'admin' });
 
@@ -583,21 +583,35 @@ const app = createApp({
         toast('Login va parolni kiriting', 'warning');
         return;
       }
+      
+      // Admin verification
+      if (loginForm.role === 'admin') {
+         if (loginForm.username !== 'admin' || loginForm.password !== 'admin123') {
+           toast('Login yoki parol xato!', 'error');
+           return;
+         }
+      } else if (loginForm.role === 'operator') {
+         if (loginForm.username !== 'operator' || loginForm.password !== 'operator123') {
+           toast('Login yoki parol xato!', 'error');
+           return;
+         }
+      }
+
       isLoggedIn.value = true;
       auth.username = loginForm.username;
       auth.role = loginForm.role;
-      localStorage.setItem('lib_logged_in', 'true');
-      localStorage.setItem('lib_user', auth.username);
-      localStorage.setItem('lib_role', auth.role);
+      sessionStorage.setItem('lib_logged_in', 'true');
+      sessionStorage.setItem('lib_user', auth.username);
+      sessionStorage.setItem('lib_role', auth.role);
       toast('Tizimga muvaffaqiyatli kirdingiz', 'success');
       loadDashboard();
     }
 
     function logout() {
       isLoggedIn.value = false;
-      localStorage.removeItem('lib_logged_in');
-      localStorage.removeItem('lib_user');
-      localStorage.removeItem('lib_role');
+      sessionStorage.removeItem('lib_logged_in');
+      sessionStorage.removeItem('lib_user');
+      sessionStorage.removeItem('lib_role');
       toast('Tizimdan chiqdingiz', 'info');
     }
 

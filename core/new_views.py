@@ -93,21 +93,28 @@ class MemberLoginView(APIView):
             ).first()
             if not member:
                 return Response({'error': "Kiritilgan login bo'yicha kitobxon topilmadi."}, status=status.HTTP_404_NOT_FOUND)
-            if member.password:
-                if not password:
-                    return Response({
-                        'error': 'Parol kiritilishi shart',
-                        'can_reset': True,
-                        'sigla': member.sigla,
-                        'email': member.email or ''
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                if not check_password(password, member.password):
-                    return Response({
-                        'error': "Noto'g'ri parol kiritildi.",
-                        'can_reset': True,
-                        'sigla': member.sigla,
-                        'email': member.email or ''
-                    }, status=status.HTTP_400_BAD_REQUEST)
+            if not member.password:
+                return Response({
+                    'error': "Siz hali parolsiz ro'yxatdasiz. Iltimos 'Parolni tiklash' orqali o'zingizga parol o'rnating yoki ro'yxatdan o'ting.",
+                    'can_reset': True,
+                    'sigla': member.sigla,
+                    'email': member.email or ''
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if not password:
+                return Response({
+                    'error': 'Parol kiritilishi shart',
+                    'can_reset': True,
+                    'sigla': member.sigla,
+                    'email': member.email or ''
+                }, status=status.HTTP_400_BAD_REQUEST)
+            if not check_password(password, member.password):
+                return Response({
+                    'error': "Noto'g'ri parol kiritildi.",
+                    'can_reset': True,
+                    'sigla': member.sigla,
+                    'email': member.email or ''
+                }, status=status.HTTP_400_BAD_REQUEST)
                     
             return Response({
                 'id': member.id,
