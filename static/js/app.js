@@ -898,10 +898,8 @@ const app = createApp({
     }
 
     function printCard() {
-      libraryCardSide.value = 'front';
-      setTimeout(() => {
-        window.print();
-      }, 150);
+      // Just print whatever side is currently selected
+      window.print();
     }
 
     function toggleChat() {

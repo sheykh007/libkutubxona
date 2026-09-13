@@ -30,7 +30,7 @@
   <div class="login-overlay" v-if="!isLoggedIn">
     <div class="login-card">
       <div style="display: flex; justify-content: center; margin-bottom: 16px;">
-        <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width: 72px; height: 72px; border-radius: 50%; object-fit: contain; background: #ffffff; padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 2px solid #C8A951;">
+        <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width: 72px; height: 72px; border-radius: 50%; object-fit: contain; background: #ffffff; padding: 0; object-fit: cover; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 2px solid #C8A951;">
       </div>
       <h2 class="login-title" style="font-family: 'Outfit', sans-serif; font-weight:800; text-align:center;">Urgut tuman AKM</h2>
       <p class="login-subtitle" style="text-align:center; font-size:0.85rem; margin-bottom:24px;">Urgut tuman axborot-kutubxona markazi</p>
@@ -64,7 +64,7 @@
   <aside class="sidebar" :class="{ open: sidebarOpen, collapsed: sidebarCollapsed }" id="sidebar">
     <!-- Brand Logo -->
     <div class="sidebar-logo">
-      <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width:40px; height:40px; border-radius:50%; object-fit:contain; background:#ffffff; padding:6px; flex-shrink:0; border:1px solid #C8A951;">
+      <img src="/static/img/urgut_logo.png" alt="Urgut AKM" style="width:40px; height:40px; border-radius:50%; object-fit:contain; background:#ffffff; padding: 0; object-fit: cover; flex-shrink:0; border:1px solid #C8A951;">
       <div class="logo-text">
         <h2 style="font-size: 1.02rem; font-weight: 800; letter-spacing: 0.5px; color: #FFFFFF; font-family:'Outfit',sans-serif; margin:0;">Urgut tuman AKM</h2>
         <span style="font-size: 0.65rem; color: #8E9CAA; display:block;">Urgut tuman axborot-kutubxona markazi</span>
@@ -601,7 +601,7 @@
                   <div class="new-book-title">{{ b.title }}</div>
                   <div class="new-book-author">✍️ {{ b.author || 'Muallif noma\'lum' }}</div>
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                    <span class="badge badge-blue" style="font-size:10px;">{{ b.published_year || '2024' }}</span>
+                    <span class="badge badge-blue" style="font-size:8px;">{{ b.published_year || '2024' }}</span>
                     <span style="font-size:11px; color:var(--info); font-weight:700;">Batafsil →</span>
                   </div>
                 </div>
@@ -848,7 +848,7 @@
             <div v-else-if="similarBooks.length" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px;">
               <div v-for="sb in similarBooks" :key="sb.id" class="card" style="padding:14px; cursor:pointer; transition:transform 0.2s;" @click="viewBookDetail(sb)">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
-                  <span class="badge badge-blue" style="font-size:10px;">{{ sb.match_percentage || 85 }}% moslik</span>
+                  <span class="badge badge-blue" style="font-size:8px;">{{ sb.match_percentage || 85 }}% moslik</span>
                   <span class="badge" :class="sb.is_available ? 'badge-green' : 'badge-yellow'" style="font-size:9px;">
                     {{ sb.is_available ? 'Mavjud' : 'Band' }}
                   </span>
@@ -1201,12 +1201,12 @@
               <!-- BACK OF CARD -->
               <div class="urgut-id-card urgut-card-back" v-show="libraryCardSide === 'back'">
                 <div class="urgut-card-header" style="background:#0D1B2A; color:#fff; padding:10px 14px; border-bottom: 3px solid #D4B96A; height: 50px; display: flex; align-items: center;">
-                  <img src="/static/img/urgut_logo.png" alt="Logo" style="width:32px; height:32px; border-radius:50%; background:#fff; padding:5px;">
+                  <img src="/static/img/urgut_logo.png" alt="Logo" style="width:32px; height:32px; border-radius:50%; background:#fff; padding: 0; object-fit: cover;">
                   <div style="font-weight:800; font-size:12px; letter-spacing:0.5px; margin-left:12px; text-transform:uppercase;">
                     FOYDALANISH SHARTLARI VA QOIDALARI
                   </div>
                 </div>
-                <div class="urgut-card-back-body" style="padding: 16px 20px; display:flex; flex-direction:column; background: #ffffff; height: 210px;">
+                <div class="urgut-card-back-body" style="display:flex; flex-direction:column; background: #ffffff; flex: 1; padding: 12px 16px;">
                   <ol class="urgut-rules-list" style="font-size:11px; line-height:1.6; color:#475569; padding-left:16px; margin:0; flex:1;">
                     <li style="margin-bottom:8px;">Mazkur karta "Urgut tuman AKM" axborot-kutubxona tizimining rasmiy hujjati hisoblanadi.</li>
                     <li style="margin-bottom:8px;">Kartani boshqa shaxslarga berish qat'iyan man etiladi.</li>
@@ -1225,29 +1225,29 @@
                   
                   <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 4px;">
                     <!-- Telegram -->
-                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      ??
-                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 2px 4px; display: flex; align-items: center; gap: 2px; border: 1px solid #E2E8F0;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                      <span style="font-size:8px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                     <!-- Instagram -->
-                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      ??
-                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 2px 4px; display: flex; align-items: center; gap: 2px; border: 1px solid #E2E8F0;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                      <span style="font-size:8px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                     <!-- Facebook -->
-                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      ??
-                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 2px 4px; display: flex; align-items: center; gap: 2px; border: 1px solid #E2E8F0;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1877F2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                      <span style="font-size:8px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                     <!-- YouTube -->
-                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      ??
-                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 2px 4px; display: flex; align-items: center; gap: 2px; border: 1px solid #E2E8F0;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FF0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+                      <span style="font-size:8px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                     <!-- X / Twitter -->
-                    <div style="background:#F1F5F9; border-radius: 12px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; border: 1px solid #E2E8F0;">
-                      ??
-                      <span style="font-size:10px; font-weight:700; color:#0F172A;">@Liburgut</span>
+                    <div style="background:#F1F5F9; border-radius: 12px; padding: 2px 4px; display: flex; align-items: center; gap: 2px; border: 1px solid #E2E8F0;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      <span style="font-size:8px; font-weight:700; color:#0F172A;">@Liburgut</span>
                     </div>
                   </div>
                 </div>
@@ -1298,7 +1298,7 @@
             <span style="font-size:20px; color:var(--info); margin-right:12px;">✨</span>
             <input type="text" v-model="aiSearchQuery" :placeholder="t('ai_search_input_placeholder')" @keyup.enter="runAISearch(null)">
             <button class="btn btn-primary" style="border-radius:var(--radius-full); padding:8px 24px; font-weight:700;" @click="runAISearch(null)" :disabled="aiSearching">
-              <span v-if="aiSearching" class="spinner" style="width:14px; height:14px; border-width:2px; margin-right:6px;"></span>
+              <span v-if="aiSearching" class="spinner" style="width:11px; height:11px; border-width:2px; margin-right:6px;"></span>
               <span>{{ aiSearching ? t('searching') : (t('search') + ' 🚀') }}</span>
             </button>
           </div>
@@ -2309,7 +2309,7 @@
               </div>
               <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px;">
                 <div v-for="(it, idx) in bookForm.items" :key="idx" style="display:flex; align-items:center; gap:6px; background:var(--bg-card); padding:6px 8px; border:1px solid var(--border); border-radius:var(--radius-xs);">
-                  <span class="badge badge-purple" style="font-size:10px;">#{{ idx + 1 }}</span>
+                  <span class="badge badge-purple" style="font-size:8px;">#{{ idx + 1 }}</span>
                   <input type="text" class="form-control" v-model="it.barcode" :placeholder="'INV-' + (idx + 1)" style="padding:6px 10px; font-size:12px; font-family:monospace; font-weight:700; flex:1;">
                   <span class="badge" :class="it.status==='borrowed' ? 'badge-yellow' : 'badge-green'" style="font-size:9px;">
                     {{ it.status === 'borrowed' ? 'Band' : 'Mavjud' }}
