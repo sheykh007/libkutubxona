@@ -568,8 +568,6 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Page Body */
 .page-body {
-  min-width: 1200px;
-  overflow-x: auto;
   padding: 24px 28px 40px 28px;
   flex: 1;
   width: 100%;
@@ -1248,8 +1246,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .catalog-book-body {
-  min-width: 1200px;
-  overflow-x: auto;
   padding: 12px 14px;
   flex: 1;
   display: flex;
@@ -1623,8 +1619,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .urgut-card-back-body {
-  min-width: 1200px;
-  overflow-x: auto;
   padding: 12px 16px;
   flex: 1;
   display: flex;
@@ -1932,8 +1926,6 @@ tbody tr:hover {
 }
 
 .modal-body {
-  min-width: 1200px;
-  overflow-x: auto;
   padding: 24px;
   overflow-y: auto;
   flex: 1;
@@ -2031,8 +2023,6 @@ tbody tr:hover {
   }
   
   html, body {
-  min-width: 1200px;
-  overflow-x: auto;
     margin: 0 !important;
     padding: 0 !important;
     background: #FFFFFF !important;
