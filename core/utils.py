@@ -257,7 +257,7 @@ def chat_bot_response(message):
 
     if any(k in lat_msg for k in ['kutubxona haqida', 'akm haqida', 'urgut akm', 'markaz haqida', 'kutubxona nima', 'malumot', 'haqida']):
         return (
-            "🏢 <b>Urgut Tuman Axborot-Kutubxona Markazi (AKM) haqida ma'lumot:</b><br><br>"
+            "🏢 <b>Urgut tuman axborot-kutubxona markazi (AKM) haqida ma'lumot:</b><br><br>"
             "Urgut tuman AKM — tuman aholisi, yoshlar, talaba va ilmiy tadqiqotchilar uchun mo'ljallangan zamonaviy axborot va ma'naviyat maskanidir.<br><br>"
             "📊 <b>Kutubxona haqida qisqacha statistika:</b><br>"
             "• 📚 <b>Kutubxona kitoblari soni:</b> 29324 ta (Fond-29324)<br>"
