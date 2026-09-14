@@ -98,8 +98,10 @@ const app = createApp({
     let toastId = 0;
     function toast(msg, type = 'info') {
       const id = ++toastId;
+      type = type.replace('toast-', '');
       toasts.value.push({ id, msg, type });
-      setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id); }, 4000);
+      const delay = type === 'success' ? 3000 : 4000;
+      setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id); }, delay);
     }
     
     // Member Data

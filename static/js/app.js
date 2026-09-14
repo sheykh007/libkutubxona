@@ -1220,6 +1220,11 @@ const app = createApp({
           payload.yangi_avo_sana = payload.azolik_bosh || new Date().toISOString().split('T')[0];
         }
 
+        // Convert empty strings to null for API payload (fixes DRF 400 bad request on dates)
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === '') payload[key] = null;
+        });
+
         if (editMode.value) {
           await api('PUT', `/members/${payload.id}/`, payload);
           toast('Kitobxon muvaffaqiyatli saqlandi', 'success');

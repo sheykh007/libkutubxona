@@ -2400,14 +2400,16 @@
     </div>
   </div>
 
-  <!-- Toast Notifications -->
+    <!-- Toast Notifications -->
   <div class="toast-container">
     <div v-for="t in toasts" :key="t.id" class="toast" :class="t.type">
-      <span v-if="t.type==='success'">✅</span>
-      <span v-else-if="t.type==='error'">❌</span>
-      <span v-else-if="t.type==='warning'">⚠️</span>
-      <span v-else>ℹ️</span>
-      {{ t.msg }}
+      <div class="toast-icon">
+        <svg v-if="t.type==='success'" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+        <svg v-else-if="t.type==='error'" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <svg v-else-if="t.type==='warning'" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <svg v-else fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      </div>
+      <div class="toast-msg">{{ t.msg }}</div>
     </div>
   </div>
 
