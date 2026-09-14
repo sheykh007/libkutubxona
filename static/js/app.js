@@ -1575,7 +1575,19 @@ const app = createApp({
         fd.append('file', importFile.value);
         const endpoint = importType.value === 'books' ? '/books/import/' : '/members/import/';
         const res = await api('POST', endpoint, fd, true);
-        toast(`Import muvaffaqiyatli yakunlandi!`, 'success');
+        
+        if (res.error_count > 0) {
+          let c = res.created_books || res.created_members || 0;
+          let msg = `Yaratildi: ${c} ta. Xatolik: ${res.error_count} ta qatorda. Xatoliklar: `;
+          const firstFew = res.errors.slice(0, 3).map(e => `Qator ${e.row}: ${e.column} (${e.reason})`).join('; ');
+          msg += firstFew;
+          if (res.errors.length > 3) msg += '...';
+          toast(msg, 'warning');
+        } else {
+          let c = res.created_books || res.created_members || 0;
+          toast(`Import yakunlandi! Muvaffaqiyatli: ${c} ta`, 'success');
+        }
+
         loadDashboard();
         if (importType.value === 'books') loadBooks();
         else loadMembers();
